@@ -1,28 +1,21 @@
 [project]
-name = "mcpservertemplate"
+name = "tabelogmcp"
 version = "0.1.0"
 description = ""
 readme = "README.md"
 authors = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
 requires-python = ">=3.12"
-dependencies = ["loguru>=0.7.3", "mcp[cli]>=1.6.0"]
+dependencies = ["loguru>=0.7.3", "typer>=0.16.0"]
 
 [project.scripts]
-mcpservertemplate = "mcpservertemplate.server:main"
+tabelogmcp = "tabelogmcp.cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [dependency-groups]
-dev = [
-    "mypy>=1.17.1",
-    "pip>=25.2",
-    "pytest>=8.4.1",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "ruff>=0.12.7",
-]
+dev = ["mypy>=1.15.0", "pytest>=8.3.3", "pytest-cov>=6.0.0", "ruff>=0.7.3"]
 
 [tool.ruff]
 exclude = ["build"]
