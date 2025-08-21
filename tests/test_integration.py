@@ -5,11 +5,11 @@ from unittest.mock import patch
 
 import pytest
 
-from tabelog import PriceRange
-from tabelog import RestaurantSearchRequest
-from tabelog import SearchRequest
-from tabelog import SortType
-from tabelog import query_restaurants
+from tabelogmcp import PriceRange
+from tabelogmcp import RestaurantSearchRequest
+from tabelogmcp import SearchRequest
+from tabelogmcp import SortType
+from tabelogmcp import query_restaurants
 
 
 class TestIntegration:

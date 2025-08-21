@@ -3,10 +3,10 @@
 import pytest
 from pydantic import ValidationError
 
-from tabelog.restaurant import PriceRange
-from tabelog.restaurant import Restaurant
-from tabelog.restaurant import RestaurantSearchRequest
-from tabelog.restaurant import SortType
+from tabelogmcp.restaurant import PriceRange
+from tabelogmcp.restaurant import Restaurant
+from tabelogmcp.restaurant import RestaurantSearchRequest
+from tabelogmcp.restaurant import SortType
 
 
 class TestRestaurant:

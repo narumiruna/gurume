@@ -7,11 +7,11 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from tabelog.restaurant import Restaurant
-from tabelog.search import SearchMeta
-from tabelog.search import SearchRequest
-from tabelog.search import SearchResponse
-from tabelog.search import SearchStatus
+from tabelogmcp.restaurant import Restaurant
+from tabelogmcp.search import SearchMeta
+from tabelogmcp.search import SearchRequest
+from tabelogmcp.search import SearchResponse
+from tabelogmcp.search import SearchStatus
 
 
 class TestSearchMeta:

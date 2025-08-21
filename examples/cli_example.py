@@ -5,9 +5,9 @@ import asyncio
 from datetime import datetime
 from datetime import timedelta
 
-from tabelog import PriceRange
-from tabelog import SearchRequest
-from tabelog import SortType
+from tabelogmcp import PriceRange
+from tabelogmcp import SearchRequest
+from tabelogmcp import SortType
 
 
 def format_date(date_str: str) -> str:
