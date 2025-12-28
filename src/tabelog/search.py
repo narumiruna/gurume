@@ -12,6 +12,7 @@ from enum import Enum
 import httpx
 from bs4 import BeautifulSoup
 
+from .area_mapping import get_area_slug
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
@@ -226,8 +227,18 @@ class SearchRequest:
                 params = request._build_params()
                 headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
+                # 嘗試使用地區路徑（更準確的地區過濾）
+                url = "https://tabelog.com/rst/rstsearch"
+                if self.area:
+                    area_slug = get_area_slug(self.area)
+                    if area_slug:
+                        # 使用地區路徑格式：/area/rstLst/
+                        url = f"https://tabelog.com/{area_slug}/rstLst/"
+                        # 移除 sa 參數，因為已經在 URL 路徑中
+                        params.pop("sa", None)
+
                 resp = httpx.get(
-                    url="https://tabelog.com/rst/rstsearch",
+                    url=url,
                     params=params,
                     headers=headers,
                     timeout=self.timeout,
@@ -282,8 +293,18 @@ class SearchRequest:
                     params = request._build_params()
                     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
 
+                    # 嘗試使用地區路徑（更準確的地區過濾）
+                    url = "https://tabelog.com/rst/rstsearch"
+                    if self.area:
+                        area_slug = get_area_slug(self.area)
+                        if area_slug:
+                            # 使用地區路徑格式：/area/rstLst/
+                            url = f"https://tabelog.com/{area_slug}/rstLst/"
+                            # 移除 sa 參數，因為已經在 URL 路徑中
+                            params.pop("sa", None)
+
                     resp = await client.get(
-                        url="https://tabelog.com/rst/rstsearch",
+                        url=url,
                         params=params,
                         headers=headers,
                     )
