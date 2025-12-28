@@ -136,3 +136,6 @@ dmypy.json
 
 # Claude Code
 .claude/
+
+# Playwright files
+.playwright-mcp/

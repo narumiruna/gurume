@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from .detail import Course
+from .detail import MenuItem
+from .detail import RestaurantDetail
+from .detail import RestaurantDetailRequest
+from .detail import Review
 from .exceptions import InvalidParameterError
 from .exceptions import NetworkError
 from .exceptions import ParseError
@@ -32,4 +37,9 @@ __all__ = [
     "ReservationDate",
     "ReservationTime",
     "RestaurantURL",
+    "RestaurantDetail",
+    "RestaurantDetailRequest",
+    "Review",
+    "MenuItem",
+    "Course",
 ]

@@ -11,10 +11,6 @@ This document tracks potential features, improvements, and implementation ideas 
   - Create a terminal-based interface for searching and browsing restaurants
   - Display restaurant details, ratings, reviews, prices in an interactive format
   - Tool: Use `textual` framework (already in user preferences)
-- [ ] **Restaurant detail page scraping**
-  - Scrape individual restaurant detail pages for comprehensive information
-  - Support multiple tabs: 口コミ (reviews), メニュー (menu), コース (courses), 写真 (photos)
-  - New API: `RestaurantDetail`, `Review`, `MenuItem`, `Course` dataclasses
 
 ### Low Priority / Future Considerations
 - [ ] **CLI tool for quick restaurant searches**
@@ -373,6 +369,19 @@ This document tracks potential features, improvements, and implementation ideas 
   - Study API design of: `yelp-fusion`, `google-places`, `tripadvisor-api`
 
 ## ✅ Completed
+
+- **Restaurant detail page scraping** (2025-12-28)
+  - ✓ Created comprehensive scraping for restaurant detail pages
+  - ✓ New dataclasses: `RestaurantDetail`, `Review`, `MenuItem`, `Course`
+  - ✓ Support for scraping multiple tabs: 口コミ (reviews), メニュー (menu), コース (courses)
+  - ✓ `RestaurantDetailRequest` class with sync/async support
+  - ✓ Pagination support for reviews (configurable max_review_pages)
+  - ✓ Selective fetching (can choose which tabs to scrape)
+  - ✓ Robust HTML parsing with BeautifulSoup
+  - ✓ Full test coverage (20 new tests)
+  - ✓ All 78 tests passing
+  - ✓ Type checking passing
+  - Note: 写真 (photos) tab not implemented (excluded from requirements)
 
 - **Core API improvements for better developer experience** (2025-12-28)
   - ✓ Created custom exception classes (TabelogError, ParseError, InvalidParameterError, NetworkError, RateLimitError)
