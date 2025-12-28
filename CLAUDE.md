@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is **tabelogmcp** - a Python library and MCP (Model Context Protocol) server for searching restaurants on Tabelog using web scraping. It provides both a Python library (`tabelog`) and an MCP server (`tabelogmcp`) for integration with AI assistants.
 
+**See also**: [IDEAS.md](IDEAS.md) - Feature ideas, improvements, and development notes
+
 ## Development Commands
 
 ### Testing
