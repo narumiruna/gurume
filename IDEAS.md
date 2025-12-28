@@ -366,15 +366,20 @@ This document tracks potential features, improvements, and implementation ideas 
 
 ## ✅ Completed
 
-- **Terminal UI (TUI) for interactive restaurant search** (2025-12-28)
+- **Terminal UI (TUI) for interactive restaurant search** (2025-12-28/29)
   - ✓ Created interactive terminal UI using Textual framework
   - ✓ Search panel with area and keyword input
+  - ✓ RadioButton-based sorting selection (評分排名/評論數/新開幕/標準)
+  - ✓ Two-column layout: Results table (left) + Detail panel (right)
+  - ✓ Worker lifecycle management (auto-cancel previous search to prevent hanging)
+  - ✓ Tabelog native API sorting (SortType passed to backend)
   - ✓ Results table (DataTable) displaying restaurant list
   - ✓ Detail panel showing selected restaurant information
   - ✓ Keyboard shortcuts: q (quit), s (search), r (results), d (detail)
   - ✓ Async search integration for non-blocking UI
   - ✓ CLI command: `tabelog tui`
-  - ✓ Clean and responsive layout with proper styling
+  - ✓ Clean and responsive dark theme with simplified styling
+  - ✓ Auto-height search panel to prevent clipping
   - ✓ All 78 tests passing
   - ✓ Type checking passing
   - Note: Advanced features like tab-based detail navigation, export, and filtering can be added later
