@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import contextlib
+from dataclasses import dataclass
+from dataclasses import field
 from datetime import datetime
 from enum import Enum
 
 import httpx
 from bs4 import BeautifulSoup
-from pydantic import BaseModel
-from pydantic import Field
 
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
@@ -21,41 +21,44 @@ class SearchStatus(str, Enum):
     ERROR = "error"
 
 
-class SearchMeta(BaseModel):
+@dataclass
+class SearchMeta:
     """搜尋元資料"""
 
-    total_count: int = Field(description="總結果數")
-    current_page: int = Field(description="當前頁碼")
-    results_per_page: int = Field(description="每頁結果數")
-    total_pages: int = Field(description="總頁數")
-    has_next_page: bool = Field(description="是否有下一頁")
-    has_prev_page: bool = Field(description="是否有上一頁")
-    search_time: datetime = Field(default_factory=datetime.now, description="搜尋時間")
+    total_count: int
+    current_page: int
+    results_per_page: int
+    total_pages: int
+    has_next_page: bool
+    has_prev_page: bool
+    search_time: datetime = field(default_factory=datetime.now)
 
 
-class SearchResponse(BaseModel):
+@dataclass
+class SearchResponse:
     """搜尋回應"""
 
-    status: SearchStatus = Field(description="搜尋狀態")
-    restaurants: list[Restaurant] = Field(default_factory=list, description="餐廳列表")
-    meta: SearchMeta | None = Field(default=None, description="搜尋元資料")
-    error_message: str | None = Field(default=None, description="錯誤訊息")
+    status: SearchStatus
+    restaurants: list[Restaurant] = field(default_factory=list)
+    meta: SearchMeta | None = None
+    error_message: str | None = None
 
 
-class SearchRequest(BaseModel):
+@dataclass
+class SearchRequest:
     """通用搜尋請求 - 擴展 RestaurantSearchRequest"""
 
     # 繼承所有餐廳搜尋參數
-    area: str | None = Field(default=None, description="地區/車站")
-    keyword: str | None = Field(default=None, description="關鍵字")
-    reservation_date: str | None = Field(default=None, description="預約日期 (YYYYMMDD)")
-    reservation_time: str | None = Field(default=None, description="預約時間 (HHMM)")
-    party_size: int | None = Field(default=None, description="預約人數")
+    area: str | None = None
+    keyword: str | None = None
+    reservation_date: str | None = None
+    reservation_time: str | None = None
+    party_size: int | None = None
 
     # 額外的搜尋配置
-    max_pages: int = Field(default=1, description="最大頁數")
-    include_meta: bool = Field(default=True, description="是否包含元資料")
-    timeout: float = Field(default=30.0, description="請求超時時間")
+    max_pages: int = 1
+    include_meta: bool = True
+    timeout: float = 30.0
 
     def _parse_meta(self, html: str, current_page: int) -> SearchMeta:
         """解析搜尋元資料"""

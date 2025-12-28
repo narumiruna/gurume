@@ -72,9 +72,9 @@ The codebase is intentionally simple with only 3 main files:
    - Key methods: `_build_params()`, `_parse_restaurants()`, `do_sync()`, `do()`
 
 2. **search.py** - Higher-level search API with metadata and pagination
-   - `SearchRequest` (Pydantic model): Wraps `RestaurantSearchRequest` with pagination support
-   - `SearchResponse` (Pydantic model): Structured response with status and metadata
-   - `SearchMeta` (Pydantic model): Total counts, page info, navigation flags
+   - `SearchRequest` dataclass: Wraps `RestaurantSearchRequest` with pagination support
+   - `SearchResponse` dataclass: Structured response with status and metadata
+   - `SearchMeta` dataclass: Total counts, page info, navigation flags
    - `SearchStatus` enum: SUCCESS, NO_RESULTS, ERROR
    - Supports multi-page scraping via `max_pages` parameter
    - Both sync (`do_sync()`) and async (`do()`) methods
@@ -103,7 +103,7 @@ The library provides **three levels of abstraction**:
 ## Testing Strategy
 
 - **Location**: All tests in `tests/` directory
-- **Current coverage**: 94% (target: 90%+)
+- **Current coverage**: 96% (target: 90%+)
 - **Test types**:
   - Unit tests: Models, validation, parameter building
   - Function tests: HTTP requests, HTML parsing, error handling
@@ -148,7 +148,6 @@ Configured in `.pre-commit-config.yaml`:
 - `beautifulsoup4` - HTML parsing
 - `lxml` - BeautifulSoup parser backend
 - `httpx` - HTTP client (sync + async)
-- `pydantic` - Data validation (for SearchRequest/Response)
 - `loguru` - Logging
 - `mcp[cli]` - MCP server framework
 - `typer` - CLI framework
