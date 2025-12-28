@@ -10,6 +10,7 @@ dependencies = [
     "loguru>=0.7.3",
     "lxml>=6.0.2",
     "mcp[cli]>=1.13.0",
+    "textual>=6.11.0",
     "typer>=0.16.0",
 ]
 

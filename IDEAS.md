@@ -7,10 +7,6 @@ This document tracks potential features, improvements, and implementation ideas 
 ### High Priority
 
 ### Medium Priority
-- [ ] **Terminal UI (TUI) for interactive restaurant search**
-  - Create a terminal-based interface for searching and browsing restaurants
-  - Display restaurant details, ratings, reviews, prices in an interactive format
-  - Tool: Use `textual` framework (already in user preferences)
 
 ### Low Priority / Future Considerations
 - [ ] **CLI tool for quick restaurant searches**
@@ -369,6 +365,19 @@ This document tracks potential features, improvements, and implementation ideas 
   - Study API design of: `yelp-fusion`, `google-places`, `tripadvisor-api`
 
 ## ✅ Completed
+
+- **Terminal UI (TUI) for interactive restaurant search** (2025-12-28)
+  - ✓ Created interactive terminal UI using Textual framework
+  - ✓ Search panel with area and keyword input
+  - ✓ Results table (DataTable) displaying restaurant list
+  - ✓ Detail panel showing selected restaurant information
+  - ✓ Keyboard shortcuts: q (quit), s (search), r (results), d (detail)
+  - ✓ Async search integration for non-blocking UI
+  - ✓ CLI command: `tabelog tui`
+  - ✓ Clean and responsive layout with proper styling
+  - ✓ All 78 tests passing
+  - ✓ Type checking passing
+  - Note: Advanced features like tab-based detail navigation, export, and filtering can be added later
 
 - **Restaurant detail page scraping** (2025-12-28)
   - ✓ Created comprehensive scraping for restaurant detail pages

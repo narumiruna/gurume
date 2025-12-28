@@ -22,6 +22,14 @@ def search(
     typer.echo(f"關鍵字: {keyword}")
 
 
+@app.command()
+def tui() -> None:
+    """啟動互動式 TUI 介面"""
+    from .tui import main as tui_main
+
+    tui_main()
+
+
 def main() -> None:
     """主程式進入點"""
     app()
