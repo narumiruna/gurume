@@ -280,7 +280,7 @@ class TestIntegration:
         response = request.do_sync()
 
         assert response.status.value == "error"
-        assert "Network error" in response.error_message
+        assert response.error_message is not None and "Network error" in response.error_message
         assert len(response.restaurants) == 0
         assert response.meta is None
 

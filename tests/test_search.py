@@ -64,7 +64,7 @@ class TestSearchResponse:
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 2
-        assert response.meta.total_count == 2
+        assert response.meta is not None and response.meta.total_count == 2
         assert response.error_message is None
 
     def test_search_response_no_results(self):
@@ -233,7 +233,7 @@ class TestSearchRequest:
         response = request.do_sync()
 
         assert response.status == SearchStatus.ERROR
-        assert "404 Not Found" in response.error_message
+        assert response.error_message is not None and "404 Not Found" in response.error_message
         assert len(response.restaurants) == 0
 
     @patch("httpx.get")
@@ -342,7 +342,7 @@ class TestSearchRequest:
         response = await request.do()
 
         assert response.status == SearchStatus.ERROR
-        assert "404 Not Found" in response.error_message
+        assert response.error_message is not None and "404 Not Found" in response.error_message
         assert len(response.restaurants) == 0
 
     @pytest.mark.asyncio
