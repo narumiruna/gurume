@@ -47,7 +47,7 @@ def advanced_search():
         has_private_room=True,
     )
 
-    restaurants = request.do_sync()
+    restaurants = request.search_sync()
 
     print(f"找到 {len(restaurants)} 家餐廳")
     for restaurant in restaurants[:3]:
@@ -71,7 +71,7 @@ async def async_search():
         include_meta=True,
     )
 
-    response = await request.do()
+    response = await request.search()
 
     print(f"搜尋狀態: {response.status}")
     if response.meta:

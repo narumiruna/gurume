@@ -178,14 +178,14 @@ class TestRestaurantSearchRequest:
 class TestQueryRestaurants:
     """Test query_restaurants function"""
 
-    @patch("tabelog.restaurant.RestaurantSearchRequest.do_sync")
-    def test_query_restaurants_basic(self, mock_do_sync):
+    @patch("tabelog.restaurant.RestaurantSearchRequest.search_sync")
+    def test_query_restaurants_basic(self, mock_search_sync):
         """Test basic query_restaurants function"""
         mock_restaurants = [
             Restaurant(name="テスト1", url="https://test1.com"),
             Restaurant(name="テスト2", url="https://test2.com"),
         ]
-        mock_do_sync.return_value = mock_restaurants
+        mock_search_sync.return_value = mock_restaurants
 
         restaurants = query_restaurants(
             area="銀座",
@@ -199,13 +199,13 @@ class TestQueryRestaurants:
         assert restaurants[1].name == "テスト2"
 
         # Check that do_sync was called
-        mock_do_sync.assert_called_once()
+        mock_search_sync.assert_called_once()
 
-    @patch("tabelog.restaurant.RestaurantSearchRequest.do_sync")
-    def test_query_restaurants_with_filters(self, mock_do_sync):
+    @patch("tabelog.restaurant.RestaurantSearchRequest.search_sync")
+    def test_query_restaurants_with_filters(self, mock_search_sync):
         """Test query_restaurants with filters"""
         mock_restaurants = [Restaurant(name="テスト", url="https://test.com")]
-        mock_do_sync.return_value = mock_restaurants
+        mock_search_sync.return_value = mock_restaurants
 
         restaurants = query_restaurants(
             area="渋谷",
@@ -220,13 +220,13 @@ class TestQueryRestaurants:
         )
 
         assert len(restaurants) == 1
-        mock_do_sync.assert_called_once()
+        mock_search_sync.assert_called_once()
 
-    @patch("tabelog.restaurant.RestaurantSearchRequest.do_sync")
-    def test_query_restaurants_caching(self, mock_do_sync):
+    @patch("tabelog.restaurant.RestaurantSearchRequest.search_sync")
+    def test_query_restaurants_caching(self, mock_search_sync):
         """Test that query_restaurants uses caching"""
         mock_restaurants = [Restaurant(name="テスト", url="https://test.com")]
-        mock_do_sync.return_value = mock_restaurants
+        mock_search_sync.return_value = mock_restaurants
 
         # Clear cache first
         query_restaurants.cache_clear()
@@ -242,13 +242,13 @@ class TestQueryRestaurants:
         assert restaurants1[0].name == restaurants2[0].name
 
         # do_sync should only be called once due to caching
-        mock_do_sync.assert_called_once()
+        mock_search_sync.assert_called_once()
 
-    @patch("tabelog.restaurant.RestaurantSearchRequest.do_sync")
-    def test_query_restaurants_no_cache_different_params(self, mock_do_sync):
+    @patch("tabelog.restaurant.RestaurantSearchRequest.search_sync")
+    def test_query_restaurants_no_cache_different_params(self, mock_search_sync):
         """Test that different parameters don't use cache"""
         mock_restaurants = [Restaurant(name="テスト", url="https://test.com")]
-        mock_do_sync.return_value = mock_restaurants
+        mock_search_sync.return_value = mock_restaurants
 
         # Clear cache first
         query_restaurants.cache_clear()
@@ -260,4 +260,4 @@ class TestQueryRestaurants:
         query_restaurants(area="渋谷", keyword="焼肉")
 
         # do_sync should be called twice
-        assert mock_do_sync.call_count == 2
+        assert mock_search_sync.call_count == 2

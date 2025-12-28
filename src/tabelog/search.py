@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import contextlib
+import json
+from collections.abc import Callable
+from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import datetime
@@ -42,6 +45,109 @@ class SearchResponse:
     restaurants: list[Restaurant] = field(default_factory=list)
     meta: SearchMeta | None = None
     error_message: str | None = None
+
+    def filter(
+        self,
+        condition: Callable[[Restaurant], bool] | None = None,
+        min_rating: float | None = None,
+        min_review_count: int | None = None,
+    ) -> SearchResponse:
+        """過濾餐廳
+
+        Args:
+            condition: 自定義過濾條件函數
+            min_rating: 最低評分
+            min_review_count: 最低評論數
+
+        Returns:
+            包含過濾後餐廳的新 SearchResponse
+        """
+        filtered = self.restaurants
+
+        if min_rating is not None:
+            filtered = [r for r in filtered if r.rating and r.rating >= min_rating]
+
+        if min_review_count is not None:
+            filtered = [r for r in filtered if r.review_count and r.review_count >= min_review_count]
+
+        if condition is not None:
+            filtered = [r for r in filtered if condition(r)]
+
+        return SearchResponse(
+            status=self.status,
+            restaurants=filtered,
+            meta=self.meta,
+            error_message=self.error_message,
+        )
+
+    def sort_by(self, key: str, reverse: bool = False) -> SearchResponse:
+        """依指定欄位排序
+
+        Args:
+            key: 排序欄位（rating, review_count, save_count, name）
+            reverse: 是否反向排序（預設 False）
+
+        Returns:
+            包含排序後餐廳的新 SearchResponse
+        """
+        sorted_restaurants = sorted(
+            self.restaurants,
+            key=lambda r: getattr(r, key, 0) or 0,
+            reverse=reverse,
+        )
+
+        return SearchResponse(
+            status=self.status,
+            restaurants=sorted_restaurants,
+            meta=self.meta,
+            error_message=self.error_message,
+        )
+
+    def top(self, n: int) -> SearchResponse:
+        """取前 N 筆餐廳
+
+        Args:
+            n: 要取的數量
+
+        Returns:
+            包含前 N 筆餐廳的新 SearchResponse
+        """
+        return SearchResponse(
+            status=self.status,
+            restaurants=self.restaurants[:n],
+            meta=self.meta,
+            error_message=self.error_message,
+        )
+
+    def to_json(self, indent: int = 2) -> str:
+        """匯出為 JSON 字串
+
+        Args:
+            indent: JSON 縮排空格數
+
+        Returns:
+            JSON 字串
+        """
+        data = {
+            "status": self.status.value,
+            "restaurants": [asdict(r) for r in self.restaurants],
+            "meta": asdict(self.meta) if self.meta else None,
+            "error_message": self.error_message,
+        }
+        return json.dumps(data, ensure_ascii=False, indent=indent, default=str)
+
+    def to_dict(self) -> dict:
+        """轉換為字典
+
+        Returns:
+            包含所有資料的字典
+        """
+        return {
+            "status": self.status.value,
+            "restaurants": [asdict(r) for r in self.restaurants],
+            "meta": asdict(self.meta) if self.meta else None,
+            "error_message": self.error_message,
+        }
 
 
 @dataclass
@@ -104,7 +210,7 @@ class SearchRequest:
             page=page,
         )
 
-    def do_sync(self) -> SearchResponse:
+    def search_sync(self) -> SearchResponse:
         """同步執行搜尋"""
         try:
             all_restaurants = []
@@ -160,7 +266,7 @@ class SearchRequest:
                 error_message=str(e),
             )
 
-    async def do(self) -> SearchResponse:
+    async def search(self) -> SearchResponse:
         """異步執行搜尋"""
         try:
             all_restaurants = []
@@ -213,3 +319,11 @@ class SearchRequest:
                 status=SearchStatus.ERROR,
                 error_message=str(e),
             )
+
+    def do_sync(self) -> SearchResponse:
+        """同步執行搜尋（已棄用，請使用 search_sync()）"""
+        return self.search_sync()
+
+    async def do(self) -> SearchResponse:
+        """異步執行搜尋（已棄用，請使用 search()）"""
+        return await self.search()

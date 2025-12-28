@@ -11,6 +11,8 @@ from typing import Any
 import httpx
 from bs4 import BeautifulSoup
 
+from .exceptions import InvalidParameterError
+
 
 class SortType(str, Enum):
     """排序方式"""
@@ -74,21 +76,6 @@ class Restaurant:
 
 @dataclass
 class RestaurantSearchRequest:
-    def __post_init__(self):
-        # 自動去除 area/keyword 前後空白
-        if self.area is not None:
-            self.area = self.area.strip()
-        if self.keyword is not None:
-            self.keyword = self.keyword.strip()
-
-        # 驗證日期格式 YYYYMMDD
-        if self.reservation_date is not None and not re.fullmatch(r"\d{8}", self.reservation_date):
-            raise ValueError("reservation_date must be YYYYMMDD")
-
-        # 驗證時間格式 HHMM
-        if self.reservation_time is not None and not re.fullmatch(r"\d{4}", self.reservation_time):
-            raise ValueError("reservation_time must be HHMM")
-
     """餐廳搜尋請求"""
 
     # 基本搜尋參數
@@ -115,6 +102,31 @@ class RestaurantSearchRequest:
     has_parking: bool = False
     smoking_allowed: bool = False
     card_accepted: bool = False
+
+    def __post_init__(self):
+        # 自動去除 area/keyword 前後空白
+        if self.area is not None:
+            self.area = self.area.strip()
+        if self.keyword is not None:
+            self.keyword = self.keyword.strip()
+
+        # 驗證日期格式 YYYYMMDD
+        if self.reservation_date is not None and not re.fullmatch(r"\d{8}", self.reservation_date):
+            raise InvalidParameterError(
+                f"reservation_date 必須是 YYYYMMDD 格式，例如：20250715。收到：{self.reservation_date}"
+            )
+
+        # 驗證時間格式 HHMM
+        if self.reservation_time is not None and not re.fullmatch(r"\d{4}", self.reservation_time):
+            raise InvalidParameterError(f"reservation_time 必須是 HHMM 格式，例如：1900。收到：{self.reservation_time}")
+
+        # 驗證人數範圍
+        if self.party_size is not None and not (1 <= self.party_size <= 100):
+            raise InvalidParameterError(f"party_size 必須在 1 到 100 之間。收到：{self.party_size}")
+
+        # 驗證頁數
+        if self.page < 1:
+            raise InvalidParameterError(f"page 必須 >= 1。收到：{self.page}")
 
     def _build_params(self) -> dict[str, Any]:
         """構建搜尋參數"""
@@ -285,7 +297,7 @@ class RestaurantSearchRequest:
 
         return restaurants
 
-    def do_sync(self) -> list[Restaurant]:
+    def search_sync(self) -> list[Restaurant]:
         """同步執行搜尋"""
         params = self._build_params()
 
@@ -304,7 +316,7 @@ class RestaurantSearchRequest:
 
         return self._parse_restaurants(resp.text)
 
-    async def do(self) -> list[Restaurant]:
+    async def search(self) -> list[Restaurant]:
         """異步執行搜尋"""
         params = self._build_params()
 
@@ -321,6 +333,14 @@ class RestaurantSearchRequest:
             resp.raise_for_status()
 
             return self._parse_restaurants(resp.text)
+
+    def do_sync(self) -> list[Restaurant]:
+        """同步執行搜尋（已棄用，請使用 search_sync()）"""
+        return self.search_sync()
+
+    async def do(self) -> list[Restaurant]:
+        """異步執行搜尋（已棄用，請使用 search()）"""
+        return await self.search()
 
 
 @cache
@@ -358,4 +378,4 @@ def query_restaurants(
         has_parking=has_parking,
         smoking_allowed=smoking_allowed,
         card_accepted=card_accepted,
-    ).do_sync()
+    ).search_sync()

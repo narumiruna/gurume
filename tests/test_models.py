@@ -1,5 +1,6 @@
 import pytest
 
+from tabelog.exceptions import InvalidParameterError
 from tabelog.restaurant import PriceRange
 from tabelog.restaurant import Restaurant
 from tabelog.restaurant import RestaurantSearchRequest
@@ -112,11 +113,11 @@ class TestRestaurantSearchRequest:
         request = RestaurantSearchRequest(reservation_date="20250715")
         assert request.reservation_date == "20250715"
 
-        # Invalid date format should raise ValueError
-        with pytest.raises(ValueError):
+        # Invalid date format should raise InvalidParameterError
+        with pytest.raises(InvalidParameterError):
             RestaurantSearchRequest(reservation_date="2025-07-15")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(InvalidParameterError):
             RestaurantSearchRequest(reservation_date="invalid")
 
     def test_time_validation(self):
@@ -125,11 +126,11 @@ class TestRestaurantSearchRequest:
         request = RestaurantSearchRequest(reservation_time="1900")
         assert request.reservation_time == "1900"
 
-        # Invalid time format should raise ValueError
-        with pytest.raises(ValueError):
+        # Invalid time format should raise InvalidParameterError
+        with pytest.raises(InvalidParameterError):
             RestaurantSearchRequest(reservation_time="19:00")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(InvalidParameterError):
             RestaurantSearchRequest(reservation_time="invalid")
 
     def test_build_params(self):

@@ -30,10 +30,15 @@ make lint
 # or
 uv run ruff check .
 
-# Run type checker
+# Run type checker (重要！每次修改程式碼後都要執行)
 make type
 # or
 uv run ty check .
+
+# 完整檢查流程
+uv run ruff check .  # 程式碼風格檢查
+uv run ty check .    # 型別檢查
+uv run pytest -v     # 執行測試
 ```
 
 ### Publishing

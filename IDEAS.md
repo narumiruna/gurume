@@ -5,11 +5,6 @@ This document tracks potential features, improvements, and implementation ideas 
 ## 🎯 Planned Features
 
 ### High Priority
-- [ ] **Improve core API for better developer experience**
-  - Make API more intuitive, fluent, and Pythonic
-  - Add builder pattern, convenience methods, better error handling
-  - Reduce boilerplate code for common use cases
-  - Impact: Breaking change if removing old methods, consider v2.0
 
 ### Medium Priority
 - [ ] **Terminal UI (TUI) for interactive restaurant search**
@@ -378,6 +373,22 @@ This document tracks potential features, improvements, and implementation ideas 
   - Study API design of: `yelp-fusion`, `google-places`, `tripadvisor-api`
 
 ## ✅ Completed
+
+- **Core API improvements for better developer experience** (2025-12-28)
+  - ✓ Created custom exception classes (TabelogError, ParseError, InvalidParameterError, NetworkError, RateLimitError)
+  - ✓ Added type aliases (ReservationDate, ReservationTime, RestaurantURL)
+  - ✓ Renamed methods: do()/do_sync() → search()/search_sync() (keeping old names for backward compatibility)
+  - ✓ Improved parameter validation with better error messages
+  - ✓ Added useful methods to SearchResponse:
+    - filter() - filter restaurants by rating, review count, or custom condition
+    - sort_by() - sort by any field
+    - top() - get top N results
+    - to_json() - export to JSON string
+    - to_dict() - convert to dictionary
+  - ✓ Updated all tests to use new API
+  - ✓ Updated examples to use new API
+  - ✓ All 58 tests passing
+  - ✓ Code quality checks passing (ruff, type hints)
 
 - **Package renamed from `tabelogmcp` to `tabelog`** (2025-12-28)
   - Updated package name in pyproject.toml

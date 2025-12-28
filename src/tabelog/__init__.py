@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from .exceptions import InvalidParameterError
+from .exceptions import NetworkError
+from .exceptions import ParseError
+from .exceptions import RateLimitError
+from .exceptions import TabelogError
 from .restaurant import PriceRange
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
@@ -7,6 +12,9 @@ from .restaurant import SortType
 from .restaurant import query_restaurants
 from .search import SearchRequest
 from .search import SearchResponse
+from .types import ReservationDate
+from .types import ReservationTime
+from .types import RestaurantURL
 
 __all__ = [
     "Restaurant",
@@ -16,4 +24,12 @@ __all__ = [
     "SortType",
     "PriceRange",
     "query_restaurants",
+    "TabelogError",
+    "ParseError",
+    "InvalidParameterError",
+    "RateLimitError",
+    "NetworkError",
+    "ReservationDate",
+    "ReservationTime",
+    "RestaurantURL",
 ]
