@@ -31,9 +31,9 @@ class TestRestaurantSearchRequest:
         assert restaurant1.review_count == 123
         assert restaurant1.save_count == 456
         assert restaurant1.area == "銀座"
-        assert restaurant1.station == "銀座駅"
-        assert restaurant1.distance == "50m"
-        assert restaurant1.genres == ["寿司", "日本料理"]
+        assert restaurant1.station is None
+        assert restaurant1.distance is None
+        assert restaurant1.genres == ["寿司"]
         assert restaurant1.description == "新鮮なネタが自慢の寿司店"
         assert restaurant1.dinner_price == "ディナー ¥5,000～¥5,999"
         assert restaurant1.has_vpoint is True
@@ -48,9 +48,9 @@ class TestRestaurantSearchRequest:
         assert restaurant2.review_count == 789
         assert restaurant2.save_count == 321
         assert restaurant2.area == "新宿"
-        assert restaurant2.station == "新宿駅"
-        assert restaurant2.distance == "100m"
-        assert restaurant2.genres == ["焼肉", "韓国料理"]
+        assert restaurant2.station is None
+        assert restaurant2.distance is None
+        assert restaurant2.genres == ["焼肉"]
         assert restaurant2.description == "A5ランクの和牛を使用"
         assert restaurant2.lunch_price == "ランチ ¥2,000～¥2,999"
         assert restaurant2.has_vpoint is False

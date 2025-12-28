@@ -17,9 +17,8 @@ def mock_html_response():
             </a>
             <span class="c-rating__val">4.5</span>
             <em class="list-rst__rvw-count-num">123</em>
-            <em class="list-rst__save-count-num">456</em>
-            <span class="list-rst__area-genre">銀座、銀座駅 50m</span>
-            <span class="list-rst__genre">寿司、日本料理</span>
+            <span class="list-rst__save-count-num">456</span>
+            <div class="list-rst__area-genre"> [東京] 銀座 / 寿司</div>
             <div class="list-rst__catch">新鮮なネタが自慢の寿司店</div>
             <span class="list-rst__budget-val">ディナー ¥5,000～¥5,999</span>
             <span class="c-badge-tpoint">Vpoint</span>
@@ -32,9 +31,8 @@ def mock_html_response():
             </a>
             <span class="c-rating__val">4.2</span>
             <em class="list-rst__rvw-count-num">789</em>
-            <em class="list-rst__save-count-num">321</em>
-            <span class="list-rst__area-genre">新宿、新宿駅 100m</span>
-            <span class="list-rst__genre">焼肉、韓国料理</span>
+            <span class="list-rst__save-count-num">321</span>
+            <div class="list-rst__area-genre"> [東京] 新宿 / 焼肉</div>
             <div class="list-rst__catch">A5ランクの和牛を使用</div>
             <span class="list-rst__budget-val">ランチ ¥2,000～¥2,999</span>
             <img class="list-rst__photo-img" src="https://example.com/image2.jpg" />

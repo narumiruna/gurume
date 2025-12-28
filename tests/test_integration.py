@@ -27,8 +27,7 @@ class TestIntegration:
                 </a>
                 <span class="c-rating__val">4.5</span>
                 <em class="list-rst__rvw-count-num">1234</em>
-                <span class="list-rst__area-genre">銀座、銀座駅 50m</span>
-                <span class="list-rst__genre">寿司、日本料理</span>
+                <div class="list-rst__area-genre"> [東京] 銀座 / 寿司</div>
                 <span class="c-badge-tpoint">Vpoint</span>
                 <div class="list-rst__booking-btn">予約</div>
             </div>
@@ -82,8 +81,7 @@ class TestIntegration:
                 </a>
                 <span class="c-rating__val">4.2</span>
                 <em class="list-rst__rvw-count-num">567</em>
-                <span class="list-rst__area-genre">渋谷、渋谷駅 100m</span>
-                <span class="list-rst__genre">焼肉、韓国料理</span>
+                <div class="list-rst__area-genre"> [東京] 渋谷 / 焼肉</div>
                 <span class="list-rst__budget-val">ディナー ¥4,000～¥4,999</span>
                 <div class="list-rst__booking-btn">予約</div>
             </div>
@@ -117,9 +115,9 @@ class TestIntegration:
         assert restaurant.rating == 4.2
         assert restaurant.review_count == 567
         assert restaurant.area == "渋谷"
-        assert restaurant.station == "渋谷駅"
-        assert restaurant.distance == "100m"
-        assert restaurant.genres == ["焼肉", "韓国料理"]
+        assert restaurant.station is None
+        assert restaurant.distance is None
+        assert restaurant.genres == ["焼肉"]
         assert restaurant.dinner_price == "ディナー ¥4,000～¥4,999"
         assert restaurant.has_reservation is True
 

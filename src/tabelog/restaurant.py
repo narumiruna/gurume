@@ -216,34 +216,38 @@ class RestaurantSearchRequest:
 
                 # 儲存數
                 save_count = None
-                save_elem = item.find("em", class_="list-rst__save-count-num")
+                save_elem = item.find("span", class_="list-rst__save-count-num")
+                if not save_elem:
+                    save_elem = item.find("em", class_="list-rst__save-count-num")
                 if save_elem:
                     with contextlib.suppress(ValueError):
-                        save_count = int(save_elem.get_text(strip=True))
+                        save_count = int(save_elem.get_text(strip=True).replace(",", ""))
 
-                # 地區和車站
+                # 地區和料理類型 - 格式: [縣] 市區 / 類型
                 area = None
                 station = None
                 distance = None
-                area_elem = item.find("span", class_="list-rst__area-genre")
-                if area_elem:
-                    area_text = area_elem.get_text(strip=True)
-                    parts = area_text.split("、")
-                    if len(parts) >= 2:
-                        area = parts[0]
-                        station_info = parts[1]
-                        if "駅" in station_info:
-                            station_parts = station_info.split()
-                            if len(station_parts) >= 2:
-                                station = station_parts[0]
-                                distance = station_parts[1]
-
-                # 料理類型
                 genres = []
-                genre_elem = item.find("span", class_="list-rst__genre")
-                if genre_elem:
-                    genre_text = genre_elem.get_text(strip=True)
-                    genres = [g.strip() for g in genre_text.split("、") if g.strip()]
+
+                area_genre_elem = item.find("div", class_="list-rst__area-genre")
+                if area_genre_elem:
+                    area_genre_text = area_genre_elem.get_text(strip=True)
+                    # 移除前後的空白和方括號
+                    area_genre_text = area_genre_text.strip()
+
+                    # 分割地區和類型 (格式: [縣] 市區 / 類型)
+                    if "/" in area_genre_text:
+                        parts = area_genre_text.split("/")
+                        if len(parts) >= 2:
+                            # 處理地區部分 (例如: [石川] 金沢市)
+                            area_part = parts[0].strip()
+                            # 移除方括號中的縣名，保留市區
+                            area = area_part.split("]")[-1].strip() if "]" in area_part else area_part
+
+                            # 處理類型部分
+                            genre_part = parts[1].strip()
+                            if genre_part:
+                                genres = [genre_part]
 
                 # 描述
                 description = None
