@@ -14,6 +14,7 @@ from textual.widgets import Select
 from textual.widgets import Static
 
 from .restaurant import Restaurant
+from .restaurant import SortType
 from .search import SearchRequest
 
 
@@ -27,13 +28,12 @@ class SearchPanel(Container):
         yield Input(placeholder="關鍵字 (例如: 寿司)", id="keyword-input")
         yield Select(
             options=[
-                ("評分高到低", "rating_desc"),
-                ("評分低到高", "rating_asc"),
-                ("評論數多到少", "review_count_desc"),
-                ("評論數少到多", "review_count_asc"),
-                ("儲存數多到少", "save_count_desc"),
+                ("評分排名", SortType.RANKING.value),
+                ("評論數排序", SortType.REVIEW_COUNT.value),
+                ("新開幕", SortType.NEW_OPEN.value),
+                ("標準排序", SortType.STANDARD.value),
             ],
-            value="rating_desc",
+            value=SortType.RANKING.value,
             id="sort-select",
             allow_blank=False,
         )
@@ -123,6 +123,7 @@ class TabelogApp(App):
         super().__init__(**kwargs)
         self.restaurants: list[Restaurant] = []
         self.selected_restaurant: Restaurant | None = None
+        self.search_worker = None
 
     def compose(self) -> ComposeResult:
         """建立應用程式的元件"""
@@ -135,65 +136,65 @@ class TabelogApp(App):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """處理按鈕點擊事件"""
         if event.button.id == "search-button":
-            self.run_worker(self.perform_search())
+            self.start_search()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """處理 Input Enter 鍵事件"""
         if event.input.id in ("area-input", "keyword-input"):
-            self.run_worker(self.perform_search())
+            self.start_search()
+
+    def start_search(self) -> None:
+        """啟動搜尋（取消之前的搜尋）"""
+        # 取消之前的搜尋 worker
+        if self.search_worker and not self.search_worker.is_finished:
+            self.search_worker.cancel()
+
+        # 啟動新的搜尋 worker
+        self.search_worker = self.run_worker(self.perform_search())
 
     async def perform_search(self) -> None:
         """執行餐廳搜尋"""
-        # 取得輸入值
-        area_input = self.query_one("#area-input", Input)
-        keyword_input = self.query_one("#keyword-input", Input)
-        sort_select = self.query_one("#sort-select", Select)
-
-        area = area_input.value.strip()
-        keyword = keyword_input.value.strip()
-
-        if not area and not keyword:
-            detail_content = self.query_one("#detail-content", Static)
-            detail_content.update("請輸入地區或關鍵字")
-            return
-
-        # 取得排序方式
-        sort_value = sort_select.value or "rating_desc"
-
-        # 顯示搜尋中訊息
-        detail_content = self.query_one("#detail-content", Static)
-        sort_name = {
-            "rating_desc": "評分高到低",
-            "rating_asc": "評分低到高",
-            "review_count_desc": "評論數多",
-            "review_count_asc": "評論數少",
-            "save_count_desc": "儲存數多",
-        }.get(sort_value, "評分高到低")
-        detail_content.update(f"搜尋中 ({sort_name}): {area} {keyword}...")
-
-        # 建立搜尋請求
-        request = SearchRequest(area=area, keyword=keyword)
-
         try:
+            # 取得輸入值
+            area_input = self.query_one("#area-input", Input)
+            keyword_input = self.query_one("#keyword-input", Input)
+            sort_select = self.query_one("#sort-select", Select)
+
+            area = area_input.value.strip()
+            keyword = keyword_input.value.strip()
+
+            if not area and not keyword:
+                detail_content = self.query_one("#detail-content", Static)
+                detail_content.update("請輸入地區或關鍵字")
+                return
+
+            # 取得排序方式
+            sort_value = sort_select.value or SortType.RANKING.value
+            sort_type = SortType(sort_value)
+
+            # 顯示搜尋中訊息
+            detail_content = self.query_one("#detail-content", Static)
+            sort_name = {
+                SortType.RANKING.value: "評分排名",
+                SortType.REVIEW_COUNT.value: "評論數排序",
+                SortType.NEW_OPEN.value: "新開幕",
+                SortType.STANDARD.value: "標準排序",
+            }.get(sort_value, "評分排名")
+            search_params = f"地區: {area or '(無)'}, 關鍵字: {keyword or '(無)'}"
+            detail_content.update(f"搜尋中 ({sort_name}): {search_params}...")
+
+            # 建立搜尋請求（使用 Tabelog 的排序）
+            request = SearchRequest(area=area, keyword=keyword, sort_type=sort_type)
+
             # 執行搜尋
             response = await request.search()
 
             if response.restaurants:
-                # 依選擇的方式排序結果
-                if sort_value == "rating_desc":
-                    response = response.sort_by("rating", reverse=True)
-                elif sort_value == "rating_asc":
-                    response = response.sort_by("rating", reverse=False)
-                elif sort_value == "review_count_desc":
-                    response = response.sort_by("review_count", reverse=True)
-                elif sort_value == "review_count_asc":
-                    response = response.sort_by("review_count", reverse=False)
-                elif sort_value == "save_count_desc":
-                    response = response.sort_by("save_count", reverse=True)
-
                 self.restaurants = response.restaurants
                 self.update_results_table()
-                detail_content.update(f"找到 {len(self.restaurants)} 家餐廳 ({sort_name})")
+                detail_content.update(
+                    f"找到 {len(self.restaurants)} 家餐廳\n搜尋條件: {search_params}\n排序: {sort_name}"
+                )
             else:
                 self.restaurants = []
                 table = self.query_one("#results-table", ResultsTable)
@@ -201,20 +202,30 @@ class TabelogApp(App):
                 detail_content.update("沒有找到餐廳")
 
         except Exception as e:
-            detail_content.update(f"搜尋錯誤: {str(e)}")
+            # 捕獲所有異常，包括搜尋被取消的情況
+            try:
+                detail_content = self.query_one("#detail-content", Static)
+                detail_content.update(f"搜尋錯誤: {str(e)}")
+            except Exception:
+                # 如果連更新 UI 都失敗（例如應用程式正在關閉），就忽略
+                pass
 
     def update_results_table(self) -> None:
         """更新結果表格"""
-        table = self.query_one("#results-table", ResultsTable)
-        table.clear()
+        try:
+            table = self.query_one("#results-table", ResultsTable)
+            table.clear()
 
-        for restaurant in self.restaurants:
-            rating = f"{restaurant.rating:.2f}" if restaurant.rating else "N/A"
-            review_count = str(restaurant.review_count) if restaurant.review_count else "N/A"
-            area = restaurant.area or "N/A"
-            genres = ", ".join(restaurant.genres[:2]) if restaurant.genres else "N/A"
+            for restaurant in self.restaurants:
+                rating = f"{restaurant.rating:.2f}" if restaurant.rating else "N/A"
+                review_count = str(restaurant.review_count) if restaurant.review_count else "N/A"
+                area = restaurant.area or "N/A"
+                genres = ", ".join(restaurant.genres[:2]) if restaurant.genres else "N/A"
 
-            table.add_row(restaurant.name, rating, review_count, area, genres)
+                table.add_row(restaurant.name, rating, review_count, area, genres)
+        except Exception:
+            # 忽略更新表格時的錯誤（例如在搜尋被取消時）
+            pass
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """處理表格行選擇事件"""

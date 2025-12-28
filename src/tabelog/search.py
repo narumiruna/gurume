@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup
 
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
+from .restaurant import SortType
 
 
 class SearchStatus(str, Enum):
@@ -160,6 +161,7 @@ class SearchRequest:
     reservation_date: str | None = None
     reservation_time: str | None = None
     party_size: int | None = None
+    sort_type: SortType = SortType.STANDARD
 
     # 額外的搜尋配置
     max_pages: int = 1
@@ -207,6 +209,7 @@ class SearchRequest:
             reservation_date=self.reservation_date,
             reservation_time=self.reservation_time,
             party_size=self.party_size,
+            sort_type=self.sort_type,
             page=page,
         )
 
