@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+from textual import on
 from textual.app import App
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.containers import Horizontal
+from textual.containers import Vertical
+from textual.screen import ModalScreen
 from textual.widgets import Button
 from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Input
+from textual.widgets import Label
+from textual.widgets import OptionList
 from textual.widgets import RadioButton
 from textual.widgets import RadioSet
 from textual.widgets import Static
@@ -18,6 +23,82 @@ from textual.widgets import Static
 from .restaurant import Restaurant
 from .restaurant import SortType
 from .search import SearchRequest
+from .suggest import AreaSuggestion
+from .suggest import get_area_suggestions_async
+
+
+class AreaSuggestModal(ModalScreen[str]):
+    """地區建議彈出視窗"""
+
+    CSS = """
+    AreaSuggestModal {
+        align: center middle;
+    }
+
+    #suggest-dialog {
+        width: 70;
+        height: auto;
+        max-height: 25;
+        border: heavy $accent;
+        background: $surface;
+        padding: 1;
+    }
+
+    #suggest-title {
+        text-align: center;
+        text-style: bold;
+        background: $accent;
+        color: $text;
+        padding: 1;
+        margin-bottom: 1;
+    }
+
+    #suggest-list {
+        height: auto;
+        max-height: 18;
+        border: solid $primary-lighten-1;
+        padding: 0;
+    }
+
+    #suggest-list:focus {
+        border: solid $success;
+    }
+
+    #suggest-hint {
+        text-align: center;
+        color: $text-muted;
+        padding: 1 0 0 0;
+        margin-top: 1;
+    }
+    """
+
+    def __init__(self, suggestions: list[AreaSuggestion], **kwargs):
+        super().__init__(**kwargs)
+        self.suggestions = suggestions
+
+    def compose(self) -> ComposeResult:
+        """建立彈出視窗的元件"""
+        with Vertical(id="suggest-dialog"):
+            yield Label(f"🗺️  地區建議（共 {len(self.suggestions)} 個）", id="suggest-title")
+            option_list = OptionList(id="suggest-list")
+            for suggestion in self.suggestions:
+                # 顯示格式：圖標 名稱 (類型)
+                type_label = "🚉 駅" if suggestion.datatype == "RailroadStation" else "📍 地區"
+                option_list.add_option(f"{type_label}  {suggestion.name}")
+            yield option_list
+            yield Static("💡 提示：使用 ↑↓ 方向鍵選擇，Enter 確認，Esc 取消", id="suggest-hint")
+
+    @on(OptionList.OptionSelected)
+    def on_option_selected(self, event: OptionList.OptionSelected) -> None:
+        """處理選項選擇事件"""
+        if event.option_index < len(self.suggestions):
+            selected = self.suggestions[event.option_index]
+            self.dismiss(selected.name)
+
+    def on_key(self, event) -> None:
+        """處理鍵盤事件"""
+        if event.key == "escape":
+            self.dismiss(None)
 
 
 class SearchPanel(Container):
@@ -27,7 +108,7 @@ class SearchPanel(Container):
         """建立搜尋面板的元件"""
         yield Static("餐廳搜尋", classes="panel-title")
         with Horizontal(id="input-row"):
-            yield Input(placeholder="地區 (例如: 東京)", id="area-input")
+            yield Input(placeholder="地區 (例如: 東京, 按 F2 查看建議)", id="area-input")
             yield Input(placeholder="關鍵字 (例如: 寿司)", id="keyword-input")
         with Horizontal(id="sort-row"):
             yield Static("排序:", classes="sort-label")
@@ -195,6 +276,7 @@ class TabelogApp(App):
         ("s", "focus_search", "Search"),
         ("r", "focus_results", "Results"),
         ("d", "focus_detail", "Detail"),
+        ("f2", "show_area_suggest", "Area Suggest"),
     ]
 
     def __init__(self, **kwargs):
@@ -355,6 +437,40 @@ URL: {r.url}
         """聚焦到詳細資訊面板"""
         detail_panel = self.query_one(DetailPanel)
         detail_panel.focus()
+
+    async def action_show_area_suggest(self) -> None:
+        """顯示地區建議彈出視窗"""
+        area_input = self.query_one("#area-input", Input)
+        query = area_input.value.strip()
+
+        if not query:
+            # 如果輸入框為空，提示用戶
+            detail_content = self.query_one("#detail-content", Static)
+            detail_content.update("💡 請先輸入地區關鍵字\n\n例如：東京、大阪、伊勢\n\n然後按 F2 查看建議")
+            return
+
+        # 顯示載入訊息（帶動畫效果）
+        detail_content = self.query_one("#detail-content", Static)
+        detail_content.update(f"🔍 正在搜尋「{query}」的地區建議...\n\n請稍候...")
+
+        # 取得建議
+        suggestions = await get_area_suggestions_async(query)
+
+        if not suggestions:
+            detail_content.update(
+                f"❌ 找不到「{query}」的地區建議\n\n建議：\n• 嘗試更短的關鍵字\n• 使用日文地名\n• 試試附近的地標或車站"
+            )
+            return
+
+        # 顯示彈出視窗
+        def on_dismiss(selected_area: str | None) -> None:
+            if selected_area:
+                area_input.value = selected_area
+                detail_content.update(f"✅ 已選擇地區：{selected_area}\n\n現在可以點擊搜尋按鈕或按 Enter 開始搜尋")
+            else:
+                detail_content.update("⏸️ 已取消選擇")
+
+        await self.push_screen(AreaSuggestModal(suggestions), on_dismiss)
 
 
 def main():

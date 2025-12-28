@@ -17,6 +17,9 @@ from .restaurant import SortType
 from .restaurant import query_restaurants
 from .search import SearchRequest
 from .search import SearchResponse
+from .suggest import AreaSuggestion
+from .suggest import get_area_suggestions
+from .suggest import get_area_suggestions_async
 from .types import ReservationDate
 from .types import ReservationTime
 from .types import RestaurantURL
@@ -42,4 +45,7 @@ __all__ = [
     "Review",
     "MenuItem",
     "Course",
+    "AreaSuggestion",
+    "get_area_suggestions",
+    "get_area_suggestions_async",
 ]
