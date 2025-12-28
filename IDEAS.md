@@ -5,11 +5,6 @@ This document tracks potential features, improvements, and implementation ideas 
 ## 🎯 Planned Features
 
 ### High Priority
-- [ ] **Rename package from `tabelog` to `tabelog`**
-  - Simplify package name to match core functionality
-  - Affects: pyproject.toml, src/ directory structure, all imports, documentation
-  - Impact: Breaking change, requires new major version
-
 - [ ] **Improve core API for better developer experience**
   - Make API more intuitive, fluent, and Pythonic
   - Add builder pattern, convenience methods, better error handling
@@ -254,22 +249,6 @@ This document tracks potential features, improvements, and implementation ideas 
       response.prev_page()
       ```
 
-- **Package name simplification**: Currently using `tabelog` which implies MCP is the main focus, but the library is primarily a Tabelog scraper. Renaming to `tabelog` would:
-  - Better reflect the library's core purpose
-  - Simplify imports (`from tabelog import ...` vs `from tabelog import ...`)
-  - Separate concerns: MCP server can be an optional integration, not the package identity
-  - **Files to update**:
-    - `pyproject.toml`: package name, import path
-    - `src/tabelog/` → `src/tabelog/`
-    - All test imports in `tests/`
-    - CLAUDE.md references
-    - README.md (if exists)
-    - Any example files
-  - **Considerations**:
-    - PyPI name availability
-    - Existing users migration path
-    - Version bump strategy (major version for breaking change)
-
 - **Restaurant detail page scraping**: Extend scraping capabilities beyond search results
   - **Current limitation**: Only scrapes restaurant list pages, not individual restaurant pages
   - **New features needed**:
@@ -399,7 +378,14 @@ This document tracks potential features, improvements, and implementation ideas 
   - Study API design of: `yelp-fusion`, `google-places`, `tripadvisor-api`
 
 ## ✅ Completed
--
+
+- **Package renamed from `tabelogmcp` to `tabelog`** (2025-12-28)
+  - Updated package name in pyproject.toml
+  - Renamed src/tabelogmcp/ → src/tabelog/
+  - Updated all imports in tests and examples
+  - Updated CLAUDE.md and IDEAS.md references
+  - Created basic CLI entry point (tabelog.cli:main)
+  - All tests passing ✓
 
 ---
 **Note**: This is a living document. Feel free to add, modify, or reorganize ideas as the project evolves.
