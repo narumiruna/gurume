@@ -231,13 +231,20 @@ class SearchRequest:
 
                 # 嘗試使用地區路徑（更準確的地區過濾）
                 url = "https://tabelog.com/rst/rstsearch"
-                if self.area:
-                    area_slug = get_area_slug(self.area)
-                    if area_slug:
-                        # 使用地區路徑格式：/area/rstLst/
-                        url = f"https://tabelog.com/{area_slug}/rstLst/"
-                        # 移除 sa 參數，因為已經在 URL 路徑中
-                        params.pop("sa", None)
+                area_slug = get_area_slug(self.area) if self.area else None
+
+                # 根據 area 和 genre_code 決定 URL 格式
+                if area_slug and self.genre_code:
+                    # 有地區 + 類別：/area/rstLst/GENRE_CODE/
+                    url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+                    params.pop("sa", None)
+                elif area_slug:
+                    # 只有地區：/area/rstLst/
+                    url = f"https://tabelog.com/{area_slug}/rstLst/"
+                    params.pop("sa", None)
+                elif self.genre_code:
+                    # 只有類別：/rstLst/GENRE_CODE/
+                    url = f"https://tabelog.com/rstLst/{self.genre_code}/"
 
                 resp = httpx.get(
                     url=url,
@@ -297,13 +304,20 @@ class SearchRequest:
 
                     # 嘗試使用地區路徑（更準確的地區過濾）
                     url = "https://tabelog.com/rst/rstsearch"
-                    if self.area:
-                        area_slug = get_area_slug(self.area)
-                        if area_slug:
-                            # 使用地區路徑格式：/area/rstLst/
-                            url = f"https://tabelog.com/{area_slug}/rstLst/"
-                            # 移除 sa 參數，因為已經在 URL 路徑中
-                            params.pop("sa", None)
+                    area_slug = get_area_slug(self.area) if self.area else None
+
+                    # 根據 area 和 genre_code 決定 URL 格式
+                    if area_slug and self.genre_code:
+                        # 有地區 + 類別：/area/rstLst/GENRE_CODE/
+                        url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+                        params.pop("sa", None)
+                    elif area_slug:
+                        # 只有地區：/area/rstLst/
+                        url = f"https://tabelog.com/{area_slug}/rstLst/"
+                        params.pop("sa", None)
+                    elif self.genre_code:
+                        # 只有類別：/rstLst/GENRE_CODE/
+                        url = f"https://tabelog.com/rstLst/{self.genre_code}/"
 
                     resp = await client.get(
                         url=url,

@@ -409,6 +409,15 @@ class TabelogApp(App):
                 detail_content.update("請輸入地區或關鍵字")
                 return
 
+            # 自動偵測 keyword 是否為料理類別名稱
+            genre_code_to_use = self.current_genre_code
+            detected_genre = get_genre_code(keyword) if keyword else None
+            if detected_genre:
+                # 如果 keyword 是已知的料理類別，使用對應的 genre_code
+                genre_code_to_use = detected_genre
+                # 將 keyword 設為空，避免重複搜尋
+                keyword = ""
+
             # 取得排序方式
             sort_radio = self.query_one("#sort-radio", RadioSet)
             pressed_button = sort_radio.pressed_button
@@ -429,17 +438,17 @@ class TabelogApp(App):
             # 顯示搜尋中訊息
             detail_content = self.query_one("#detail-content", Static)
             genre_name = ""
-            if self.current_genre_code:
+            if genre_code_to_use:
                 from .genre_mapping import get_genre_name_by_code
 
-                genre_name = get_genre_name_by_code(self.current_genre_code) or ""
+                genre_name = get_genre_name_by_code(genre_code_to_use) or ""
             search_params = f"地區: {area or '(無)'}, 關鍵字: {keyword or '(無)'}"
             if genre_name:
                 search_params += f", 料理類別: {genre_name}"
             detail_content.update(f"搜尋中 ({sort_name}): {search_params}...")
 
             # 建立搜尋請求（使用 Tabelog 的排序和料理類別代碼）
-            request = SearchRequest(area=area, keyword=keyword, genre_code=self.current_genre_code, sort_type=sort_type)
+            request = SearchRequest(area=area, keyword=keyword, genre_code=genre_code_to_use, sort_type=sort_type)
 
             # 執行搜尋
             response = await request.search()
