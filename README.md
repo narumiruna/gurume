@@ -1,4 +1,4 @@
-# Tabelog
+# Gurume
 
 A Python library for searching restaurants on Tabelog using web scraping.
 
@@ -23,7 +23,7 @@ A Python library for searching restaurants on Tabelog using web scraping.
 
 ### MCP Server (for Claude Desktop / AI Assistants)
 
-The Tabelog MCP server provides restaurant search functionality to AI assistants like Claude.
+The Gurume MCP server provides restaurant search functionality to AI assistants like Claude.
 
 **GitHub (Latest Development Version)**:
 ```json
@@ -62,7 +62,7 @@ The Tabelog MCP server provides restaurant search functionality to AI assistants
       "args": [
         "run",
         "--directory",
-        "/home/<user>/workspace/tabelog",
+        "/home/<user>/workspace/gurume",
         "gurume-mcp"
       ]
     }
@@ -170,7 +170,7 @@ TUI 特色：
 ### Basic Search (程式庫)
 
 ```python
-from tabelog import query_restaurants, SortType, get_genre_code
+from gurume import query_restaurants, SortType, get_genre_code
 
 # Quick search with keyword
 restaurants = query_restaurants(
@@ -184,7 +184,7 @@ for restaurant in restaurants:
     print(f"{restaurant.name} - {restaurant.rating}")
 
 # Search with cuisine type filtering (更精確!)
-from tabelog import RestaurantSearchRequest
+from gurume import RestaurantSearchRequest
 
 genre_code = get_genre_code("すき焼き")  # RC0107
 request = RestaurantSearchRequest(
@@ -202,7 +202,7 @@ for restaurant in restaurants:
 ### Advanced Search
 
 ```python
-from tabelog import RestaurantSearchRequest, SortType, PriceRange, get_genre_code
+from gurume import RestaurantSearchRequest, SortType, PriceRange, get_genre_code
 
 # Detailed search with filters
 request = RestaurantSearchRequest(
@@ -221,7 +221,7 @@ request = RestaurantSearchRequest(
 restaurants = request.search_sync()
 
 # 瀏覽所有支援的料理類別
-from tabelog import get_all_genres
+from gurume import get_all_genres
 
 all_genres = get_all_genres()
 print(f"支援 {len(all_genres)} 種料理類別:")
@@ -233,7 +233,7 @@ print(all_genres)
 
 ```python
 import asyncio
-from tabelog import SearchRequest, get_genre_code
+from gurume import SearchRequest, get_genre_code
 
 async def search_example():
     request = SearchRequest(

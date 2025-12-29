@@ -1,6 +1,6 @@
 # Feature Ideas & Development Notes
 
-This document tracks potential features, improvements, and implementation ideas for tabelog.
+This document tracks potential features, improvements, and implementation ideas for gurume.
 
 ## 🎯 Planned Features
 
@@ -21,10 +21,10 @@ This document tracks potential features, improvements, and implementation ideas 
     - ✅ **Zero configuration**: Works out-of-the-box without API keys
     - ✅ **Client-side parsing**: Let Claude/AI clients handle natural language, MCP server only handles structured queries
   - **Implementation**:
-    - New file: `src/tabelog/server.py` (MCP server entry point)
+    - New file: `src/gurume/server.py` (MCP server entry point)
     - Use existing `SearchRequest` for backend logic
     - Return results in Claude-friendly format (structured JSON)
-    - Entry point: `tabelog` command (already defined in pyproject.toml)
+    - Entry point: `gurume` command (already defined in pyproject.toml)
   - **Example MCP tools**:
     ```python
     # Tool 1: search_restaurants
@@ -117,9 +117,9 @@ This document tracks potential features, improvements, and implementation ideas 
     ```json
     {
       "mcpServers": {
-        "tabelog": {
+        "gurume": {
           "command": "uvx",
-          "args": ["tabelog@latest"]
+          "args": ["gurume@latest"]
         }
       }
     }
@@ -241,9 +241,9 @@ This document tracks potential features, improvements, and implementation ideas 
     - Scrollable content for long reviews/menus
     - Press 'b' or Esc to go back to search results
   - **Technical approach**:
-    - New module: `src/tabelog/tui.py` or separate `tabelog-tui` package
+    - New module: `src/gurume/tui.py` or separate `gurume-tui` package
     - Async integration with `SearchRequest.do()` for non-blocking search
-    - CLI entry point: `tabelog search-tui` or standalone `tabelog-tui` command
+    - CLI entry point: `gurume search-tui` or standalone `gurume-tui` command
     - Configuration: save/load favorite search queries
   - **Dependencies to add**:
     - `textual` - TUI framework
@@ -391,7 +391,7 @@ This document tracks potential features, improvements, and implementation ideas 
       - メニュー (menu): dish names, prices, photos
       - コース (courses): set menus, prices, course details
       - 写真 (photos): restaurant/food photos with captions
-  - **New data models** (src/tabelog/detail.py or src/tabelog/models.py):
+  - **New data models** (src/gurume/detail.py or src/gurume/models.py):
     ```python
     @dataclass
     class Review:
@@ -491,7 +491,7 @@ This document tracks potential features, improvements, and implementation ideas 
   - Metrics and monitoring hooks (request count, response time, error rate)
   - Health check endpoint for MCP server
   - Graceful degradation when Tabelog is down or changes HTML structure
-  - Configuration file support (.tabelogrc, environment variables)
+  - Configuration file support (.gurumerc, environment variables)
 
 - **Developer experience**:
   - Type stubs for better IDE autocomplete
@@ -555,7 +555,7 @@ This document tracks potential features, improvements, and implementation ideas 
     - ✅ Client-side natural language handling
   - ✓ Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
   - ✓ stdio transport for communication with MCP clients
-  - ✓ Entry point: `tabelog-mcp` command
+  - ✓ Entry point: `gurume-mcp` command
   - ✓ All 4 tools tested and working
   - ✓ Documentation updated (README.md, CLAUDE.md, IDEAS.md)
   - ✓ Ready for use with Claude Desktop and other MCP clients
@@ -563,15 +563,15 @@ This document tracks potential features, improvements, and implementation ideas 
 - **Command-line interface (CLI) with natural language query** (2025-12-29)
   - ✓ Created comprehensive CLI using Typer and Rich
   - ✓ Commands:
-    - `tabelog search` - Search restaurants with multiple filters
-    - `tabelog list-cuisines` - Display all supported cuisine types
-    - `tabelog tui` - Launch interactive TUI
+    - `gurume search` - Search restaurants with multiple filters
+    - `gurume list-cuisines` - Display all supported cuisine types
+    - `gurume tui` - Launch interactive TUI
   - ✓ CLI options: -a/--area, -k/--keyword, -c/--cuisine, -q/--query, -s/--sort, -n/--limit, -o/--output
   - ✓ **Natural language query (-q/--query)**:
     - AI-powered parsing using `llm.parse_user_input()`
     - Multi-language support (Chinese, Japanese, English)
     - Auto-translation (e.g., "壽喜燒" → "すき焼き")
-    - Example: `tabelog search -q "三重すきやき"`
+    - Example: `gurume search -q "三重すきやき"`
   - ✓ **Auto-detection of cuisine types**: Automatically converts cuisine names to genre_code for precise filtering
   - ✓ **Three output formats**: table (Rich), json, simple text
   - ✓ **Graceful error handling**: Falls back when API key is missing
@@ -580,7 +580,7 @@ This document tracks potential features, improvements, and implementation ideas 
   - ✓ All 78 tests passing
   - ✓ All linting and type checks passing (ruff, ty)
   - ✓ Documentation updated (README.md, CLAUDE.md)
-  - Entry point: `tabelog search` or `uv run tabelog search`
+  - Entry point: `gurume search` or `uv run gurume search`
 
 - **Area filtering and suggestion system** (2025-12-29)
   - ✓ Fixed critical bug: Tabelog's `/rst/rstsearch?sa=area` does NOT filter by area
@@ -616,7 +616,7 @@ This document tracks potential features, improvements, and implementation ideas 
   - ✓ **Smart linking**: After AI parsing, auto-triggers area suggest (F2) or cuisine select (F3) based on parsed values
   - ✓ **Genre code filtering**: Automatically converts cuisine names to genre_code for precise filtering
   - ✓ Async search integration for non-blocking UI
-  - ✓ CLI command: `tabelog tui`
+  - ✓ CLI command: `gurume tui`
   - ✓ Clean and responsive dark theme with simplified styling
   - ✓ Auto-height search panel to prevent clipping
   - ✓ All 78 tests passing
@@ -653,12 +653,12 @@ This document tracks potential features, improvements, and implementation ideas 
   - ✓ All 58 tests passing
   - ✓ Code quality checks passing (ruff, type hints)
 
-- **Package renamed from `tabelogmcp` to `tabelog`** (2025-12-28)
+- **Package renamed from `gurume` to `gurume`** (2025-12-28)
   - Updated package name in pyproject.toml
-  - Renamed src/tabelogmcp/ → src/tabelog/
+  - Renamed src/gurumemcp/ → src/gurume/
   - Updated all imports in tests and examples
   - Updated CLAUDE.md and IDEAS.md references
-  - Created basic CLI entry point (tabelog.cli:main)
+  - Created basic CLI entry point (gurume.cli:main)
   - All tests passing ✓
 
 - **HTML parsing improvements for Tabelog format changes** (2025-12-29)

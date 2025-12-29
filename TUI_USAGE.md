@@ -6,10 +6,10 @@
 
 ```bash
 # 使用 uv
-uv run tabelog tui
+uv run gurume tui
 
 # 或直接使用 Python
-python -m tabelog.tui
+python -m gurume.tui
 ```
 
 ## 介面說明
@@ -85,7 +85,7 @@ TUI 介面分為四個主要區域:
 ## 使用流程
 
 ### 基本流程
-1. 啟動 TUI: `uv run tabelog tui`
+1. 啟動 TUI: `uv run gurume tui`
 2. 在「地區」輸入框中輸入地區名稱 (例如: 東京)
 3. 按 `Tab` 移到「關鍵字」輸入框，輸入關鍵字 (例如: 寿司)
 4. 按 `Tab` 移到排序選項，使用方向鍵選擇排序方式（預設為「評分排名」）
@@ -97,7 +97,7 @@ TUI 介面分為四個主要區域:
 10. 按 `q` 退出應用程式
 
 ### 使用地區建議（推薦）
-1. 啟動 TUI: `uv run tabelog tui`
+1. 啟動 TUI: `uv run gurume tui`
 2. 在「地區」輸入框中輸入地區關鍵字 (例如: 東京、伊勢)
 3. 按 `F2` 開啟地區建議彈窗
 4. 使用 `↑`/`↓` 方向鍵選擇建議的地區或車站
@@ -115,7 +115,7 @@ TUI 介面分為四個主要區域:
 F3 鍵提供兩種模式，根據關鍵字輸入框內容自動切換：
 
 **模式 1：關鍵字為空 → 料理類別完整列表**
-1. 啟動 TUI: `uv run tabelog tui`
+1. 啟動 TUI: `uv run gurume tui`
 2. 確保關鍵字輸入框為空
 3. 按 `F3` 開啟料理類別選擇彈窗
 4. 使用 `↑`/`↓` 方向鍵瀏覽 45+ 種料理類型
@@ -147,7 +147,7 @@ F3 鍵提供兩種模式，根據關鍵字輸入框內容自動切換：
 - 支援所有 45+ 種料理類別的自動識別
 
 ### 使用 AI 解析自然語言（智慧型）
-1. 啟動 TUI: `uv run tabelog tui`
+1. 啟動 TUI: `uv run gurume tui`
 2. 在關鍵字輸入框輸入自然語言（例如：「我想吃三重的壽喜燒」）
 3. 按 `F4` 使用 AI 解析
 4. 系統會自動解析地區和關鍵字並填入對應欄位
@@ -248,4 +248,4 @@ F3 鍵提供兩種模式，根據關鍵字輸入框內容自動切換：
 ## 問題回報
 
 如遇到問題,請到 GitHub Issues 回報:
-https://github.com/narumiruna/tabelog/issues
+https://github.com/narumiruna/gurume/issues
