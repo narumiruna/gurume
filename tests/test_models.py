@@ -1,10 +1,10 @@
 import pytest
 
-from tabelog.exceptions import InvalidParameterError
-from tabelog.restaurant import PriceRange
-from tabelog.restaurant import Restaurant
-from tabelog.restaurant import RestaurantSearchRequest
-from tabelog.restaurant import SortType
+from gurume.exceptions import InvalidParameterError
+from gurume.restaurant import PriceRange
+from gurume.restaurant import Restaurant
+from gurume.restaurant import RestaurantSearchRequest
+from gurume.restaurant import SortType
 
 
 class TestRestaurant:

@@ -7,7 +7,7 @@ including reviews, menu items, and courses.
 
 from __future__ import annotations
 
-from tabelog import RestaurantDetailRequest
+from gurume import RestaurantDetailRequest
 
 
 def main():

@@ -28,7 +28,7 @@ from .suggest import get_area_suggestions_async
 from .suggest import get_keyword_suggestions_async
 
 # Create MCP server instance
-server = Server("tabelog")
+server = Server("gurume")
 
 
 @server.list_tools()
@@ -276,7 +276,7 @@ async def main() -> None:
 def run() -> None:
     """Synchronous entry point for CLI
 
-    This function is called when running 'tabelog-mcp' command.
+    This function is called when running 'gurume-mcp' command.
     """
     asyncio.run(main())
 

@@ -17,8 +17,8 @@ from .restaurant import SortType
 from .search import SearchRequest
 
 app = typer.Typer(
-    name="tabelog",
-    help="Tabelog 餐廳搜尋工具 - 搜尋 Tabelog 上的日本餐廳",
+    name="gurume",
+    help="Gurume 餐廳搜尋工具 - 搜尋 Tabelog 上的日本餐廳",
     add_completion=False,
 )
 
@@ -55,10 +55,10 @@ def search(
     """搜尋餐廳
 
     範例：
-      tabelog search --area 東京 --keyword 寿司
-      tabelog search -a 三重 -c すき焼き --sort ranking
-      tabelog search --area 大阪 --cuisine ラーメン -o json
-      tabelog search -q 三重すきやき
+      gurume search --area 東京 --keyword 寿司
+      gurume search -a 三重 -c すき焼き --sort ranking
+      gurume search --area 大阪 --cuisine ラーメン -o json
+      gurume search -q 三重すきやき
     """
     # 如果提供了自然語言查詢，自動解析
     if query:

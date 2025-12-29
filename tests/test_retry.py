@@ -6,12 +6,12 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from tabelog.exceptions import NetworkError
-from tabelog.exceptions import RateLimitError
-from tabelog.retry import DEFAULT_MAX_ATTEMPTS
-from tabelog.retry import fetch_with_retry
-from tabelog.retry import handle_http_errors
-from tabelog.retry import is_retryable_error
+from gurume.exceptions import NetworkError
+from gurume.exceptions import RateLimitError
+from gurume.retry import DEFAULT_MAX_ATTEMPTS
+from gurume.retry import fetch_with_retry
+from gurume.retry import handle_http_errors
+from gurume.retry import is_retryable_error
 
 
 class TestRetryHelpers:
@@ -75,7 +75,7 @@ class TestRetryHelpers:
 class TestFetchWithRetry:
     """Test fetch_with_retry function"""
 
-    @patch("tabelog.retry.httpx.get")
+    @patch("gurume.retry.httpx.get")
     def test_fetch_success_first_try(self, mock_get):
         """Test successful fetch on first try"""
         mock_response = Mock()
@@ -87,7 +87,7 @@ class TestFetchWithRetry:
         assert result == mock_response
         assert mock_get.call_count == 1
 
-    @patch("tabelog.retry.httpx.get")
+    @patch("gurume.retry.httpx.get")
     def test_fetch_rate_limit_error(self, mock_get):
         """Test rate limit error raises immediately"""
         mock_response = Mock()
@@ -100,7 +100,7 @@ class TestFetchWithRetry:
         with pytest.raises(RateLimitError):
             fetch_with_retry("http://example.com")
 
-    @patch("tabelog.retry.httpx.get")
+    @patch("gurume.retry.httpx.get")
     def test_fetch_success_after_retries(self, mock_get):
         """Test successful fetch after retries"""
         # First two calls fail with network error, third succeeds
@@ -118,7 +118,7 @@ class TestFetchWithRetry:
         assert result == mock_response_success
         assert mock_get.call_count == 3
 
-    @patch("tabelog.retry.httpx.get")
+    @patch("gurume.retry.httpx.get")
     def test_fetch_all_retries_fail(self, mock_get):
         """Test all retries fail raises NetworkError"""
         mock_get.side_effect = [httpx.ConnectError("failed")] * (DEFAULT_MAX_ATTEMPTS + 1)
@@ -133,7 +133,7 @@ class TestFetchWithRetry:
 class TestFetchWithRetryAsync:
     """Test fetch_with_retry_async function"""
 
-    @patch("tabelog.retry.httpx.AsyncClient")
+    @patch("gurume.retry.httpx.AsyncClient")
     async def test_fetch_async_success_first_try(self, mock_async_client):
         """Test successful async fetch on first try"""
         from unittest.mock import AsyncMock
@@ -147,7 +147,7 @@ class TestFetchWithRetryAsync:
         mock_async_client.return_value.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_async_client.return_value.__aexit__ = AsyncMock(return_value=None)
 
-        from tabelog.retry import fetch_with_retry_async
+        from gurume.retry import fetch_with_retry_async
 
         result = await fetch_with_retry_async("http://example.com")
         assert result == mock_response
