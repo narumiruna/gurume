@@ -25,7 +25,39 @@ from .suggest import get_area_suggestions_async
 from .suggest import get_keyword_suggestions_async
 
 # Create FastMCP server instance
-mcp = FastMCP("gurume")
+mcp = FastMCP(
+    "gurume",
+    instructions="""Tabelog restaurant search MCP server for Japanese restaurants.
+
+🎯 RECOMMENDED WORKFLOW:
+1. Validate inputs FIRST using suggestion tools
+2. Then perform search with validated parameters
+
+📋 STEP-BY-STEP GUIDE:
+
+Step 1: Get area suggestions (if user provides area)
+→ Use: tabelog_get_area_suggestions(query="user's area")
+→ Pick the best match from suggestions
+
+Step 2: Get keyword/cuisine suggestions (if searching by cuisine/keyword)
+→ Use: tabelog_get_keyword_suggestions(query="user's keyword")
+→ Identify if it's Genre2 (cuisine) or Restaurant (name)
+
+Step 3: Search with validated parameters
+→ Use: tabelog_search_restaurants(area=validated_area, cuisine=validated_cuisine)
+
+🔑 KEY PRINCIPLES:
+- Cuisine searches: Use `cuisine` parameter (more accurate than `keyword`)
+- Always validate user input with suggestion tools before searching
+- All parameters and results are in Japanese
+
+Example:
+User: "Find sukiyaki in Tokyo"
+1. tabelog_get_area_suggestions(query="Tokyo") → Get "東京都"
+2. tabelog_get_keyword_suggestions(query="sukiyaki") → Get "すき焼き" (Genre2)
+3. tabelog_search_restaurants(area="東京都", cuisine="すき焼き")
+""",
+)
 
 
 # ============================================================================
@@ -82,6 +114,20 @@ async def tabelog_search_restaurants(
     limit: int = 20,
 ) -> list[RestaurantOutput]:
     """Search for restaurants on Tabelog with precise filtering by area, cuisine type, or keywords.
+
+    ⚠️ **IMPORTANT - RECOMMENDED WORKFLOW**:
+    Before calling this tool, VALIDATE user inputs using suggestion tools:
+
+    1. If user provides area → Call `tabelog_get_area_suggestions` first
+       Example: User says "Tokyo" → Call tabelog_get_area_suggestions(query="Tokyo")
+       → Use suggested area name (e.g., "東京都") in this search
+
+    2. If user provides cuisine/keyword → Call `tabelog_get_keyword_suggestions` first
+       Example: User says "sukiyaki" → Call tabelog_get_keyword_suggestions(query="sukiyaki")
+       → If result is Genre2: use in `cuisine` param
+       → If result is Restaurant: use in `keyword` param
+
+    This 2-step workflow ensures accurate results and correct parameter usage.
 
     **WHEN TO USE**:
     - Finding restaurants in a specific area or cuisine type

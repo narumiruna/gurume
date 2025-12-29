@@ -101,16 +101,43 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
    - Returns: Array of `SuggestionOutput` with dynamic suggestions (cuisine types, restaurant names, combinations)
    - Annotations: `readOnly=true`, `openWorld=true`
 
-**Usage Examples** (in Claude Desktop):
-```
-User: Find top-rated sukiyaki restaurants in Mie prefecture
-Claude: [Uses tabelog_search_restaurants with area="三重", cuisine="すき焼き", sort="ranking"]
+**Recommended Workflow** (for best results):
 
-User: What cuisine types can I search for?
+```
+🎯 STEP-BY-STEP APPROACH:
+
+1. Validate area (if provided)
+   → tabelog_get_area_suggestions(query=user_area)
+   → Pick best match from suggestions
+
+2. Validate cuisine/keyword (if provided)
+   → tabelog_get_keyword_suggestions(query=user_input)
+   → Check datatype: Genre2 (cuisine) or Restaurant (name)
+
+3. Search with validated parameters
+   → tabelog_search_restaurants(area=validated, cuisine=validated)
+```
+
+**Usage Examples** (in Claude Desktop):
+
+```
+Example 1: Complete workflow
+User: "Find sukiyaki in Tokyo"
+Step 1: tabelog_get_area_suggestions(query="Tokyo")
+        → Returns [{"name": "東京都", "datatype": "AddressMaster"}, ...]
+Step 2: tabelog_get_keyword_suggestions(query="sukiyaki")
+        → Returns [{"name": "すき焼き", "datatype": "Genre2"}, ...]
+Step 3: tabelog_search_restaurants(area="東京都", cuisine="すき焼き", sort="ranking")
+        → Returns top sukiyaki restaurants in Tokyo
+
+Example 2: Quick cuisine check
+User: "What cuisine types can I search for?"
 Claude: [Uses tabelog_list_cuisines to show all 45+ options]
 
-User: I want to search near Shibuya station
-Claude: [Uses tabelog_get_area_suggestions with query="渋谷" to show area options]
+Example 3: Area validation
+User: "I want to search near Shibuya station"
+Claude: [Uses tabelog_get_area_suggestions with query="渋谷"]
+        → Shows options like "渋谷区", "渋谷駅" for user to choose
 ```
 
 **Architecture** (SKILL.md compliant):
