@@ -84,8 +84,39 @@ The codebase has the following main files:
    - Key methods: `_build_params()`, `_parse_restaurants()`, `search_sync()`, `search()`
    - **Area filtering**: Uses area slug paths (e.g., `/tokyo/rstLst/`) for accurate prefecture-level filtering
    - **Cuisine filtering**: Supports `genre_code` parameter for precise cuisine type filtering (e.g., `RC0107` for すき焼き)
+   - **Caching and retry**: Integrated with cache.py and retry.py via `use_cache` and `use_retry` parameters (both default to True)
 
-2. **search.py** - Higher-level search API with metadata and pagination
+2. **cache.py** - Caching system for HTTP responses (🆕)
+   - `CacheEntry` dataclass: Stores data with timestamp and TTL
+   - `MemoryCache` class: In-memory cache with LRU eviction
+     - Default: 1000 entries max, 1 hour TTL
+     - Methods: `get()`, `set()`, `clear()`, `size()`
+     - Automatic oldest entry eviction when full
+   - `FileCache` class: File-based persistent cache
+     - Stores as JSON with SHA256 hashed filenames
+     - Useful for development and debugging
+   - Global cache functions:
+     - `get_cache()`: Returns global cache instance
+     - `set_cache()`: Sets cache backend (memory or file)
+     - `generate_cache_key()`: Creates consistent keys from URL + params
+     - `cached_get()`: Get from cache with force refresh option
+     - `cache_set()`: Store to cache with custom TTL
+     - `clear_cache()`: Clear all entries
+   - **Integration**: Automatically used in `RestaurantSearchRequest.search_sync()` and `.search()` with 30-min TTL
+
+3. **retry.py** - Retry and resilience mechanisms (🆕)
+   - `is_retryable_error()`: Checks if exception should trigger retry
+   - `handle_http_errors()`: Converts HTTP errors to custom exceptions
+   - `fetch_with_retry()`: Sync fetch with automatic retry
+     - Max 3 attempts with exponential backoff (1s, 2s, 4s)
+     - Retries on: ConnectError, TimeoutException, NetworkError, 5xx errors
+     - Raises: RateLimitError (429), NetworkError (other errors)
+   - `fetch_with_retry_async()`: Async version with manual retry loop
+   - Configuration: `DEFAULT_MAX_ATTEMPTS=3`, `DEFAULT_MIN_WAIT=1`, `DEFAULT_MAX_WAIT=10`
+   - Uses `tenacity` library for retry decorators with exponential backoff and jitter
+   - **Integration**: Automatically used in `RestaurantSearchRequest.search_sync()` and `.search()` when `use_retry=True`
+
+4. **search.py** - Higher-level search API with metadata and pagination
    - `SearchRequest` dataclass: Wraps `RestaurantSearchRequest` with pagination support
    - `SearchResponse` dataclass: Structured response with status and metadata
    - `SearchMeta` dataclass: Total counts, page info, navigation flags
@@ -95,13 +126,13 @@ The codebase has the following main files:
    - **Area filtering**: Automatically uses area slug paths when prefecture can be mapped
    - **Cuisine filtering**: Supports `genre_code` parameter for URL path construction with cuisine types
 
-3. **area_mapping.py** - Area name to URL slug mapping
+5. **area_mapping.py** - Area name to URL slug mapping
    - `PREFECTURE_MAPPING`: Maps all 47 prefectures to Tabelog URL slugs
    - `CITY_MAPPING`: Maps major cities to URL slugs (tokyo, osaka, kyoto, etc.)
    - `get_area_slug()`: Converts area names (東京都, 大阪府) to URL slugs (tokyo, osaka)
    - **Purpose**: Enables accurate area filtering by using Tabelog's path-based filtering
 
-4. **genre_mapping.py** - Cuisine type to genre code mapping
+6. **genre_mapping.py** - Cuisine type to genre code mapping
    - `GENRE_CODE_MAPPING`: Maps 45+ Japanese cuisine types to Tabelog genre codes (RC codes)
    - `get_genre_code()`: Converts cuisine name (すき焼き) to genre code (RC0107)
    - `get_genre_name_by_code()`: Reverse lookup from genre code to cuisine name
@@ -109,7 +140,7 @@ The codebase has the following main files:
    - **Purpose**: Enables accurate cuisine filtering via URL path-based genre codes
    - **Coverage**: Supports common Japanese cuisine types (和食, 洋食, 中華, 焼肉, 鍋, 居酒屋, カレー, カフェ, etc.)
 
-5. **suggest.py** - Area and keyword suggestion API integration
+7. **suggest.py** - Area and keyword suggestion API integration
    - `AreaSuggestion` dataclass: Represents area/station suggestions from Tabelog
    - `KeywordSuggestion` dataclass: Represents keyword suggestions (cuisine types, restaurant names, combinations)
    - `get_area_suggestions()`: Sync function to get area suggestions
@@ -123,7 +154,7 @@ The codebase has the following main files:
      - Area: `AddressMaster`, `RailroadStation`
      - Keyword: `Genre2` (cuisine type), `Restaurant` (restaurant name), `Genre2 DetailCondition` (cuisine + condition)
 
-6. **cli.py** - Command-line interface using Typer and Rich
+8. **cli.py** - Command-line interface using Typer and Rich
    - `app`: Main Typer application instance
    - `search()`: Search restaurants with various filters (area, keyword, cuisine, query, sort, limit, output format)
    - `list_cuisines()`: Display all supported cuisine types in a table
@@ -135,7 +166,7 @@ The codebase has the following main files:
    - **Auto-detection**: Automatically detects cuisine types in keyword and converts to genre_code for precise filtering
    - Entry point: `tabelog search` or direct execution
 
-7. **tui.py** - Interactive terminal UI using Textual framework
+9. **tui.py** - Interactive terminal UI using Textual framework
    - `TabelogApp`: Main TUI application class
    - `SearchPanel`: Search input panel with area, keyword, and sorting options
    - `ResultsTable`: DataTable for displaying restaurant results
@@ -153,23 +184,23 @@ The codebase has the following main files:
    - Keybindings: F2 (area suggest), F3 (intelligent keyword/genre suggest), F4 (AI parse), s (search), r (results), d (detail), q (quit)
    - Entry point: `python -m tabelog.tui` or `uv run tabelog tui`
 
-8. **server.py** - MCP (Model Context Protocol) server implementation (🆕)
-   - `server`: Main MCP Server instance
-   - **Tools** (4 total):
-     - `search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
-     - `list_cuisines`: Get all 45+ cuisine types with genre codes
-     - `get_area_suggestions`: Get area/station suggestions from Tabelog API
-     - `get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
-   - **Design principles**:
-     - ❌ No AI parsing (no OpenAI API key dependency)
-     - ✅ Zero configuration
-     - ✅ Simple structured parameters
-     - ✅ Client-side natural language handling
-   - **Implementation**: Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
-   - **Transport**: stdio (standard input/output)
-   - Entry point: `tabelog-mcp` command
+10. **server.py** - MCP (Model Context Protocol) server implementation (🆕)
+    - `server`: Main MCP Server instance
+    - **Tools** (4 total):
+      - `search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
+      - `list_cuisines`: Get all 45+ cuisine types with genre codes
+      - `get_area_suggestions`: Get area/station suggestions from Tabelog API
+      - `get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
+    - **Design principles**:
+      - ❌ No AI parsing (no OpenAI API key dependency)
+      - ✅ Zero configuration
+      - ✅ Simple structured parameters
+      - ✅ Client-side natural language handling
+    - **Implementation**: Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
+    - **Transport**: stdio (standard input/output)
+    - Entry point: `tabelog-mcp` command
 
-9. **__init__.py** - Public API exports
+11. **__init__.py** - Public API exports
    - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`
 
 ### API Patterns
@@ -225,13 +256,17 @@ The library provides **three levels of abstraction**:
 
 - **Location**: All tests in `tests/` directory
 - **Current coverage**: 71% overall, 87-94% on core modules (target: 90%+)
-- **Total tests**: 78 tests (all passing ✓)
+- **Total tests**: 101 tests (all passing ✓)
 - **Test types**:
-  - Unit tests: Models, validation, parameter building
+  - Unit tests: Models, validation, parameter building, caching, retry logic
   - Function tests: HTTP requests, HTML parsing, error handling
   - Integration tests: End-to-end search workflows
-- **Mocking**: Mock `httpx.get` and `httpx.AsyncClient` for HTTP tests
+- **New test files** (🆕):
+  - `test_cache.py`: 12 tests for MemoryCache, FileCache, and cache helpers
+  - `test_retry.py`: 11 tests for retry logic, error handling, and exponential backoff
+- **Mocking**: Mock `httpx.get` and `httpx.AsyncClient` for HTTP tests (no real network calls)
 - **Async**: Uses `pytest-asyncio` with `AsyncMock` for async operations
+- **Performance**: All tests run in ~6 seconds with mocking (no actual retry delays)
 - **Note**: TUI (tui.py) and CLI (cli.py) currently have 0% coverage (UI modules)
 
 ## Type Annotations
@@ -274,6 +309,7 @@ Configured in `.pre-commit-config.yaml`:
 - `loguru` - Logging
 - `mcp[cli]` - MCP server framework
 - `typer` - CLI framework
+- `tenacity` - Retry logic with exponential backoff (🆕)
 
 **Development**:
 - `pytest`, `pytest-asyncio`, `pytest-cov` - Testing

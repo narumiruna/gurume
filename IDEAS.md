@@ -157,17 +157,19 @@ This document tracks potential features, improvements, and implementation ideas 
 
 ### Low Priority / Future Considerations
 
-- [ ] **Caching and performance optimization**
-  - Built-in response caching (not just `@cache` on one function)
-  - Configurable cache backend (memory, Redis, file-based)
-  - Rate limiting to avoid being blocked
-  - Connection pooling for multiple requests
+- [x] **Caching and performance optimization** ✅ (2025-12-29)
+  - ✅ Built-in response caching (cache.py module)
+  - ✅ Configurable cache backend (MemoryCache and FileCache)
+  - ✅ Integrated into RestaurantSearchRequest.search_sync() and .search() with 30-min TTL
+  - ⏳ Rate limiting to avoid being blocked (future)
+  - ⏳ Connection pooling for multiple requests (future)
 
-- [ ] **Retry and resilience mechanisms**
-  - Auto-retry on transient failures
-  - Exponential backoff
-  - Circuit breaker pattern
-  - Tool: `tenacity` library (per user preferences)
+- [x] **Retry and resilience mechanisms** ✅ (2025-12-29)
+  - ✅ Auto-retry on transient failures (retry.py module)
+  - ✅ Exponential backoff with jitter (tenacity library)
+  - ✅ Max 3 attempts, 1-10 second wait range
+  - ✅ Integrated into RestaurantSearchRequest.search_sync() and .search()
+  - ⏳ Circuit breaker pattern (future)
 
 - [ ] **Export and integration features**
   - Export to multiple formats: JSON, CSV, Excel, SQLite

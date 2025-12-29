@@ -100,7 +100,7 @@ class TestRestaurantSearchRequest:
             party_size=2,
         )
 
-        restaurants = request.do_sync()
+        restaurants = request.search_sync(use_cache=False, use_retry=False)
 
         assert len(restaurants) == 2
         assert restaurants[0].name == "テストレストラン1"
@@ -137,7 +137,7 @@ class TestRestaurantSearchRequest:
             party_size=2,
         )
 
-        restaurants = await request.do()
+        restaurants = await request.search(use_cache=False, use_retry=False)
 
         assert len(restaurants) == 2
         assert restaurants[0].name == "テストレストラン1"
@@ -154,7 +154,7 @@ class TestRestaurantSearchRequest:
         request = RestaurantSearchRequest(area="銀座")
 
         with pytest.raises(httpx.HTTPStatusError):
-            request.do_sync()
+            request.search_sync(use_cache=False, use_retry=False)
 
     @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
@@ -172,7 +172,7 @@ class TestRestaurantSearchRequest:
         request = RestaurantSearchRequest(area="銀座")
 
         with pytest.raises(httpx.HTTPStatusError):
-            await request.do()
+            await request.search(use_cache=False, use_retry=False)
 
 
 class TestQueryRestaurants:

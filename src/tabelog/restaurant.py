@@ -12,7 +12,11 @@ import httpx
 from bs4 import BeautifulSoup
 
 from .area_mapping import get_area_slug
+from .cache import cache_set
+from .cache import cached_get
 from .exceptions import InvalidParameterError
+from .retry import fetch_with_retry
+from .retry import fetch_with_retry_async
 
 
 class SortType(str, Enum):
@@ -338,8 +342,16 @@ class RestaurantSearchRequest:
 
         return restaurants
 
-    def search_sync(self) -> list[Restaurant]:
-        """同步執行搜尋"""
+    def search_sync(self, use_cache: bool = True, use_retry: bool = True) -> list[Restaurant]:
+        """同步執行搜尋
+
+        Args:
+            use_cache: 是否使用快取（預設：True）
+            use_retry: 是否使用重試機制（預設：True）
+
+        Returns:
+            餐廳列表
+        """
         params = self._build_params()
 
         headers = {
@@ -366,54 +378,90 @@ class RestaurantSearchRequest:
             # 只有類別：/rstLst/GENRE_CODE/
             url = f"https://tabelog.com/rstLst/{self.genre_code}/"
 
-        resp = httpx.get(
-            url=url,
-            params=params,
-            headers=headers,
-            timeout=30.0,
-            follow_redirects=True,
-        )
-        resp.raise_for_status()
+        # 檢查快取
+        if use_cache:
+            cached_html = cached_get(url, params)
+            if cached_html is not None:
+                return self._parse_restaurants(cached_html)
 
-        return self._parse_restaurants(resp.text)
-
-    async def search(self) -> list[Restaurant]:
-        """異步執行搜尋"""
-        params = self._build_params()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-
-        # 構建 URL：考慮地區和料理類別
-        url = "https://tabelog.com/rst/rstsearch"
-        area_slug = None
-
-        if self.area:
-            area_slug = get_area_slug(self.area)
-
-        # 根據 area 和 genre_code 決定 URL 格式
-        if area_slug and self.genre_code:
-            # 有地區 + 類別：/area/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
-            params.pop("sa", None)  # 移除 area 參數
-        elif area_slug:
-            # 只有地區：/area/rstLst/
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)  # 移除 area 參數
-        elif self.genre_code:
-            # 只有類別：/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
-
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-            resp = await client.get(
+        # 執行請求（使用或不使用重試）
+        if use_retry:
+            resp = fetch_with_retry(url=url, params=params, headers=headers, timeout=30.0)
+        else:
+            resp = httpx.get(
                 url=url,
                 params=params,
                 headers=headers,
+                timeout=30.0,
+                follow_redirects=True,
             )
             resp.raise_for_status()
 
-            return self._parse_restaurants(resp.text)
+        # 儲存到快取
+        if use_cache:
+            cache_set(url, params, resp.text, ttl=1800.0)  # 30 minutes TTL
+
+        return self._parse_restaurants(resp.text)
+
+    async def search(self, use_cache: bool = True, use_retry: bool = True) -> list[Restaurant]:
+        """異步執行搜尋
+
+        Args:
+            use_cache: 是否使用快取（預設：True）
+            use_retry: 是否使用重試機制（預設：True）
+
+        Returns:
+            餐廳列表
+        """
+        params = self._build_params()
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        # 構建 URL：考慮地區和料理類別
+        url = "https://tabelog.com/rst/rstsearch"
+        area_slug = None
+
+        if self.area:
+            area_slug = get_area_slug(self.area)
+
+        # 根據 area 和 genre_code 決定 URL 格式
+        if area_slug and self.genre_code:
+            # 有地區 + 類別：/area/rstLst/GENRE_CODE/
+            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+            params.pop("sa", None)  # 移除 area 參數
+        elif area_slug:
+            # 只有地區：/area/rstLst/
+            url = f"https://tabelog.com/{area_slug}/rstLst/"
+            params.pop("sa", None)  # 移除 area 參數
+        elif self.genre_code:
+            # 只有類別：/rstLst/GENRE_CODE/
+            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
+
+        # 檢查快取
+        if use_cache:
+            cached_html = cached_get(url, params)
+            if cached_html is not None:
+                return self._parse_restaurants(cached_html)
+
+        # 執行請求（使用或不使用重試）
+        if use_retry:
+            resp = await fetch_with_retry_async(url=url, params=params, headers=headers, timeout=30.0)
+        else:
+            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+                resp = await client.get(
+                    url=url,
+                    params=params,
+                    headers=headers,
+                )
+                resp.raise_for_status()
+
+        # 儲存到快取
+        if use_cache:
+            cache_set(url, params, resp.text, ttl=1800.0)  # 30 minutes TTL
+
+        return self._parse_restaurants(resp.text)
 
     def do_sync(self) -> list[Restaurant]:
         """同步執行搜尋（已棄用，請使用 search_sync()）"""
