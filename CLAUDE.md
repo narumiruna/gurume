@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **tabelog** - a Python library and MCP (Model Context Protocol) server for searching restaurants on Tabelog using web scraping. It provides both a Python library (`tabelog`) and an MCP server (`tabelog`) for integration with AI assistants.
+This is **gurume** - a Python library and MCP (Model Context Protocol) server for searching restaurants on Tabelog using web scraping. It provides both a Python library (`gurume`) and an MCP server (`gurume`) for integration with AI assistants.
 
 **See also**: [IDEAS.md](IDEAS.md) - Feature ideas, improvements, and development notes
 
@@ -49,7 +49,7 @@ make publish  # Builds wheel and publishes to PyPI
 ### Running Examples
 ```bash
 # Basic search example
-PYTHONPATH=/home/narumi/workspace/tabelog/src python examples/basic_search.py
+PYTHONPATH=/home/narumi/workspace/gurume/src python examples/basic_search.py
 
 # Or with uv (推薦)
 uv run python examples/basic_search.py
@@ -60,18 +60,18 @@ uv run python examples/basic_search.py
 ### Running MCP Server
 ```bash
 # Via entry point (requires installation)
-uv run tabelog-mcp
+uv run gurume-mcp
 
 # Local development
-uv run --directory /path/to/tabelog tabelog-mcp
+uv run --directory /path/to/gurume gurume-mcp
 
 # Direct execution
-uv run python -m tabelog.server
+uv run python -m gurume.server
 ```
 
 ## Architecture
 
-### Core Modules (src/tabelog/)
+### Core Modules (src/gurume/)
 
 The codebase has the following main files:
 
@@ -164,7 +164,7 @@ The codebase has the following main files:
    - **CLI options**: -a/--area, -k/--keyword, -c/--cuisine, -q/--query (🆕), -s/--sort, -n/--limit, -o/--output
    - **Natural language query (-q)**: Uses `llm.parse_user_input()` to parse user input in multiple languages (Chinese, Japanese, English)
    - **Auto-detection**: Automatically detects cuisine types in keyword and converts to genre_code for precise filtering
-   - Entry point: `tabelog search` or direct execution
+   - Entry point: `gurume search` or direct execution
 
 9. **tui.py** - Interactive terminal UI using Textual framework
    - `TabelogApp`: Main TUI application class
@@ -182,7 +182,7 @@ The codebase has the following main files:
    - **Smart linking**: AI parse (F4) automatically triggers area suggest (F2) or genre suggest (F3) after parsing
    - Features: RadioButton sorting, two-column layout, async worker management, context-aware autocomplete
    - Keybindings: F2 (area suggest), F3 (intelligent keyword/genre suggest), F4 (AI parse), s (search), r (results), d (detail), q (quit)
-   - Entry point: `python -m tabelog.tui` or `uv run tabelog tui`
+   - Entry point: `python -m gurume.tui` or `uv run gurume tui`
 
 10. **server.py** - MCP (Model Context Protocol) server implementation (🆕)
     - `server`: Main MCP Server instance
@@ -198,7 +198,7 @@ The codebase has the following main files:
       - ✅ Client-side natural language handling
     - **Implementation**: Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
     - **Transport**: stdio (standard input/output)
-    - Entry point: `tabelog-mcp` command
+    - Entry point: `gurume-mcp` command
 
 11. **__init__.py** - Public API exports
    - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`
@@ -274,7 +274,7 @@ The library provides **three levels of abstraction**:
 - **Required**: Full type hints on all functions
 - **Style**: Built-in types only (e.g., `list[str]`, `dict[str, Any]`, `X | None`)
 - **Checker**: Uses `ty` (configured in Makefile and pyproject.toml)
-- **py.typed marker**: Present in `src/tabelog/py.typed` for library consumers
+- **py.typed marker**: Present in `src/gurume/py.typed` for library consumers
 
 ## Code Style
 

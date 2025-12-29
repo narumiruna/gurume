@@ -1,5 +1,5 @@
 [project]
-name = "tabelog"
+name = "gurume"
 version = "0.0.0"
 description = ""
 readme = "README.md"
@@ -17,8 +17,8 @@ dependencies = [
 ]
 
 [project.scripts]
-tabelog = "tabelog.cli:main"
-tabelog-mcp = "tabelog.server:run"
+gurume = "gurume.cli:main"
+gurume-mcp = "gurume.server:run"
 
 [build-system]
 requires = ["hatchling"]

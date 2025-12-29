@@ -6,12 +6,12 @@ from unittest.mock import patch
 
 import pytest
 
-from tabelog import Course
-from tabelog import MenuItem
-from tabelog import RestaurantDetail
-from tabelog import RestaurantDetailRequest
-from tabelog import Review
-from tabelog.exceptions import InvalidParameterError
+from gurume import Course
+from gurume import MenuItem
+from gurume import RestaurantDetail
+from gurume import RestaurantDetailRequest
+from gurume import Review
+from gurume.exceptions import InvalidParameterError
 
 
 class TestReviewModel:
@@ -92,7 +92,7 @@ class TestCourseModel:
 
 class TestRestaurantDetailModel:
     def test_restaurant_detail_creation(self):
-        from tabelog import Restaurant
+        from gurume import Restaurant
 
         restaurant = Restaurant(name="測試餐廳", url="https://tabelog.com/test/")
         reviews = [Review(reviewer="評論者", content="好吃")]

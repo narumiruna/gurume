@@ -29,12 +29,12 @@ The Tabelog MCP server provides restaurant search functionality to AI assistants
 ```json
 {
   "mcpServers": {
-    "tabelog": {
+    "gurume": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/narumiruna/tabelog",
-        "tabelog-mcp"
+        "git+https://github.com/narumiruna/gurume",
+        "gurume-mcp"
       ]
     }
   }
@@ -45,9 +45,9 @@ The Tabelog MCP server provides restaurant search functionality to AI assistants
 ```json
 {
   "mcpServers": {
-    "tabelog": {
+    "gurume": {
       "command": "uvx",
-      "args": ["--from", "tabelog", "tabelog-mcp"]
+      "args": ["--from", "gurume", "gurume-mcp"]
     }
   }
 }
@@ -57,13 +57,13 @@ The Tabelog MCP server provides restaurant search functionality to AI assistants
 ```json
 {
   "mcpServers": {
-    "tabelog": {
+    "gurume": {
       "command": "uv",
       "args": [
         "run",
         "--directory",
         "/home/<user>/workspace/tabelog",
-        "tabelog-mcp"
+        "gurume-mcp"
       ]
     }
   }
@@ -86,13 +86,13 @@ The Tabelog MCP server provides restaurant search functionality to AI assistants
 ## Installation
 
 ```bash
-uv add tabelog
+uv add gurume
 ```
 
 Or with pip:
 
 ```bash
-pip install tabelog
+pip install gurume
 ```
 
 ## Quick Start
@@ -103,24 +103,24 @@ pip install tabelog
 
 ```bash
 # 基本搜尋
-tabelog search --area 東京 --keyword 寿司
+gurume search --area 東京 --keyword 寿司
 
 # 使用料理類別精確過濾
-tabelog search -a 三重 -c すき焼き
+gurume search -a 三重 -c すき焼き
 
 # 指定排序方式和輸出格式
-tabelog search -a 大阪 -c ラーメン --sort ranking -o json
+gurume search -a 大阪 -c ラーメン --sort ranking -o json
 
 # 🆕 使用自然語言查詢（AI 自動解析地區和關鍵字）
-tabelog search -q 三重すきやき
-tabelog search -q "我想吃東京的拉麵"
-tabelog search -q "sushi in Osaka"
+gurume search -q 三重すきやき
+gurume search -q "我想吃東京的拉麵"
+gurume search -q "sushi in Osaka"
 
 # 查看所有支援的料理類別
-tabelog list-cuisines
+gurume list-cuisines
 
 # 查看完整說明
-tabelog search --help
+gurume search --help
 ```
 
 **CLI 選項：**
@@ -144,10 +144,10 @@ tabelog search --help
 
 ```bash
 # 使用 uv
-uv run tabelog tui
+uv run gurume tui
 
 # 或直接使用 Python
-python -m tabelog.tui
+python -m gurume.tui
 ```
 
 TUI 特色：

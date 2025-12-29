@@ -2,13 +2,13 @@
 
 import time
 
-from tabelog.cache import FileCache
-from tabelog.cache import MemoryCache
-from tabelog.cache import cache_set
-from tabelog.cache import cached_get
-from tabelog.cache import clear_cache
-from tabelog.cache import generate_cache_key
-from tabelog.cache import set_cache
+from gurume.cache import FileCache
+from gurume.cache import MemoryCache
+from gurume.cache import cache_set
+from gurume.cache import cached_get
+from gurume.cache import clear_cache
+from gurume.cache import generate_cache_key
+from gurume.cache import set_cache
 
 
 class TestMemoryCache:
