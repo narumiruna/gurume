@@ -6,7 +6,7 @@ This document tracks potential features, improvements, and implementation ideas 
 
 ### High Priority
 
-- [ ] **MCP Server Integration**
+- [x] **MCP Server Integration** ✅ (Completed 2025-12-29)
   - Expose Tabelog search functionality as an MCP (Model Context Protocol) server
   - **Key features**:
     - Tool: `search_restaurants` - Search restaurants by area, keyword, cuisine type
@@ -538,6 +538,25 @@ This document tracks potential features, improvements, and implementation ideas 
   - Study API design of: `yelp-fusion`, `google-places`, `tripadvisor-api`
 
 ## ✅ Completed
+
+- **MCP (Model Context Protocol) Server** (2025-12-29)
+  - ✓ Created `server.py` with full MCP server implementation
+  - ✓ Implemented 4 tools:
+    - `search_restaurants`: Search by area, keyword, cuisine with sorting and limits
+    - `list_cuisines`: Get all 45+ cuisine types with genre codes
+    - `get_area_suggestions`: Dynamic area/station suggestions from Tabelog API
+    - `get_keyword_suggestions`: Dynamic keyword/cuisine/restaurant suggestions from Tabelog API
+  - ✓ **Design achievements**:
+    - ❌ No AI parsing dependency (no OpenAI API key required)
+    - ✅ Zero configuration setup
+    - ✅ Simple structured parameters
+    - ✅ Client-side natural language handling
+  - ✓ Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
+  - ✓ stdio transport for communication with MCP clients
+  - ✓ Entry point: `tabelog-mcp` command
+  - ✓ All 4 tools tested and working
+  - ✓ Documentation updated (README.md, CLAUDE.md, IDEAS.md)
+  - ✓ Ready for use with Claude Desktop and other MCP clients
 
 - **Command-line interface (CLI) with natural language query** (2025-12-29)
   - ✓ Created comprehensive CLI using Typer and Rich

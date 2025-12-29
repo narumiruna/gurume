@@ -1,6 +1,6 @@
 [project]
 name = "tabelog"
-version = "0.1.0"
+version = "0.0.0"
 description = ""
 readme = "README.md"
 authors = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 tabelog = "tabelog.cli:main"
+tabelog-mcp = "tabelog.server:run"
 
 [build-system]
 requires = ["hatchling"]
@@ -62,7 +63,7 @@ filterwarnings = ["ignore::DeprecationWarning"]
 ignore_missing_imports = true
 
 [tool.bumpversion]
-current_version = "0.1.0"
+current_version = "0.0.0"
 tag = true
 commit = true
 pre_commit_hooks = ["uv lock", "git add uv.lock"]

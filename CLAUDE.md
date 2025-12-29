@@ -60,10 +60,13 @@ uv run python examples/basic_search.py
 ### Running MCP Server
 ```bash
 # Via entry point (requires installation)
-uv run tabelog
+uv run tabelog-mcp
 
 # Local development
-uv run --directory /path/to/tabelog-mcp tabelog
+uv run --directory /path/to/tabelog tabelog-mcp
+
+# Direct execution
+uv run python -m tabelog.server
 ```
 
 ## Architecture
@@ -150,7 +153,23 @@ The codebase has the following main files:
    - Keybindings: F2 (area suggest), F3 (intelligent keyword/genre suggest), F4 (AI parse), s (search), r (results), d (detail), q (quit)
    - Entry point: `python -m tabelog.tui` or `uv run tabelog tui`
 
-8. **__init__.py** - Public API exports
+8. **server.py** - MCP (Model Context Protocol) server implementation (🆕)
+   - `server`: Main MCP Server instance
+   - **Tools** (4 total):
+     - `search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
+     - `list_cuisines`: Get all 45+ cuisine types with genre codes
+     - `get_area_suggestions`: Get area/station suggestions from Tabelog API
+     - `get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
+   - **Design principles**:
+     - ❌ No AI parsing (no OpenAI API key dependency)
+     - ✅ Zero configuration
+     - ✅ Simple structured parameters
+     - ✅ Client-side natural language handling
+   - **Implementation**: Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
+   - **Transport**: stdio (standard input/output)
+   - Entry point: `tabelog-mcp` command
+
+9. **__init__.py** - Public API exports
    - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`
 
 ### API Patterns
@@ -244,7 +263,7 @@ Configured in `.pre-commit-config.yaml`:
 - **Rate limiting**: No built-in rate limiting - users must implement for production use
 - **Legal compliance**: Library is for educational/research purposes - respect robots.txt and ToS
 - **Fallback selectors**: Parser includes backup CSS selectors for robustness
-- **No MCP server code**: Despite `tabelog` package name and entry point in pyproject.toml, the actual MCP server implementation (`server.py`) is currently missing
+- **MCP server** (🆕): Fully implemented in `server.py` with 4 tools, zero-config design, no API key required
 
 ## Dependencies
 

@@ -21,8 +21,11 @@ A Python library for searching restaurants on Tabelog using web scraping.
 
 ## Usage
 
-### GitHub
+### MCP Server (for Claude Desktop / AI Assistants)
 
+The Tabelog MCP server provides restaurant search functionality to AI assistants like Claude.
+
+**GitHub (Latest Development Version)**:
 ```json
 {
   "mcpServers": {
@@ -30,29 +33,27 @@ A Python library for searching restaurants on Tabelog using web scraping.
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/narumiruna/tabelog-mcp",
-        "tabelog"
+        "git+https://github.com/narumiruna/tabelog",
+        "tabelog-mcp"
       ]
     }
   }
 }
 ```
 
-### PyPI
-
+**PyPI (Stable Release)**:
 ```json
 {
   "mcpServers": {
     "tabelog": {
       "command": "uvx",
-      "args": ["tabelog@latest"]
+      "args": ["--from", "tabelog", "tabelog-mcp"]
     }
   }
 }
 ```
 
-### Local
-
+**Local Development**:
 ```json
 {
   "mcpServers": {
@@ -61,13 +62,25 @@ A Python library for searching restaurants on Tabelog using web scraping.
       "args": [
         "run",
         "--directory",
-        "/home/<user>/workspace/tabelog-mcp",
-        "tabelog"
+        "/home/<user>/workspace/tabelog",
+        "tabelog-mcp"
       ]
     }
   }
 }
 ```
+
+**Available Tools**:
+- `search_restaurants`: Search restaurants by area, keyword, or cuisine type
+- `list_cuisines`: Get all 45+ supported Japanese cuisine types with genre codes
+- `get_area_suggestions`: Get area/station suggestions from Tabelog API
+- `get_keyword_suggestions`: Get keyword/cuisine/restaurant name suggestions
+
+**Design Principles**:
+- ✅ **Zero Configuration**: No API keys required
+- ✅ **Simple Parameters**: Direct structured inputs (area, keyword, cuisine)
+- ✅ **Client-Side NLP**: AI clients handle natural language parsing
+- ✅ **Accurate Filtering**: Uses Tabelog genre codes for precise cuisine filtering
 
 
 ## Installation
