@@ -179,21 +179,33 @@ The codebase has the following main files:
    - Keybindings: F2 (area suggest), F3 (intelligent keyword/genre suggest), F4 (AI parse), s (search), r (results), d (detail), q (quit)
    - Entry point: `python -m gurume.tui` or `uv run gurume tui`
 
-10. **server.py** - MCP (Model Context Protocol) server implementation (🆕)
-    - `server`: Main MCP Server instance
-    - **Tools** (4 total):
-      - `search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
-      - `list_cuisines`: Get all 45+ cuisine types with genre codes
-      - `get_area_suggestions`: Get area/station suggestions from Tabelog API
-      - `get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
+10. **server.py** - MCP (Model Context Protocol) server implementation using FastMCP (🔄 Refactored)
+    - `mcp`: FastMCP server instance (high-level API)
+    - **Tools** (4 total, all with `tabelog_` prefix):
+      - `tabelog_search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
+      - `tabelog_list_cuisines`: Get all 45+ cuisine types with genre codes
+      - `tabelog_get_area_suggestions`: Get area/station suggestions from Tabelog API
+      - `tabelog_get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
+    - **Architecture** (符合 SKILL.md 規範):
+      - ✅ **FastMCP API**: Uses `@mcp.tool()` decorator for automatic schema generation
+      - ✅ **Pydantic Output Schemas**: `RestaurantOutput`, `CuisineOutput`, `SuggestionOutput` with Field descriptions
+      - ✅ **Tool Annotations**: All tools have proper hints (readOnly, idempotent, openWorld)
+      - ✅ **Comprehensive error handling**: Try-except with actionable error messages (ValueError for validation, RuntimeError for execution)
+      - ✅ **Auto schema generation**: Input schemas automatically generated from type hints
+      - ✅ **Auto serialization**: Returns Pydantic models, FastMCP handles JSON serialization
     - **Design principles**:
-      - ❌ No AI parsing (no OpenAI API key dependency)
-      - ✅ Zero configuration
-      - ✅ Simple structured parameters
-      - ✅ Client-side natural language handling
-    - **Implementation**: Uses MCP SDK's `@server.list_tools()` and `@server.call_tool()` decorators
+      - ✅ Zero configuration (no API keys required)
+      - ✅ Type-safe with full type hints
+      - ✅ Read-only operations (all tools marked with readOnlyHint=True)
+      - ✅ Structured output for machine readability
+    - **Implementation details**:
+      - Uses `@mcp.tool(annotations=ToolAnnotations(...))` for tool registration
+      - Docstrings automatically become tool descriptions (supports markdown formatting)
+      - Parameter validation with clear error messages
+      - Async-first design for all I/O operations
     - **Transport**: stdio (standard input/output)
-    - Entry point: `gurume mcp` command
+    - **Entry point**: `gurume mcp` command or `python -m gurume.server`
+    - **File size**: 505 lines (refactored from 286 lines with low-level Server API)
 
 11. **__init__.py** - Public API exports
    - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`

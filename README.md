@@ -72,48 +72,61 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
 }
 ```
 
-**Available Tools**:
+**Available Tools** (FastMCP-powered with automatic schema generation):
 
-1. **`search_restaurants`** - Search restaurants by area, keyword, or cuisine type
+1. **`tabelog_search_restaurants`** - Search restaurants by area, keyword, or cuisine type
    - Parameters:
      - `area` (optional): Prefecture/city name (e.g., "東京", "大阪", "三重")
-     - `keyword` (optional): Search keyword (e.g., "寿司", "ラーメン")
-     - `cuisine` (optional): Precise cuisine filter (e.g., "すき焼き", "焼肉")
+     - `keyword` (optional): Search keyword for restaurant names (e.g., "和田金")
+     - `cuisine` (optional): Precise cuisine filter (e.g., "すき焼き", "焼肉") - **RECOMMENDED** for cuisine searches
      - `sort` (optional): "ranking" | "review-count" | "new-open" | "standard" (default: "ranking")
      - `limit` (optional): Max results 1-60 (default: 20)
-   - Returns: Array of restaurants with name, rating, reviews, area, genres, URL, prices
+   - Returns: Array of `RestaurantOutput` with name, rating, reviews, area, genres, URL, prices
+   - Annotations: `readOnly=true`, `openWorld=true`
 
-2. **`list_cuisines`** - Get all 45+ supported Japanese cuisine types
+2. **`tabelog_list_cuisines`** - Get all 45+ supported Japanese cuisine types
    - Parameters: None
-   - Returns: Array of `{name, code}` for all supported cuisines
+   - Returns: Array of `CuisineOutput` with `{name, code}` for all supported cuisines
+   - Annotations: `readOnly=true`, `idempotent=true`
 
-3. **`get_area_suggestions`** - Get area/station suggestions
+3. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API
    - Parameters:
      - `query` (required): Area search query (e.g., "東京", "渋谷")
-   - Returns: Array of suggestions with name, type, coordinates
+   - Returns: Array of `SuggestionOutput` with name, datatype, id, coordinates
+   - Annotations: `readOnly=true`, `openWorld=true`
 
-4. **`get_keyword_suggestions`** - Get keyword/cuisine/restaurant suggestions
+4. **`tabelog_get_keyword_suggestions`** - Get keyword/cuisine/restaurant suggestions from Tabelog API
    - Parameters:
      - `query` (required): Keyword search query (e.g., "すき", "寿司")
-   - Returns: Array of dynamic suggestions including cuisine types and restaurant names
+   - Returns: Array of `SuggestionOutput` with dynamic suggestions (cuisine types, restaurant names, combinations)
+   - Annotations: `readOnly=true`, `openWorld=true`
 
 **Usage Examples** (in Claude Desktop):
 ```
 User: Find top-rated sukiyaki restaurants in Mie prefecture
-Claude: [Uses search_restaurants with area="三重", cuisine="すき焼き", sort="ranking"]
+Claude: [Uses tabelog_search_restaurants with area="三重", cuisine="すき焼き", sort="ranking"]
 
 User: What cuisine types can I search for?
-Claude: [Uses list_cuisines to show all 45+ options]
+Claude: [Uses tabelog_list_cuisines to show all 45+ options]
 
 User: I want to search near Shibuya station
-Claude: [Uses get_area_suggestions with query="渋谷" to show area options]
+Claude: [Uses tabelog_get_area_suggestions with query="渋谷" to show area options]
 ```
+
+**Architecture** (SKILL.md compliant):
+- ✅ **FastMCP Framework**: Automatic schema generation from type hints
+- ✅ **Pydantic Output Schemas**: Type-safe structured responses
+- ✅ **Tool Annotations**: Proper hints for LLM understanding (readOnly, idempotent, openWorld)
+- ✅ **Comprehensive Error Handling**: Actionable error messages with next steps
+- ✅ **Auto-Serialization**: Returns Pydantic models, framework handles JSON conversion
 
 **Design Principles**:
 - ✅ **Zero Configuration**: No API keys required
+- ✅ **Type-Safe**: Full type hints with automatic validation
 - ✅ **Simple Parameters**: Direct structured inputs (area, keyword, cuisine)
 - ✅ **Client-Side NLP**: AI clients handle natural language parsing
 - ✅ **Accurate Filtering**: Uses Tabelog genre codes for precise cuisine filtering
+- ✅ **Read-Only Operations**: All tools are safe, non-destructive queries
 
 **Testing the MCP Server**:
 ```bash
