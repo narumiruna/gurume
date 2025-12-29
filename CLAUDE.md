@@ -80,6 +80,7 @@ The codebase has the following main files:
    - `query_restaurants()` function: Cached convenience function for quick searches
    - Key methods: `_build_params()`, `_parse_restaurants()`, `search_sync()`, `search()`
    - **Area filtering**: Uses area slug paths (e.g., `/tokyo/rstLst/`) for accurate prefecture-level filtering
+   - **Cuisine filtering**: Supports `genre_code` parameter for precise cuisine type filtering (e.g., `RC0107` for すき焼き)
 
 2. **search.py** - Higher-level search API with metadata and pagination
    - `SearchRequest` dataclass: Wraps `RestaurantSearchRequest` with pagination support
@@ -89,6 +90,7 @@ The codebase has the following main files:
    - Supports multi-page scraping via `max_pages` parameter
    - Both sync (`search_sync()`) and async (`search()`) methods
    - **Area filtering**: Automatically uses area slug paths when prefecture can be mapped
+   - **Cuisine filtering**: Supports `genre_code` parameter for URL path construction with cuisine types
 
 3. **area_mapping.py** - Area name to URL slug mapping
    - `PREFECTURE_MAPPING`: Maps all 47 prefectures to Tabelog URL slugs
@@ -96,23 +98,34 @@ The codebase has the following main files:
    - `get_area_slug()`: Converts area names (東京都, 大阪府) to URL slugs (tokyo, osaka)
    - **Purpose**: Enables accurate area filtering by using Tabelog's path-based filtering
 
-4. **suggest.py** - Area suggestion API integration
+4. **genre_mapping.py** - Cuisine type to genre code mapping
+   - `GENRE_CODE_MAPPING`: Maps 45+ Japanese cuisine types to Tabelog genre codes (RC codes)
+   - `get_genre_code()`: Converts cuisine name (すき焼き) to genre code (RC0107)
+   - `get_genre_name_by_code()`: Reverse lookup from genre code to cuisine name
+   - `get_all_genres()`: Returns list of all supported cuisine types
+   - **Purpose**: Enables accurate cuisine filtering via URL path-based genre codes
+   - **Coverage**: Supports common Japanese cuisine types (和食, 洋食, 中華, 焼肉, 鍋, 居酒屋, カレー, カフェ, etc.)
+
+5. **suggest.py** - Area suggestion API integration
    - `AreaSuggestion` dataclass: Represents area/station suggestions from Tabelog
    - `get_area_suggestions()`: Sync function to get area suggestions
    - `get_area_suggestions_async()`: Async function to get area suggestions
    - **API**: Uses `https://tabelog.com/internal_api/suggest_form_words`
 
-5. **tui.py** - Interactive terminal UI using Textual framework
+6. **tui.py** - Interactive terminal UI using Textual framework
    - `TabelogApp`: Main TUI application class
    - `SearchPanel`: Search input panel with area, keyword, and sorting options
    - `ResultsTable`: DataTable for displaying restaurant results
    - `DetailPanel`: Panel showing detailed restaurant information
    - `AreaSuggestModal`: Modal popup for area suggestions (F2 key)
-   - Features: RadioButton sorting, two-column layout, async worker management, area autocomplete
+   - `GenreSuggestModal`: Modal popup for cuisine type selection (F4 key)
+   - **Auto-detection**: Automatically detects cuisine names in keyword input and converts to genre_code
+   - Features: RadioButton sorting, two-column layout, async worker management, area/cuisine autocomplete
+   - Keybindings: F2 (area suggest), F3 (AI parse), F4 (cuisine select), s (search), r (results), d (detail), q (quit)
    - Entry point: `python -m tabelog.tui` or `uv run tabelog tui`
 
-6. **__init__.py** - Public API exports
-   - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`
+7. **__init__.py** - Public API exports
+   - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`
 
 ### API Patterns
 
@@ -136,6 +149,16 @@ The library provides **three levels of abstraction**:
   - **Implementation**: `area_mapping.py` maps prefecture names to URL slugs, automatically used in search methods
   - **Limitation**: Only works for 47 prefectures + major cities; city/station-level filtering not supported
   - **Fallback**: If area cannot be mapped to slug, falls back to `/rst/rstsearch` (returns national results)
+- **Cuisine filtering** (CRITICAL):
+  - **Problem**: Using `keyword` parameter for cuisine types returns broad results (restaurants mentioning the cuisine, not specialists)
+  - **Solution**: Use genre codes in URL path (e.g., `/mie/rstLst/RC0107/` for すき焼き specialists in 三重)
+  - **Implementation**: `genre_mapping.py` maps cuisine names to genre codes, automatically used in search methods
+  - **URL patterns**: Three combinations supported:
+    - Area + Cuisine: `/area_slug/rstLst/GENRE_CODE/` (most precise)
+    - Area only: `/area_slug/rstLst/`
+    - Cuisine only: `/rstLst/GENRE_CODE/`
+  - **Coverage**: 45+ common Japanese cuisine types with RC codes (RC0107-RC2101)
+  - **Auto-detection**: TUI automatically detects cuisine names in keyword input and converts to genre_code
 - **Error handling**: Gracefully skips malformed items during parsing (try/except with continue)
 - **Caching**: `query_restaurants()` uses `@cache` decorator for performance
 - **User-Agent**: All requests include browser User-Agent to avoid bot detection
