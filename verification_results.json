@@ -1,0 +1,203 @@
+{
+  "metadata": {
+    "timestamp": "2025-12-30T13:08:12.231213",
+    "total_tests": 14,
+    "python_version": "3.12.7 (main, Oct 16 2024, 04:37:19) [Clang 18.1.8 ]"
+  },
+  "analysis": {
+    "total_tests": 14,
+    "successful": 14,
+    "failed": 0,
+    "success_rate": 100.0,
+    "by_type": {
+      "area_only": {
+        "total": 2,
+        "successful": 2
+      },
+      "cuisine_only": {
+        "total": 2,
+        "successful": 2
+      },
+      "area_cuisine": {
+        "total": 7,
+        "successful": 7
+      },
+      "area_keyword": {
+        "total": 3,
+        "successful": 3
+      }
+    },
+    "average_duration": 1.51,
+    "total_restaurants_found": 287
+  },
+  "results": [
+    {
+      "test_name": "札幌_ハンバーグ_keyword",
+      "area": "札幌",
+      "keyword": "ハンバーグ",
+      "cuisine": null,
+      "genre_code": null,
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.27,
+      "timestamp": "2025-12-30T13:07:52.333382"
+    },
+    {
+      "test_name": "東京_すき焼き_cuisine",
+      "area": "東京",
+      "keyword": null,
+      "cuisine": "すき焼き",
+      "genre_code": "RC0107",
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 1.49,
+      "timestamp": "2025-12-30T13:07:53.825838"
+    },
+    {
+      "test_name": "大阪_ラーメン_cuisine",
+      "area": "大阪",
+      "keyword": null,
+      "cuisine": "ラーメン",
+      "genre_code": "RC0501",
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 1.38,
+      "timestamp": "2025-12-30T13:07:55.208274"
+    },
+    {
+      "test_name": "京都_寿司_cuisine",
+      "area": "京都",
+      "keyword": null,
+      "cuisine": "寿司",
+      "genre_code": "RC0201",
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 1.4,
+      "timestamp": "2025-12-30T13:07:56.606921"
+    },
+    {
+      "test_name": "三重_すき焼き_cuisine",
+      "area": "三重",
+      "keyword": null,
+      "cuisine": "すき焼き",
+      "genre_code": "RC0107",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.38,
+      "timestamp": "2025-12-30T13:07:57.989260"
+    },
+    {
+      "test_name": "すき焼き_cuisine_only",
+      "area": null,
+      "keyword": null,
+      "cuisine": "すき焼き",
+      "genre_code": "RC0107",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.53,
+      "timestamp": "2025-12-30T13:07:59.517738"
+    },
+    {
+      "test_name": "ラーメン_cuisine_only",
+      "area": null,
+      "keyword": null,
+      "cuisine": "ラーメン",
+      "genre_code": "RC0501",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 2.1,
+      "timestamp": "2025-12-30T13:08:01.613064"
+    },
+    {
+      "test_name": "東京_寿司_keyword",
+      "area": "東京",
+      "keyword": "寿司",
+      "cuisine": null,
+      "genre_code": null,
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 2.08,
+      "timestamp": "2025-12-30T13:08:03.697517"
+    },
+    {
+      "test_name": "大阪_焼肉_keyword",
+      "area": "大阪",
+      "keyword": "焼肉",
+      "cuisine": null,
+      "genre_code": null,
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 1.55,
+      "timestamp": "2025-12-30T13:08:05.251690"
+    },
+    {
+      "test_name": "東京_area_only",
+      "area": "東京",
+      "keyword": null,
+      "cuisine": null,
+      "genre_code": null,
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 1.97,
+      "timestamp": "2025-12-30T13:08:07.221673"
+    },
+    {
+      "test_name": "大阪_area_only",
+      "area": "大阪",
+      "keyword": null,
+      "cuisine": null,
+      "genre_code": null,
+      "success": true,
+      "restaurant_count": 21,
+      "error": null,
+      "duration_seconds": 0.29,
+      "timestamp": "2025-12-30T13:08:07.516002"
+    },
+    {
+      "test_name": "福岡_居酒屋_cuisine",
+      "area": "福岡",
+      "keyword": null,
+      "cuisine": "居酒屋",
+      "genre_code": "RC1701",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.44,
+      "timestamp": "2025-12-30T13:08:08.953713"
+    },
+    {
+      "test_name": "札幌_ラーメン_cuisine",
+      "area": "札幌",
+      "keyword": null,
+      "cuisine": "ラーメン",
+      "genre_code": "RC0501",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.31,
+      "timestamp": "2025-12-30T13:08:10.259469"
+    },
+    {
+      "test_name": "名古屋_うなぎ_cuisine",
+      "area": "名古屋",
+      "keyword": null,
+      "cuisine": "うなぎ",
+      "genre_code": "RC0701",
+      "success": true,
+      "restaurant_count": 20,
+      "error": null,
+      "duration_seconds": 1.96,
+      "timestamp": "2025-12-30T13:08:12.223441"
+    }
+  ]
+}
