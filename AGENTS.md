@@ -24,3 +24,16 @@ Recent history favors short imperative messages such as `fix lint errors`, `remo
 
 ## Security & Configuration Tips
 Do not commit secrets. Natural-language parsing in the CLI uses `OPENAI_API_KEY`, typically provided through a local `.env` file. Treat scraped upstream HTML as unstable: prefer defensive parsing, clear exceptions, and tests that lock in expected behavior.
+
+## MEMORY.md
+
+- `docs/MEMORY.md` is not auto-loaded. Check it before non-trivial debugging or design work when prior project context may matter.
+- Keep entries short and reusable.
+- `docs/MEMORY.md` must use `## GOTCHA` and `## TASTE` sections.
+- After a non-trivial error or discovery, add one concise entry if it will help future work.
+
+## LOG.md
+
+- Append ONE line to the end of `docs/LOG.md`.
+- Format: `YYYY-MM-DD | type(scope): summary (#ref)`.
+- Do not modify existing content.
