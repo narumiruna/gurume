@@ -1,324 +1,147 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides working guidance for Claude Code and similar coding agents in this repository.
 
 ## Project Overview
 
-This is **gurume** - a Python library and MCP (Model Context Protocol) server for searching restaurants on Tabelog using web scraping. It provides both a Python library (`gurume`) and an MCP server (`gurume`) for integration with AI assistants.
+`gurume` is a Python library and MCP server for searching restaurants on Tabelog via web scraping.
+The repository includes:
 
-**See also**: [IDEAS.md](IDEAS.md) - Feature ideas, improvements, and development notes
+- a Python package under `src/gurume/`
+- a CLI exposed as `gurume`
+- a Textual TUI
+- an MCP server for AI assistant integrations
+
+Use this document as an agent-facing execution guide. For user-facing setup and usage examples, see `README.md`.
+
+## Working Principles
+
+- Prefer existing project tooling and patterns over new abstractions.
+- Keep changes tightly scoped to the task.
+- Add or update tests when behavior changes.
+- Treat scraped upstream HTML and internal APIs as unstable inputs.
+- Verify commands and assumptions against the current repo before documenting them.
+
+## Repository Map
+
+### Core code
+
+- `src/gurume/restaurant.py`: core scraping request/response logic
+- `src/gurume/search.py`: higher-level search API with metadata and pagination
+- `src/gurume/detail.py`: restaurant detail fetching and parsing
+- `src/gurume/suggest.py`: area and keyword suggestion API integration
+- `src/gurume/server.py`: FastMCP server tools
+- `src/gurume/cli.py`: Typer CLI entrypoints
+- `src/gurume/tui.py`: Textual terminal UI
+- `src/gurume/cache.py` and `src/gurume/retry.py`: resilience helpers
+- `src/gurume/area_mapping.py` and `src/gurume/genre_mapping.py`: mapping helpers for precise filtering
+
+### Supporting directories
+
+- `tests/`: unit and integration tests, usually mirroring module names
+- `examples/`: runnable usage examples
+- `scripts/`: verification or one-off helper scripts
 
 ## Development Commands
 
-### Testing
-```bash
-# Run all tests with coverage
-make test
-# or
-uv run pytest -v -s --cov=src tests
+Use `uv` for Python execution and dependency management.
 
-# Run specific test file
-uv run pytest tests/test_models.py -v
-uv run pytest tests/test_restaurant.py -v
-uv run pytest tests/test_search.py -v
+### Setup
+
+```bash
+uv sync --dev
 ```
 
-### Code Quality
+### Checks
+
 ```bash
-# Run linter
 make lint
-# or
-uv run ruff check .
-
-# Run type checker (重要！每次修改程式碼後都要執行)
 make type
-# or
+make test
+```
+
+Equivalent direct commands:
+
+```bash
+uv run ruff check .
 uv run ty check .
-
-# 完整檢查流程
-uv run ruff check .  # 程式碼風格檢查
-uv run ty check .    # 型別檢查
-uv run pytest -v     # 執行測試
+uv run pytest -v -s --cov=src tests
 ```
 
-### Publishing
-```bash
-make publish  # Builds wheel and publishes to PyPI
-```
+### Run locally
 
-### Running Examples
 ```bash
-# Basic search example
 uv run python examples/basic_search.py
-```
-
-### Running MCP Server
-```bash
-# Via entry point (requires installation)
 uv run gurume mcp
-
-# Local development
-uv run --directory /path/to/gurume gurume mcp
-
-# Direct execution
-uv run python -m gurume.server
+uv run gurume tui
 ```
 
-## Architecture
+## Coding Guidance
 
-### Core Modules (src/gurume/)
+### Python conventions
 
-The codebase has the following main files:
+- Target Python 3.12+.
+- Keep full type hints on public and non-trivial internal functions.
+- Use built-in generic syntax such as `list[str]` and `X | None`.
+- Follow Ruff configuration in `pyproject.toml`.
+- Respect the configured 120-character line length.
 
-1. **restaurant.py** - Core scraping and search implementation
-   - `Restaurant` dataclass: Represents restaurant data (name, rating, reviews, prices, etc.)
-   - `RestaurantSearchRequest` dataclass: Builds search URLs and scrapes Tabelog
-   - `SortType` enum: Search sorting options (STANDARD, RANKING, REVIEW_COUNT, NEW_OPEN)
-   - `PriceRange` enum: Extensive lunch/dinner price ranges (B001-B012, C001-C012)
-   - `query_restaurants()` function: Cached convenience function for quick searches
-   - Key methods: `_build_params()`, `_parse_restaurants()`, `search_sync()`, `search()`
-   - **Area filtering**: Uses area slug paths (e.g., `/tokyo/rstLst/`) for accurate prefecture-level filtering
-   - **Cuisine filtering**: Supports `genre_code` parameter for precise cuisine type filtering (e.g., `RC0107` for すき焼き)
-   - **Caching and retry**: Integrated with cache.py and retry.py via `use_cache` and `use_retry` parameters (both default to True)
+### Design expectations
 
-2. **cache.py** - Caching system for HTTP responses (🆕)
-   - `CacheEntry` dataclass: Stores data with timestamp and TTL
-   - `MemoryCache` class: In-memory cache with LRU eviction
-     - Default: 1000 entries max, 1 hour TTL
-     - Methods: `get()`, `set()`, `clear()`, `size()`
-     - Automatic oldest entry eviction when full
-   - `FileCache` class: File-based persistent cache
-     - Stores as JSON with SHA256 hashed filenames
-     - Useful for development and debugging
-   - Global cache functions:
-     - `get_cache()`: Returns global cache instance
-     - `set_cache()`: Sets cache backend (memory or file)
-     - `generate_cache_key()`: Creates consistent keys from URL + params
-     - `cached_get()`: Get from cache with force refresh option
-     - `cache_set()`: Store to cache with custom TTL
-     - `clear_cache()`: Clear all entries
-   - **Integration**: Automatically used in `RestaurantSearchRequest.search_sync()` and `.search()` with 30-min TTL
+- Keep modules focused. Split files before they become difficult to scan.
+- Avoid adding dependencies unless there is a concrete need.
+- Reuse existing request, parsing, cache, retry, and mapping helpers when possible.
+- Prefer explicit behavior over clever abstractions.
 
-3. **retry.py** - Retry and resilience mechanisms (🆕)
-   - `is_retryable_error()`: Checks if exception should trigger retry
-   - `handle_http_errors()`: Converts HTTP errors to custom exceptions
-   - `fetch_with_retry()`: Sync fetch with automatic retry
-     - Max 3 attempts with exponential backoff (1s, 2s, 4s)
-     - Retries on: ConnectError, TimeoutException, NetworkError, 5xx errors
-     - Raises: RateLimitError (429), NetworkError (other errors)
-   - `fetch_with_retry_async()`: Async version with manual retry loop
-   - Configuration: `DEFAULT_MAX_ATTEMPTS=3`, `DEFAULT_MIN_WAIT=1`, `DEFAULT_MAX_WAIT=10`
-   - Uses `tenacity` library for retry decorators with exponential backoff and jitter
-   - **Integration**: Automatically used in `RestaurantSearchRequest.search_sync()` and `.search()` when `use_retry=True`
+## Testing Expectations
 
-4. **search.py** - Higher-level search API with metadata and pagination
-   - `SearchRequest` dataclass: Wraps `RestaurantSearchRequest` with pagination support
-   - `SearchResponse` dataclass: Structured response with status and metadata
-   - `SearchMeta` dataclass: Total counts, page info, navigation flags
-   - `SearchStatus` enum: SUCCESS, NO_RESULTS, ERROR
-   - Supports multi-page scraping via `max_pages` parameter
-   - Both sync (`search_sync()`) and async (`search()`) methods
-   - **Area filtering**: Automatically uses area slug paths when prefecture can be mapped
-   - **Cuisine filtering**: Supports `genre_code` parameter for URL path construction with cuisine types
+- Put tests in `tests/` using names like `test_<feature>.py`.
+- Prefer focused unit tests with mocks for HTTP boundaries.
+- Add integration coverage only when workflow behavior matters.
+- When changing scraping, parsing, CLI, TUI, or MCP behavior, update the corresponding tests in the same change.
 
-5. **area_mapping.py** - Area name to URL slug mapping
-   - `PREFECTURE_MAPPING`: Maps all 47 prefectures to Tabelog URL slugs
-   - `CITY_MAPPING`: Maps major cities to URL slugs (tokyo, osaka, kyoto, etc.)
-   - `get_area_slug()`: Converts area names (東京都, 大阪府) to URL slugs (tokyo, osaka)
-   - **Purpose**: Enables accurate area filtering by using Tabelog's path-based filtering
+Useful examples:
 
-6. **genre_mapping.py** - Cuisine type to genre code mapping
-   - `GENRE_CODE_MAPPING`: Maps 45+ Japanese cuisine types to Tabelog genre codes (RC codes)
-   - `get_genre_code()`: Converts cuisine name (すき焼き) to genre code (RC0107)
-   - `get_genre_name_by_code()`: Reverse lookup from genre code to cuisine name
-   - `get_all_genres()`: Returns list of all supported cuisine types
-   - **Purpose**: Enables accurate cuisine filtering via URL path-based genre codes
-   - **Coverage**: Supports common Japanese cuisine types (和食, 洋食, 中華, 焼肉, 鍋, 居酒屋, カレー, カフェ, etc.)
+```bash
+uv run pytest tests/test_search.py -v
+uv run pytest tests/test_server.py -v
+uv run pytest tests/test_detail.py -v
+```
 
-7. **suggest.py** - Area and keyword suggestion API integration
-   - `AreaSuggestion` dataclass: Represents area/station suggestions from Tabelog
-   - `KeywordSuggestion` dataclass: Represents keyword suggestions (cuisine types, restaurant names, combinations)
-   - `get_area_suggestions()`: Sync function to get area suggestions
-   - `get_area_suggestions_async()`: Async function to get area suggestions
-   - `get_keyword_suggestions()`: Sync function to get keyword suggestions (🆕)
-   - `get_keyword_suggestions_async()`: Async function to get keyword suggestions (🆕)
-   - **API**: Uses `https://tabelog.com/internal_api/suggest_form_words`
-     - `sa=query`: Area suggestions (prefecture, city, station)
-     - `sk=query`: Keyword suggestions (cuisine, restaurant, combinations) (🆕)
-   - **Response datatypes**:
-     - Area: `AddressMaster`, `RailroadStation`
-     - Keyword: `Genre2` (cuisine type), `Restaurant` (restaurant name), `Genre2 DetailCondition` (cuisine + condition)
+## Project-Specific Gotchas
 
-8. **cli.py** - Command-line interface using Typer and Rich
-   - `app`: Main Typer application instance
-   - `search()`: Search restaurants with various filters (area, keyword, cuisine, query, sort, limit, output format)
-   - `list_cuisines()`: Display all supported cuisine types in a table
-   - `tui()`: Launch the interactive TUI
-   - **Output formats**: table (Rich table), json (structured JSON), simple (plain text)
-   - **Features**: Color-coded output, error handling, cuisine auto-detection, genre code filtering, AI natural language parsing
-   - **CLI options**: -a/--area, -k/--keyword, -c/--cuisine, -q/--query (🆕), -s/--sort, -n/--limit, -o/--output
-   - **Natural language query (-q)**: Uses `llm.parse_user_input()` to parse user input in multiple languages (Chinese, Japanese, English)
-   - **Auto-detection**: Automatically detects cuisine types in keyword and converts to genre_code for precise filtering
-   - Entry point: `gurume search` or direct execution
+### Scraping behavior
 
-9. **tui.py** - Interactive terminal UI using Textual framework
-   - `TabelogApp`: Main TUI application class
-   - `SearchPanel`: Search input panel with area, keyword, and sorting options
-   - `ResultsTable`: DataTable for displaying restaurant results
-   - `DetailPanel`: Panel showing detailed restaurant information
-   - `AreaSuggestModal`: Modal popup for area suggestions (F2 key)
-   - `GenreSuggestModal`: Modal popup for static cuisine type list (F3 key, when keyword is empty)
-   - `KeywordSuggestModal`: Modal popup for dynamic keyword suggestions (F3 key, when keyword has content) (🆕)
-   - **Intelligent F3 behavior** (🆕):
-     - Empty keyword → Shows `GenreSuggestModal` with 45+ static cuisine types (fast, no API call)
-     - Non-empty keyword → Calls API and shows `KeywordSuggestModal` with dynamic suggestions (cuisine types, restaurant names, combinations)
-     - Icon differentiation: 🍜 (Genre2/cuisine), 🏪 (Restaurant), 🔖 (combinations)
-   - **Auto-detection**: Automatically detects cuisine names in keyword input and converts to genre_code
-   - **Smart linking**: AI parse (F4) automatically triggers area suggest (F2) or genre suggest (F3) after parsing
-   - Features: RadioButton sorting, two-column layout, async worker management, context-aware autocomplete
-   - Keybindings: F2 (area suggest), F3 (intelligent keyword/genre suggest), F4 (AI parse), s (search), r (results), d (detail), q (quit)
-   - Entry point: `python -m gurume.tui` or `uv run gurume tui`
+- Tabelog markup changes without warning. Write parsing logic defensively.
+- CSS selectors and HTML structures are not stable contracts.
+- Skip malformed items gracefully when possible, but keep failures debuggable.
 
-10. **server.py** - MCP (Model Context Protocol) server implementation using FastMCP (🔄 Refactored)
-    - `mcp`: FastMCP server instance (high-level API)
-    - **Tools** (4 total, all with `tabelog_` prefix):
-      - `tabelog_search_restaurants`: Search restaurants with area, keyword, cuisine, sort, limit parameters
-      - `tabelog_list_cuisines`: Get all 45+ cuisine types with genre codes
-      - `tabelog_get_area_suggestions`: Get area/station suggestions from Tabelog API
-      - `tabelog_get_keyword_suggestions`: Get keyword/cuisine/restaurant suggestions from Tabelog API
-    - **Architecture** (符合 SKILL.md 規範):
-      - ✅ **FastMCP API**: Uses `@mcp.tool()` decorator for automatic schema generation
-      - ✅ **Pydantic Output Schemas**: `RestaurantOutput`, `CuisineOutput`, `SuggestionOutput` with Field descriptions
-      - ✅ **Tool Annotations**: All tools have proper hints (readOnly, idempotent, openWorld)
-      - ✅ **Comprehensive error handling**: Try-except with actionable error messages (ValueError for validation, RuntimeError for execution)
-      - ✅ **Auto schema generation**: Input schemas automatically generated from type hints
-      - ✅ **Auto serialization**: Returns Pydantic models, FastMCP handles JSON serialization
-    - **Design principles**:
-      - ✅ Zero configuration (no API keys required)
-      - ✅ Type-safe with full type hints
-      - ✅ Read-only operations (all tools marked with readOnlyHint=True)
-      - ✅ Structured output for machine readability
-    - **Implementation details**:
-      - Uses `@mcp.tool(annotations=ToolAnnotations(...))` for tool registration
-      - Docstrings automatically become tool descriptions (supports markdown formatting)
-      - Parameter validation with clear error messages
-      - Async-first design for all I/O operations
-    - **Transport**: stdio (standard input/output)
-    - **Entry point**: `gurume mcp` command or `python -m gurume.server`
-    - **File size**: 505 lines (refactored from 286 lines with low-level Server API)
+### Area filtering
 
-11. **__init__.py** - Public API exports
-   - Exports: `Restaurant`, `RestaurantSearchRequest`, `SearchRequest`, `SearchResponse`, `SortType`, `PriceRange`, `query_restaurants`, `AreaSuggestion`, `get_area_suggestions`, `get_area_suggestions_async`, `get_genre_code`, `get_genre_name_by_code`, `get_all_genres`
+- Do not assume `sa=<area>` query parameters produce correct area filtering.
+- Accurate prefecture-level filtering depends on path-based area slugs such as `/tokyo/rstLst/`.
+- If an area cannot be mapped, current behavior may fall back to broader results.
 
-### API Patterns
+### Cuisine filtering
 
-The library provides **three levels of abstraction**:
+- Cuisine searches should prefer genre-code-based URL paths over plain keyword matching.
+- `genre_mapping.py` exists to make cuisine filtering precise; use it before adding new ad hoc matching logic.
 
-1. **Quick function** (simplest): `query_restaurants()` - cached, sync-only
-2. **Core request** (flexible): `RestaurantSearchRequest` - full control, sync/async
-3. **Advanced search** (metadata): `SearchRequest` - pagination, status, metadata
+### Suggestions and details
 
-### Important Implementation Details
+- Suggestion endpoints and detail pages are upstream-controlled and may change response shape.
+- Preserve defensive parsing and actionable error messages when touching these flows.
 
-- **Web scraping**: Uses `httpx` for requests and `BeautifulSoup` (lxml parser) for HTML parsing
-- **CSS selectors**: Relies on specific Tabelog CSS classes (`list-rst`, `c-rating__val`, etc.)
-- **HTML format handling**: Supports multiple Tabelog HTML formats for backward compatibility:
-  - New format: `<div class="list-rst__area-genre"> [縣] 市區 / 類型</div>` (優先)
-  - Old format: `<span class="list-rst__area-genre">地區、駅名 距離</span>` (fallback)
-  - Genre extraction: Parses from area-genre field and separate `list-rst__genre` element
-- **Area filtering** (CRITICAL):
-  - **Problem**: Tabelog's `/rst/rstsearch?sa=area` endpoint DOES NOT filter by area - always returns national results
-  - **Solution**: Use path-based URLs (e.g., `/tokyo/rstLst/` instead of `/rst/rstsearch?sa=東京`)
-  - **Implementation**: `area_mapping.py` maps prefecture names to URL slugs, automatically used in search methods
-  - **Limitation**: Only works for 47 prefectures + major cities; city/station-level filtering not supported
-  - **Fallback**: If area cannot be mapped to slug, falls back to `/rst/rstsearch` (returns national results)
-- **Cuisine filtering** (CRITICAL):
-  - **Problem**: Using `keyword` parameter for cuisine types returns broad results (restaurants mentioning the cuisine, not specialists)
-  - **Solution**: Use genre codes in URL path (e.g., `/mie/rstLst/RC0107/` for すき焼き specialists in 三重)
-  - **Implementation**: `genre_mapping.py` maps cuisine names to genre codes, automatically used in search methods
-  - **URL patterns**: Three combinations supported:
-    - Area + Cuisine: `/area_slug/rstLst/GENRE_CODE/` (most precise)
-    - Area only: `/area_slug/rstLst/`
-    - Cuisine only: `/rstLst/GENRE_CODE/`
-  - **Coverage**: 45+ common Japanese cuisine types with RC codes (RC0107-RC2101)
-  - **Auto-detection**: TUI automatically detects cuisine names in keyword input and converts to genre_code
-- **Keyword/Cuisine suggestion API** (NEW - discovered 2025-12-29):
-  - **Endpoint**: `https://tabelog.com/internal_api/suggest_form_words`
-  - **Parameters**:
-    - `sa=query`: Area suggestions (prefecture, station, city)
-    - `sk=query`: Keyword suggestions (cuisine, restaurant names, combinations) (🆕)
-  - **Response structure**: JSON array with `name`, `datatype`, `id_in_datatype`, optional `lat`/`lng`
-  - **datatypes** for keyword (`sk`):
-    - `Genre2`: Cuisine type (すき焼き, 寿司, ラーメン)
-    - `Restaurant`: Restaurant name (和田金, すきやき割烹 美川)
-    - `Genre2 DetailCondition`: Cuisine + condition (すき焼き ランチ, 寿司 接待)
-  - **Usage in TUI**: F3 key intelligently switches between static genre list (empty keyword) and dynamic API suggestions (non-empty keyword)
-- **Error handling**: Gracefully skips malformed items during parsing (try/except with continue)
-- **Caching**: `query_restaurants()` uses `@cache` decorator for performance
-- **User-Agent**: All requests include browser User-Agent to avoid bot detection
-- **Date/time format**: Validates `YYYYMMDD` for dates, `HHMM` for times in `__post_init__`
-- **String cleaning**: Auto-strips whitespace from `area` and `keyword` parameters
+## MCP and CLI Notes
 
-## Testing Strategy
+- The MCP server is implemented with FastMCP in `src/gurume/server.py`.
+- Keep tool outputs structured and validation errors clear.
+- CLI and TUI behavior should stay aligned with the underlying search APIs.
+- If you change parameters or output behavior in one interface, verify whether the others should change too.
 
-- **Location**: All tests in `tests/` directory
-- **Current coverage**: 71% overall, 87-94% on core modules (target: 90%+)
-- **Total tests**: 101 tests (all passing ✓)
-- **Test types**:
-  - Unit tests: Models, validation, parameter building, caching, retry logic
-  - Function tests: HTTP requests, HTML parsing, error handling
-  - Integration tests: End-to-end search workflows
-- **New test files** (🆕):
-  - `test_cache.py`: 12 tests for MemoryCache, FileCache, and cache helpers
-  - `test_retry.py`: 11 tests for retry logic, error handling, and exponential backoff
-- **Mocking**: Mock `httpx.get` and `httpx.AsyncClient` for HTTP tests (no real network calls)
-- **Async**: Uses `pytest-asyncio` with `AsyncMock` for async operations
-- **Performance**: All tests run in ~6 seconds with mocking (no actual retry delays)
-- **Note**: TUI (tui.py) and CLI (cli.py) currently have 0% coverage (UI modules)
+## Documentation Hygiene
 
-## Type Annotations
-
-- **Required**: Full type hints on all functions
-- **Style**: Built-in types only (e.g., `list[str]`, `dict[str, Any]`, `X | None`)
-- **Checker**: Uses `ty` (configured in Makefile and pyproject.toml)
-- **py.typed marker**: Present in `src/gurume/py.typed` for library consumers
-
-## Code Style
-
-- **Formatter/Linter**: ruff with specific rules (see pyproject.toml)
-- **Line length**: 120 characters max
-- **Import sorting**: Single-line imports enforced (`force-single-line = true`)
-- **Ignored**: E501, C901 per pyproject.toml
-- **Selected rules**: B (bugbear), C (comprehensions), E/W (pycodestyle), F (pyflakes), I (isort), N (naming), SIM (simplify), UP (pyupgrade)
-
-## Pre-commit Hooks
-
-Configured in `.pre-commit-config.yaml`:
-1. Basic checks (YAML, EOF, trailing whitespace)
-2. Ruff (lint + format)
-3. MyPy (type checking)
-4. UV lock file sync
-
-## Key Constraints & Considerations
-
-- **Web scraping fragility**: Tabelog's HTML structure may change without notice
-- **Rate limiting**: No built-in rate limiting - users must implement for production use
-- **Legal compliance**: Library is for educational/research purposes - respect robots.txt and ToS
-- **Fallback selectors**: Parser includes backup CSS selectors for robustness
-- **MCP server** (🆕): Fully implemented in `server.py` with 4 tools, zero-config design, no API key required
-
-## Dependencies
-
-**Production**:
-- `beautifulsoup4` - HTML parsing
-- `lxml` - BeautifulSoup parser backend
-- `httpx` - HTTP client (sync + async)
-- `loguru` - Logging
-- `mcp[cli]` - MCP server framework
-- `typer` - CLI framework
-- `tenacity` - Retry logic with exponential backoff (🆕)
-
-**Development**:
-- `pytest`, `pytest-asyncio`, `pytest-cov` - Testing
-- `ruff` - Linting/formatting
-- `ty` - Type checking
+- Keep this file short, operational, and current.
+- Do not duplicate large sections of `README.md` or `AGENTS.md`.
+- Remove stale details instead of preserving them for completeness.
+- If commands, tooling, or workflows change, update this file in the same PR.
