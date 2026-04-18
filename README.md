@@ -247,7 +247,7 @@ TUI 特色：
 - 🎯 **自動料理識別**：在關鍵字欄位輸入料理名稱，自動轉換為精確過濾
 - ✅ **準確地區過濾**：支援 47 個都道府縣的地區限制
 
-詳細使用說明請參考 [TUI_USAGE.md](TUI_USAGE.md)
+For detailed TUI usage instructions, see [TUI_USAGE.md](docs/TUI_USAGE.md).
 
 ### Basic Search (程式庫)
 
