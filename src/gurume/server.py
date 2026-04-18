@@ -259,14 +259,12 @@ async def tabelog_search_restaurants(
         sort_type = sort_map[sort_lower]
 
         # Validate reservation_date format (YYYYMMDD)
-        if reservation_date is not None:
-            if not reservation_date.isdigit() or len(reservation_date) != 8:
-                raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
+        if reservation_date is not None and (not reservation_date.isdigit() or len(reservation_date) != 8):
+            raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
 
         # Validate reservation_time format (HHMM)
-        if reservation_time is not None:
-            if not reservation_time.isdigit() or len(reservation_time) != 4:
-                raise ValueError("reservation_time must be in HHMM format (e.g., '1900' for 7:00 PM)")
+        if reservation_time is not None and (not reservation_time.isdigit() or len(reservation_time) != 4):
+            raise ValueError("reservation_time must be in HHMM format (e.g., '1900' for 7:00 PM)")
 
         # Validate party_size
         if party_size is not None and party_size < 1:
