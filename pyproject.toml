@@ -1,53 +1,62 @@
 [project]
-name = "gurume"
-version = "0.0.5"
-description = ""
-readme = "README.md"
-authors = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+name            = "gurume"
+version         = "0.0.5"
+description     = ""
+readme          = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "beautifulsoup4>=4.13.4",
-    "loguru>=0.7.3",
-    "lxml>=6.0.2",
-    "mcp[cli]>=1.13.0",
-    "openai>=2.14.0",
-    "tenacity>=9.1.2",
-    "textual>=6.11.0",
-    "typer>=0.16.0",
+authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+dependencies    = [
+  "beautifulsoup4>=4.13.4",
+  "loguru>=0.7.3",
+  "lxml>=6.0.2",
+  "mcp[cli]>=1.13.0",
+  "openai>=2.14.0",
+  "tenacity>=9.1.2",
+  "textual>=6.11.0",
+  "typer>=0.16.0",
 ]
 
 [project.scripts]
 gurume = "gurume.cli:main"
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [dependency-groups]
 dev = [
-    "pytest>=8.3.3",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.0.0",
-    "ruff>=0.7.3",
-    "ty>=0.0.7",
+  "pytest>=8.3.3",
+  "pytest-asyncio>=1.1.0",
+  "pytest-cov>=6.0.0",
+  "ruff>=0.7.3",
+  "ty>=0.0.7",
 ]
 
+[build-system]
+requires      = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.bumpversion]
+current_version  = "0.0.5"
+tag              = true
+commit           = true
+pre_commit_hooks = ["uv lock", "git add uv.lock"]
+
+[tool.pytest]
+filterwarnings = ["ignore::DeprecationWarning"]
+
 [tool.ruff]
-exclude = ["build"]
+exclude     = ["build"]
 line-length = 120
 
 [tool.ruff.lint]
 ignore = ["E501", "C901"]
 select = [
-    "B",   # flake8-bugbear
-    "C",   # flake8-comprehensions
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "N",   # pep8-naming
-    "SIM", # flake8-simplify
-    "UP",  # pyupgrade
-    "W",   # pycodestyle warnings
+  "B",                     # flake8-bugbear
+  "C",                     # flake8-comprehensions
+  "E",                     # pycodestyle errors
+  "F",                     # pyflakes
+  "I",                     # isort
+  "N",                     # pep8-naming
+  "SIM",                   # flake8-simplify
+  "UP",                    # pyupgrade
+  "W",                     # pycodestyle warnings
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -56,14 +65,9 @@ select = [
 [tool.ruff.lint.isort]
 force-single-line = true
 
-[tool.pytest.ini_options]
-filterwarnings = ["ignore::DeprecationWarning"]
+[tool.tombi.files]
+exclude = ["uv.lock"]
 
-[tool.mypy]
-ignore_missing_imports = true
-
-[tool.bumpversion]
-current_version = "0.0.5"
-tag = true
-commit = true
-pre_commit_hooks = ["uv lock", "git add uv.lock"]
+[tool.tombi.format.rules]
+key-value-equals-sign-alignment = true
+trailing-comment-alignment      = true
