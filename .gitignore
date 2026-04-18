@@ -139,3 +139,6 @@ dmypy.json
 
 # Playwright files
 .playwright-mcp/
+
+# Codex CLI
+.codex
