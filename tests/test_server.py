@@ -164,6 +164,35 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
 
 
 @pytest.mark.asyncio
+async def test_search_restaurants_with_reservation_filters(sample_restaurants):
+    """Test restaurant search forwards reservation filters to SearchRequest"""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=None,
+    )
+
+    with patch("gurume.server.SearchRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.search = AsyncMock(return_value=mock_response)
+
+        results = await tabelog_search_restaurants(
+            area="東京",
+            reservation_date="20260427",
+            reservation_time="1900",
+            party_size=2,
+        )
+
+        assert len(results) == 2
+        mock_request.search.assert_awaited_once()
+        mock_request_class.assert_called_once()
+
+        assert mock_request_class.call_args.kwargs["reservation_date"] == "20260427"
+        assert mock_request_class.call_args.kwargs["reservation_time"] == "1900"
+        assert mock_request_class.call_args.kwargs["party_size"] == 2
+
+
+@pytest.mark.asyncio
 async def test_search_restaurants_limit_applied(sample_restaurants):
     """Test that limit parameter is correctly applied"""
     # Create 5 sample restaurants
@@ -205,6 +234,20 @@ async def test_search_restaurants_invalid_sort():
     """Test validation of sort parameter"""
     with pytest.raises(ValueError, match="Invalid sort type"):
         await tabelog_search_restaurants(sort="invalid-sort-type")
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_invalid_reservation_date():
+    """Test validation of reservation_date parameter"""
+    with pytest.raises(ValueError, match="reservation_date must be in YYYYMMDD format"):
+        await tabelog_search_restaurants(reservation_date="2026-04-27")
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_invalid_reservation_time():
+    """Test validation of reservation_time parameter"""
+    with pytest.raises(ValueError, match="reservation_time must be in HHMM format"):
+        await tabelog_search_restaurants(reservation_time="19:00")
 
 
 @pytest.mark.asyncio
