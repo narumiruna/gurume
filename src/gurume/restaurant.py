@@ -4,7 +4,7 @@ import contextlib
 import re
 from dataclasses import dataclass
 from dataclasses import field
-from enum import Enum
+from enum import StrEnum
 from functools import cache
 from typing import Any
 
@@ -18,8 +18,15 @@ from .exceptions import InvalidParameterError
 from .retry import fetch_with_retry
 from .retry import fetch_with_retry_async
 
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/91.0.4472.124 Safari/537.36"
+)
+ITEM_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 
-class SortType(str, Enum):
+
+class SortType(StrEnum):
     """排序方式"""
 
     STANDARD = "trend"  # 標準【PR店舗優先順】
@@ -28,7 +35,7 @@ class SortType(str, Enum):
     NEW_OPEN = "nod"  # ニューオープン
 
 
-class PriceRange(str, Enum):
+class PriceRange(StrEnum):
     """價格範圍"""
 
     LUNCH_UNDER_1000 = "B001"  # ランチ ～￥999
@@ -109,7 +116,7 @@ class RestaurantSearchRequest:
     smoking_allowed: bool = False
     card_accepted: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # 自動去除 area/keyword 前後空白
         if self.area is not None:
             self.area = self.area.strip()
@@ -136,15 +143,23 @@ class RestaurantSearchRequest:
 
     def _build_params(self) -> dict[str, Any]:
         """構建搜尋參數"""
-        params = {}
+        params: dict[str, str] = {
+            "SrtT": self.sort_type.value,
+            "PG": str(self.page),
+        }
+        self._apply_basic_params(params)
+        self._apply_reservation_params(params)
+        self._apply_filter_params(params)
+        self._apply_feature_params(params)
+        return params
 
-        # 基本參數
+    def _apply_basic_params(self, params: dict[str, str]) -> None:
         if self.area:
             params["sa"] = self.area
         if self.keyword:
             params["sk"] = self.keyword
 
-        # 預約參數
+    def _apply_reservation_params(self, params: dict[str, str]) -> None:
         if self.reservation_date:
             params["svd"] = self.reservation_date
         if self.reservation_time:
@@ -152,16 +167,9 @@ class RestaurantSearchRequest:
         if self.party_size:
             params["svps"] = str(self.party_size)
 
-        # 排序
-        params["SrtT"] = self.sort_type.value
-
-        # 分頁
-        params["PG"] = str(self.page)
-
-        # 過濾條件
+    def _apply_filter_params(self, params: dict[str, str]) -> None:
         if self.price_range:
             params["LstCos"] = self.price_range.value
-
         if self.online_booking_only:
             params["ChkOnlineBooking"] = "1"
         if self.seat_only:
@@ -169,7 +177,7 @@ class RestaurantSearchRequest:
         if self.new_open:
             params["ChkNewOpen"] = "1"
 
-        # 餐廳特色
+    def _apply_feature_params(self, params: dict[str, str]) -> None:
         if self.has_private_room:
             params["ChkRoom"] = "1"
         if self.has_parking:
@@ -178,8 +186,6 @@ class RestaurantSearchRequest:
             params["LstSmoking"] = "1"
         if self.card_accepted:
             params["ChkCard"] = "1"
-
-        return params
 
     def _parse_restaurants(self, html: str) -> list[Restaurant]:
         """解析餐廳資訊"""
@@ -200,147 +206,148 @@ class RestaurantSearchRequest:
 
         for item in restaurant_items:
             try:
-                # 基本資訊
-                name_elem = item.find("a", class_="list-rst__rst-name-target")
-                if not name_elem:
-                    # 備用選擇器
-                    name_elem = item.find("a", href=True)
-                    if not name_elem:
-                        continue
-
-                name = name_elem.get_text(strip=True)
-                href = name_elem.get("href", "")
-                url = href if href.startswith("http") else "https://tabelog.com" + href
-
-                # 評分
-                rating = None
-                rating_elem = item.find("span", class_="c-rating__val")
-                if rating_elem:
-                    with contextlib.suppress(ValueError):
-                        rating = float(rating_elem.get_text(strip=True))
-
-                # 評論數
-                review_count = None
-                review_elem = item.find("em", class_="list-rst__rvw-count-num")
-                if review_elem:
-                    with contextlib.suppress(ValueError):
-                        review_count = int(review_elem.get_text(strip=True))
-
-                # 儲存數
-                save_count = None
-                save_elem = item.find("span", class_="list-rst__save-count-num")
-                if not save_elem:
-                    save_elem = item.find("em", class_="list-rst__save-count-num")
-                if save_elem:
-                    with contextlib.suppress(ValueError):
-                        save_count = int(save_elem.get_text(strip=True).replace(",", ""))
-
-                # 地區和料理類型 - 嘗試處理多種格式
-                area = None
-                station = None
-                distance = None
-                genres = []
-
-                # area/genre 可能是 div 或 span
-                area_genre_elem = item.find(class_="list-rst__area-genre")
-                if area_genre_elem:
-                    area_genre_text = area_genre_elem.get_text(strip=True)
-                    area_genre_text = area_genre_text.strip()
-
-                    # 格式: [縣] 市區 / 類型
-                    if "/" in area_genre_text:
-                        parts = area_genre_text.split("/")
-                        if len(parts) >= 2:
-                            area_part = parts[0].strip()
-                            area = area_part.split("]")[-1].strip() if "]" in area_part else area_part
-
-                            genre_part = parts[1].strip()
-                            if genre_part:
-                                genres = [genre_part]
-
-                    # 格式: 地區、最寄り駅 距離 (例如: 祇園、祇園四条駅 200m)
-                    elif "、" in area_genre_text:
-                        parts = [p.strip() for p in area_genre_text.split("、") if p.strip()]
-                        if parts:
-                            area = parts[0]
-                        if len(parts) >= 2:
-                            # 第二部分可能包含駅與距離
-                            station_part = parts[1]
-                            # 取出距離 (e.g., 200m)
-                            m = re.search(r"(\d+\s?m)", station_part)
-                            if m:
-                                distance = m.group(1).replace(" ", "")
-                            # 取出車站名稱 (包含 '駅')
-                            s = re.search(r"([^\d]+駅)", station_part)
-                            if s:
-                                station = s.group(1).strip()
-
-                    # 其他簡單格式: 只是市區或地名
-                    else:
-                        # 移除方括號中的縣名，保留市區
-                        area = area_genre_text.split("]")[-1].strip() if "]" in area_genre_text else area_genre_text
-
-                # 描述
-                description = None
-                desc_elem = item.find("div", class_="list-rst__catch")
-                if desc_elem:
-                    description = desc_elem.get_text(strip=True)
-
-                # 價格
-                lunch_price = None
-                dinner_price = None
-                price_elem = item.find("span", class_="list-rst__budget-val")
-                if price_elem:
-                    price_text = price_elem.get_text(strip=True)
-                    if "ランチ" in price_text:
-                        lunch_price = price_text
-                    elif "ディナー" in price_text:
-                        dinner_price = price_text
-
-                # 特色標記
-                has_vpoint = bool(item.find("span", class_="c-badge-tpoint"))
-                has_reservation = bool(item.find("div", class_="list-rst__booking-btn"))
-
-                # 圖片
-                image_urls = []
-                img_elem = item.find("img", class_="list-rst__photo-img")
-                if img_elem and img_elem.get("src"):
-                    image_urls.append(img_elem.get("src"))
-
-                # 額外的 genre 來源 (有時使用單獨的元素列出多個料理)
-                genre_elem = item.find(class_="list-rst__genre")
-                if genre_elem:
-                    text = genre_elem.get_text(strip=True)
-                    # 分割例如: 日本料理、懐石
-                    extra = [g.strip() for g in text.split("、") if g.strip()]
-                    for g in extra:
-                        if g and g not in genres:
-                            genres.append(g)
-
-                restaurant = Restaurant(
-                    name=name,
-                    url=url,
-                    rating=rating,
-                    review_count=review_count,
-                    save_count=save_count,
-                    area=area,
-                    station=station,
-                    distance=distance,
-                    genres=genres,
-                    description=description,
-                    lunch_price=lunch_price,
-                    dinner_price=dinner_price,
-                    has_vpoint=has_vpoint,
-                    has_reservation=has_reservation,
-                    image_urls=image_urls,
-                )
-                restaurants.append(restaurant)
-
-            except Exception:
+                restaurant = self._parse_restaurant_item(item)
+                if restaurant is not None:
+                    restaurants.append(restaurant)
+            except ITEM_PARSE_EXCEPTIONS:
                 # 跳過解析錯誤的項目
                 continue
 
         return restaurants
+
+    def _parse_restaurant_item(self, item: Any) -> Restaurant | None:
+        name, url = self._parse_basic_info(item)
+        if not name:
+            return None
+
+        review_count, save_count, rating = self._parse_counts(item)
+        area, station, distance, genres = self._parse_area_and_genres(item)
+        description = self._get_text(item.find("div", class_="list-rst__catch"))
+        lunch_price, dinner_price = self._parse_prices(item)
+
+        return Restaurant(
+            name=name,
+            url=url,
+            rating=rating,
+            review_count=review_count,
+            save_count=save_count,
+            area=area,
+            station=station,
+            distance=distance,
+            genres=self._merge_genres(item, genres),
+            description=description,
+            lunch_price=lunch_price,
+            dinner_price=dinner_price,
+            has_vpoint=bool(item.find("span", class_="c-badge-tpoint")),
+            has_reservation=bool(item.find("div", class_="list-rst__booking-btn")),
+            image_urls=self._parse_image_urls(item),
+        )
+
+    def _parse_basic_info(self, item: Any) -> tuple[str | None, str]:
+        name_elem = item.find("a", class_="list-rst__rst-name-target") or item.find("a", href=True)
+        if not name_elem:
+            return None, ""
+
+        href = name_elem.get("href", "")
+        url = href if href.startswith("http") else f"https://tabelog.com{href}"
+        return name_elem.get_text(strip=True), url
+
+    def _parse_counts(self, item: Any) -> tuple[int | None, int | None, float | None]:
+        rating = self._parse_float(item.find("span", class_="c-rating__val"))
+        review_count = self._parse_int(item.find("em", class_="list-rst__rvw-count-num"))
+        save_elem = item.find("span", class_="list-rst__save-count-num") or item.find(
+            "em", class_="list-rst__save-count-num"
+        )
+        save_count = self._parse_int(save_elem, strip_commas=True)
+        return review_count, save_count, rating
+
+    def _parse_area_and_genres(self, item: Any) -> tuple[str | None, str | None, str | None, list[str]]:
+        area = None
+        station = None
+        distance = None
+        genres: list[str] = []
+        area_genre_elem = item.find(class_="list-rst__area-genre")
+        if not area_genre_elem:
+            return area, station, distance, genres
+
+        area_genre_text = area_genre_elem.get_text(strip=True).strip()
+        if "/" in area_genre_text:
+            parts = area_genre_text.split("/")
+            if len(parts) >= 2:
+                area = self._strip_prefecture(parts[0].strip())
+                genre_part = parts[1].strip()
+                if genre_part:
+                    genres = [genre_part]
+            return area, station, distance, genres
+
+        if "、" in area_genre_text:
+            parts = [p.strip() for p in area_genre_text.split("、") if p.strip()]
+            if parts:
+                area = parts[0]
+            if len(parts) >= 2:
+                station_part = parts[1]
+                distance_match = re.search(r"(\d+\s?m)", station_part)
+                if distance_match:
+                    distance = distance_match.group(1).replace(" ", "")
+                station_match = re.search(r"([^\d]+駅)", station_part)
+                if station_match:
+                    station = station_match.group(1).strip()
+            return area, station, distance, genres
+
+        return self._strip_prefecture(area_genre_text), station, distance, genres
+
+    def _parse_prices(self, item: Any) -> tuple[str | None, str | None]:
+        lunch_price = None
+        dinner_price = None
+        price_elem = item.find("span", class_="list-rst__budget-val")
+        if not price_elem:
+            return lunch_price, dinner_price
+
+        price_text = price_elem.get_text(strip=True)
+        if "ランチ" in price_text:
+            lunch_price = price_text
+        elif "ディナー" in price_text:
+            dinner_price = price_text
+        return lunch_price, dinner_price
+
+    def _merge_genres(self, item: Any, genres: list[str]) -> list[str]:
+        genre_elem = item.find(class_="list-rst__genre")
+        if not genre_elem:
+            return genres
+
+        for genre in [g.strip() for g in genre_elem.get_text(strip=True).split("、") if g.strip()]:
+            if genre not in genres:
+                genres.append(genre)
+        return genres
+
+    def _parse_image_urls(self, item: Any) -> list[str]:
+        img_elem = item.find("img", class_="list-rst__photo-img")
+        if img_elem and img_elem.get("src"):
+            return [img_elem.get("src")]
+        return []
+
+    def _get_text(self, element: Any) -> str | None:
+        return element.get_text(strip=True) if element else None
+
+    def _parse_float(self, element: Any) -> float | None:
+        if not element:
+            return None
+        with contextlib.suppress(ValueError):
+            return float(element.get_text(strip=True))
+        return None
+
+    def _parse_int(self, element: Any, *, strip_commas: bool = False) -> int | None:
+        if not element:
+            return None
+        value = element.get_text(strip=True)
+        if strip_commas:
+            value = value.replace(",", "")
+        with contextlib.suppress(ValueError):
+            return int(value)
+        return None
+
+    def _strip_prefecture(self, text: str) -> str:
+        return text.split("]")[-1].strip() if "]" in text else text
 
     def search_sync(self, use_cache: bool = True, use_retry: bool = True) -> list[Restaurant]:
         """同步執行搜尋
@@ -353,10 +360,7 @@ class RestaurantSearchRequest:
             餐廳列表
         """
         params = self._build_params()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
+        headers = {"User-Agent": USER_AGENT}
 
         # 構建 URL：考慮地區和料理類別
         url = "https://tabelog.com/rst/rstsearch"
@@ -414,10 +418,7 @@ class RestaurantSearchRequest:
             餐廳列表
         """
         params = self._build_params()
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
+        headers = {"User-Agent": USER_AGENT}
 
         # 構建 URL：考慮地區和料理類別
         url = "https://tabelog.com/rst/rstsearch"
@@ -447,7 +448,7 @@ class RestaurantSearchRequest:
 
         # 執行請求（使用或不使用重試）
         if use_retry:
-            resp = await fetch_with_retry_async(url=url, params=params, headers=headers, timeout=30.0)
+            resp = await fetch_with_retry_async(url=url, params=params, headers=headers, request_timeout=30.0)
         else:
             async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
                 resp = await client.get(

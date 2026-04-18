@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
+
+from openai import OpenAIError
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.containers import Horizontal
 from textual.containers import Vertical
+from textual.css.query import NoMatches
 from textual.screen import ModalScreen
 from textual.widgets import Button
 from textual.widgets import DataTable
@@ -19,6 +24,7 @@ from textual.widgets import OptionList
 from textual.widgets import RadioButton
 from textual.widgets import RadioSet
 from textual.widgets import Static
+from textual.worker import WorkerCancelled
 
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
@@ -30,6 +36,9 @@ from .suggest import AreaSuggestion
 from .suggest import KeywordSuggestion
 from .suggest import get_area_suggestions_async
 from .suggest import get_keyword_suggestions_async
+
+TUI_UPDATE_EXCEPTIONS = (NoMatches, WorkerCancelled)
+TUI_ACTION_EXCEPTIONS = (OpenAIError, RuntimeError, ValueError)
 
 
 class AreaSuggestModal(ModalScreen[str]):
@@ -475,82 +484,24 @@ class TabelogApp(App):
     async def perform_search(self) -> None:
         """執行餐廳搜尋"""
         try:
-            # 取得輸入值
-            area_input = self.query_one("#area-input", Input)
-            keyword_input = self.query_one("#keyword-input", Input)
-
-            area = area_input.value.strip()
-            keyword = keyword_input.value.strip()
-
+            area, keyword = self._get_search_inputs()
             if not area and not keyword:
-                detail_content = self.query_one("#detail-content", Static)
-                detail_content.update("請輸入地區或關鍵字")
+                self.query_one("#detail-content", Static).update("請輸入地區或關鍵字")
                 return
 
-            # 自動偵測 keyword 是否為料理類別名稱
-            genre_code_to_use = self.current_genre_code
-            detected_genre = get_genre_code(keyword) if keyword else None
-            if detected_genre:
-                # 如果 keyword 是已知的料理類別，使用對應的 genre_code
-                genre_code_to_use = detected_genre
-                # 將 keyword 設為空，避免重複搜尋
-                keyword = ""
-
-            # 取得排序方式
-            sort_radio = self.query_one("#sort-radio", RadioSet)
-            pressed_button = sort_radio.pressed_button
-
-            if pressed_button and pressed_button.id == "sort-review":
-                sort_type = SortType.REVIEW_COUNT
-                sort_name = "評論數排序"
-            elif pressed_button and pressed_button.id == "sort-new":
-                sort_type = SortType.NEW_OPEN
-                sort_name = "新開幕"
-            elif pressed_button and pressed_button.id == "sort-standard":
-                sort_type = SortType.STANDARD
-                sort_name = "標準排序"
-            else:
-                sort_type = SortType.RANKING
-                sort_name = "評分排名"
-
-            # 顯示搜尋中訊息
+            genre_code_to_use, keyword = self._resolve_genre_search(keyword)
+            sort_type, sort_name = self._get_sort_selection()
             detail_content = self.query_one("#detail-content", Static)
-            genre_name = ""
-            if genre_code_to_use:
-                from .genre_mapping import get_genre_name_by_code
-
-                genre_name = get_genre_name_by_code(genre_code_to_use) or ""
-            search_params = f"地區: {area or '(無)'}, 關鍵字: {keyword or '(無)'}"
-            if genre_name:
-                search_params += f", 料理類別: {genre_name}"
+            search_params = self._build_search_params_text(area, keyword, genre_code_to_use)
             detail_content.update(f"搜尋中 ({sort_name}): {search_params}...")
 
-            # 建立搜尋請求（使用 Tabelog 的排序和料理類別代碼）
             request = SearchRequest(area=area, keyword=keyword, genre_code=genre_code_to_use, sort_type=sort_type)
-
-            # 執行搜尋
             response = await request.search()
-
-            if response.restaurants:
-                self.restaurants = response.restaurants
-                self.update_results_table()
-                detail_content.update(
-                    f"找到 {len(self.restaurants)} 家餐廳\n搜尋條件: {search_params}\n排序: {sort_name}"
-                )
-            else:
-                self.restaurants = []
-                table = self.query_one("#results-table", ResultsTable)
-                table.clear()
-                detail_content.update("沒有找到餐廳")
-
-        except Exception as e:
-            # 捕獲所有異常，包括搜尋被取消的情況
-            try:
-                detail_content = self.query_one("#detail-content", Static)
-                detail_content.update(f"搜尋錯誤: {str(e)}")
-            except Exception:
-                # 如果連更新 UI 都失敗（例如應用程式正在關閉），就忽略
-                pass
+            self._handle_search_response(response.restaurants, search_params, sort_name)
+        except TUI_ACTION_EXCEPTIONS as e:
+            self._update_search_error(e)
+        except TUI_UPDATE_EXCEPTIONS as e:
+            self._update_search_error(e)
 
     def update_results_table(self) -> None:
         """更新結果表格"""
@@ -565,9 +516,59 @@ class TabelogApp(App):
                 genres = ", ".join(restaurant.genres[:2]) if restaurant.genres else "N/A"
 
                 table.add_row(restaurant.name, rating, review_count, area, genres)
-        except Exception:
-            # 忽略更新表格時的錯誤（例如在搜尋被取消時）
+        except TUI_UPDATE_EXCEPTIONS:
             pass
+
+    def _get_search_inputs(self) -> tuple[str, str]:
+        area_input = self.query_one("#area-input", Input)
+        keyword_input = self.query_one("#keyword-input", Input)
+        return area_input.value.strip(), keyword_input.value.strip()
+
+    def _resolve_genre_search(self, keyword: str) -> tuple[str | None, str]:
+        detected_genre = get_genre_code(keyword) if keyword else None
+        if detected_genre:
+            return detected_genre, ""
+        return self.current_genre_code, keyword
+
+    def _get_sort_selection(self) -> tuple[SortType, str]:
+        sort_radio = self.query_one("#sort-radio", RadioSet)
+        pressed_button = sort_radio.pressed_button
+        if pressed_button and pressed_button.id == "sort-review":
+            return SortType.REVIEW_COUNT, "評論數排序"
+        if pressed_button and pressed_button.id == "sort-new":
+            return SortType.NEW_OPEN, "新開幕"
+        if pressed_button and pressed_button.id == "sort-standard":
+            return SortType.STANDARD, "標準排序"
+        return SortType.RANKING, "評分排名"
+
+    def _build_search_params_text(self, area: str, keyword: str, genre_code: str | None) -> str:
+        genre_name = ""
+        if genre_code:
+            from .genre_mapping import get_genre_name_by_code
+
+            genre_name = get_genre_name_by_code(genre_code) or ""
+
+        search_params = f"地區: {area or '(無)'}, 關鍵字: {keyword or '(無)'}"
+        if genre_name:
+            search_params += f", 料理類別: {genre_name}"
+        return search_params
+
+    def _handle_search_response(self, restaurants: list[Restaurant], search_params: str, sort_name: str) -> None:
+        detail_content = self.query_one("#detail-content", Static)
+        if restaurants:
+            self.restaurants = restaurants
+            self.update_results_table()
+            detail_content.update(f"找到 {len(self.restaurants)} 家餐廳\n搜尋條件: {search_params}\n排序: {sort_name}")
+            return
+
+        self.restaurants = []
+        self.query_one("#results-table", ResultsTable).clear()
+        detail_content.update("沒有找到餐廳")
+
+    def _update_search_error(self, error: BaseException) -> None:
+        message = "搜尋已取消" if isinstance(error, WorkerCancelled) else f"搜尋錯誤: {error!s}"
+        with contextlib.suppress(*TUI_UPDATE_EXCEPTIONS):
+            self.query_one("#detail-content", Static).update(message)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """處理表格行選擇事件"""
@@ -583,15 +584,15 @@ class TabelogApp(App):
         r = self.selected_restaurant
 
         detail_text = f"""名稱: {r.name}
-評分: {r.rating if r.rating else "N/A"}
-評論數: {r.review_count if r.review_count else "N/A"}
-儲存數: {r.save_count if r.save_count else "N/A"}
-地區: {r.area if r.area else "N/A"}
-車站: {r.station if r.station else "N/A"}
-距離: {r.distance if r.distance else "N/A"}
+評分: {r.rating or "N/A"}
+評論數: {r.review_count or "N/A"}
+儲存數: {r.save_count or "N/A"}
+地區: {r.area or "N/A"}
+車站: {r.station or "N/A"}
+距離: {r.distance or "N/A"}
 類型: {", ".join(r.genres) if r.genres else "N/A"}
-午餐價格: {r.lunch_price if r.lunch_price else "N/A"}
-晚餐價格: {r.dinner_price if r.dinner_price else "N/A"}
+午餐價格: {r.lunch_price or "N/A"}
+晚餐價格: {r.dinner_price or "N/A"}
 URL: {r.url}
 """
 
@@ -656,7 +657,12 @@ URL: {r.url}
             # 如果輸入框為空，提示用戶
             detail_content = self.query_one("#detail-content", Static)
             detail_content.update(
-                "💡 請先在關鍵字欄位輸入自然語言\n\n例如：\n• 我想吃三重的壽喜燒\n• 東京的拉麵\n• 大阪難波附近的居酒屋\n\n然後按 F4 使用 AI 解析"
+                "💡 請先在關鍵字欄位輸入自然語言\n\n"
+                "例如：\n"
+                "• 我想吃三重的壽喜燒\n"
+                "• 東京的拉麵\n"
+                "• 大阪難波附近的居酒屋\n\n"
+                "然後按 F4 使用 AI 解析"
             )
             return
 
@@ -665,10 +671,7 @@ URL: {r.url}
         detail_content.update(f"🤖 正在使用 AI 解析「{user_input}」...\n\n請稍候...")
 
         try:
-            # 使用 run_in_executor 在背景執行同步的 parse_user_input
-            import asyncio
-
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, parse_user_input, user_input)
 
             # 更新 area 和 keyword 欄位
@@ -696,7 +699,7 @@ URL: {r.url}
                 # 自動聚焦到搜尋按鈕，方便使用者直接 Enter 搜尋
                 area_input.focus()
 
-        except Exception as e:
+        except TUI_ACTION_EXCEPTIONS as e:
             # 處理錯誤（API 失敗、網路問題等）
             error_msg = str(e)
             detail_content.update(
@@ -776,7 +779,7 @@ URL: {r.url}
 
                 await self.push_screen(KeywordSuggestModal(suggestions), on_dismiss_keyword)
 
-            except Exception as e:
+            except TUI_ACTION_EXCEPTIONS as e:
                 detail_content.update(
                     f"❌ 取得關鍵字建議時發生錯誤\n\n錯誤訊息：{e}\n\n💡 建議：清空關鍵字後按 F3 查看所有料理類別"
                 )

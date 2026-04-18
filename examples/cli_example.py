@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 
@@ -10,41 +11,48 @@ from gurume import SearchRequest
 from gurume import SortType
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
 def format_date(date_str: str) -> str:
     """格式化日期字串"""
     if date_str.lower() == "today":
-        return datetime.now().strftime("%Y%m%d")
-    elif date_str.lower() == "tomorrow":
-        return (datetime.now() + timedelta(days=1)).strftime("%Y%m%d")
-    else:
-        return date_str
+        return _now().strftime("%Y%m%d")
+    if date_str.lower() == "tomorrow":
+        return (_now() + timedelta(days=1)).strftime("%Y%m%d")
+    return date_str
 
 
-async def search_restaurants(args):
+def _validate_enum_value(value: str | None, enum_cls: type[PriceRange] | type[SortType], label: str) -> bool:
+    if value is None:
+        return True
+
+    try:
+        enum_cls(value)
+    except ValueError:
+        print(f"無效的{label}: {value}")
+        return False
+
+    return True
+
+
+async def search_restaurants(args) -> None:
     """搜尋餐廳"""
-    # 處理日期
-    reservation_date = None
-    if args.date:
-        reservation_date = format_date(args.date)
+    reservation_date = format_date(args.date) if args.date else None
+    if not _validate_enum_value(args.price_range, PriceRange, "價格範圍"):
+        return
+    if not _validate_enum_value(args.sort, SortType, "排序方式"):
+        return
 
-    # 處理價格範圍
-    if args.price_range:
-        try:
-            PriceRange(args.price_range)
-        except ValueError:
-            print(f"無效的價格範圍: {args.price_range}")
-            return
+    request = _build_request(args, reservation_date)
+    _print_search_params(args, reservation_date)
+    response = await request.do()
+    _handle_response(response)
 
-    # 處理排序
-    if args.sort:
-        try:
-            SortType(args.sort)
-        except ValueError:
-            print(f"無效的排序方式: {args.sort}")
-            return
 
-    # 創建搜尋請求
-    request = SearchRequest(
+def _build_request(args, reservation_date: str | None) -> SearchRequest:
+    return SearchRequest(
         area=args.area,
         keyword=args.keyword,
         reservation_date=reservation_date,
@@ -54,6 +62,8 @@ async def search_restaurants(args):
         include_meta=True,
     )
 
+
+def _print_search_params(args, reservation_date: str | None) -> None:
     print("搜尋中...")
     print(f"地區: {args.area or '全部'}")
     print(f"關鍵字: {args.keyword or '無'}")
@@ -63,9 +73,8 @@ async def search_restaurants(args):
     print(f"最大頁數: {args.max_pages}")
     print("-" * 50)
 
-    # 執行搜尋
-    response = await request.do()
 
+def _handle_response(response) -> None:
     if response.status == "error":
         print(f"搜尋錯誤: {response.error_message}")
         return
@@ -74,14 +83,21 @@ async def search_restaurants(args):
         print("沒有找到符合條件的餐廳")
         return
 
-    # 顯示元資料
-    if response.meta:
-        print(f"總結果數: {response.meta.total_count}")
-        print(f"顯示頁數: {response.meta.current_page}")
-        print(f"總頁數: {response.meta.total_pages}")
-        print("-" * 50)
+    _print_meta(response)
+    _print_restaurants(response)
 
-    # 顯示結果
+
+def _print_meta(response) -> None:
+    if not response.meta:
+        return
+
+    print(f"總結果數: {response.meta.total_count}")
+    print(f"顯示頁數: {response.meta.current_page}")
+    print(f"總頁數: {response.meta.total_pages}")
+    print("-" * 50)
+
+
+def _print_restaurants(response) -> None:
     for i, restaurant in enumerate(response.restaurants, 1):
         print(f"{i}. {restaurant.name}")
         if restaurant.rating:
@@ -100,7 +116,7 @@ async def search_restaurants(args):
         print()
 
 
-def main():
+def main() -> None:
     """主函數"""
     parser = argparse.ArgumentParser(description="Tabelog 餐廳搜尋工具")
 

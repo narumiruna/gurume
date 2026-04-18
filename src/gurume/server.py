@@ -101,6 +101,84 @@ class SuggestionOutput(BaseModel):
     lng: float | None = Field(description="Longitude (decimal degrees)")
 
 
+SORT_MAP = {
+    "ranking": SortType.RANKING,
+    "review-count": SortType.REVIEW_COUNT,
+    "new-open": SortType.NEW_OPEN,
+    "standard": SortType.STANDARD,
+}
+
+
+def _validate_search_params(
+    sort: str,
+    limit: int,
+    reservation_date: str | None,
+    reservation_time: str | None,
+    party_size: int | None,
+) -> SortType:
+    if limit < 1 or limit > 60:
+        raise ValueError("limit must be between 1 and 60")
+
+    sort_lower = sort.lower()
+    if sort_lower not in SORT_MAP:
+        raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(SORT_MAP)}")
+
+    if reservation_date is not None and (not reservation_date.isdigit() or len(reservation_date) != 8):
+        raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
+
+    if reservation_time is not None and (not reservation_time.isdigit() or len(reservation_time) != 4):
+        raise ValueError("reservation_time must be in HHMM format (e.g., '1900' for 7:00 PM)")
+
+    if party_size is not None and party_size < 1:
+        raise ValueError("party_size must be a positive integer")
+
+    return SORT_MAP[sort_lower]
+
+
+def _resolve_genre_code(cuisine: str | None) -> str | None:
+    if not cuisine:
+        return None
+
+    genre_code = get_genre_code(cuisine)
+    if not genre_code:
+        raise ValueError(f"Unknown cuisine type: {cuisine}. Use 'tabelog_list_cuisines' to see supported cuisines.")
+    return genre_code
+
+
+def _to_restaurant_outputs(response: list, limit: int) -> list[RestaurantOutput]:
+    return [
+        RestaurantOutput(
+            name=r.name,
+            rating=r.rating,
+            review_count=r.review_count,
+            area=r.area,
+            genres=r.genres,
+            url=r.url,
+            lunch_price=r.lunch_price,
+            dinner_price=r.dinner_price,
+        )
+        for r in response[:limit]
+    ]
+
+
+def _to_suggestion_outputs(suggestions: list) -> list[SuggestionOutput]:
+    return [
+        SuggestionOutput(
+            name=s.name,
+            datatype=s.datatype,
+            id_in_datatype=s.id_in_datatype,
+            lat=s.lat,
+            lng=s.lng,
+        )
+        for s in suggestions
+    ]
+
+
+def _reraise_if_fatal(error: BaseException) -> None:
+    if isinstance(error, KeyboardInterrupt | SystemExit):
+        raise error
+
+
 # ============================================================================
 # Tool Implementations
 # ============================================================================
@@ -242,42 +320,8 @@ async def tabelog_search_restaurants(
         RuntimeError: If search operation fails (network error, parsing error, etc.)
     """
     try:
-        # Validate limit
-        if limit < 1 or limit > 60:
-            raise ValueError("limit must be between 1 and 60")
-
-        # Validate and convert sort parameter
-        sort_map = {
-            "ranking": SortType.RANKING,
-            "review-count": SortType.REVIEW_COUNT,
-            "new-open": SortType.NEW_OPEN,
-            "standard": SortType.STANDARD,
-        }
-        sort_lower = sort.lower()
-        if sort_lower not in sort_map:
-            raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(sort_map.keys())}")
-        sort_type = sort_map[sort_lower]
-
-        # Validate reservation_date format (YYYYMMDD)
-        if reservation_date is not None and (not reservation_date.isdigit() or len(reservation_date) != 8):
-            raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
-
-        # Validate reservation_time format (HHMM)
-        if reservation_time is not None and (not reservation_time.isdigit() or len(reservation_time) != 4):
-            raise ValueError("reservation_time must be in HHMM format (e.g., '1900' for 7:00 PM)")
-
-        # Validate party_size
-        if party_size is not None and party_size < 1:
-            raise ValueError("party_size must be a positive integer")
-
-        # Get genre code if cuisine is specified
-        genre_code = None
-        if cuisine:
-            genre_code = get_genre_code(cuisine)
-            if not genre_code:
-                raise ValueError(
-                    f"Unknown cuisine type: {cuisine}. Use 'tabelog_list_cuisines' to see supported cuisines."
-                )
+        sort_type = _validate_search_params(sort, limit, reservation_date, reservation_time, party_size)
+        genre_code = _resolve_genre_code(cuisine)
 
         # Create search request
         request = SearchRequest(
@@ -293,35 +337,25 @@ async def tabelog_search_restaurants(
 
         # Execute search
         response = await request.search()
-
-        # Convert to output schema
-        results = []
-        for r in response.restaurants[:limit]:
-            results.append(
-                RestaurantOutput(
-                    name=r.name,
-                    rating=r.rating,
-                    review_count=r.review_count,
-                    area=r.area,
-                    genres=r.genres,
-                    url=r.url,
-                    lunch_price=r.lunch_price,
-                    dinner_price=r.dinner_price,
-                )
-            )
-
-        return results
-
     except ValueError as e:
         # Re-raise validation errors with clear messages
         raise ValueError(f"Invalid parameters: {e}") from e
-    except Exception as e:
+    except RuntimeError as e:
         # Wrap other errors with context
         raise RuntimeError(
             f"Restaurant search failed: {e}. "
             "Please check your search parameters and try again. "
             "If the problem persists, the Tabelog service may be unavailable."
         ) from e
+    except BaseException as e:
+        _reraise_if_fatal(e)
+        raise RuntimeError(
+            f"Restaurant search failed: {e}. "
+            "Please check your search parameters and try again. "
+            "If the problem persists, the Tabelog service may be unavailable."
+        ) from e
+    else:
+        return _to_restaurant_outputs(response.restaurants, limit)
 
 
 @mcp.tool(
@@ -367,18 +401,17 @@ async def tabelog_list_cuisines() -> list[CuisineOutput]:
     """
     try:
         cuisines = get_all_genres()
-        results = []
-        for cuisine in cuisines:
-            code = get_genre_code(cuisine)
-            if code:  # Only include cuisines with valid codes
-                results.append(CuisineOutput(name=cuisine, code=code))
-
-        return results
-
-    except Exception as e:
+    except ValueError as e:
         raise RuntimeError(
             f"Failed to retrieve cuisine list: {e}. This is an unexpected error as cuisine data is static."
         ) from e
+    except BaseException as e:
+        _reraise_if_fatal(e)
+        raise RuntimeError(
+            f"Failed to retrieve cuisine list: {e}. This is an unexpected error as cuisine data is static."
+        ) from e
+    else:
+        return [CuisineOutput(name=cuisine, code=code) for cuisine in cuisines if (code := get_genre_code(cuisine))]
 
 
 @mcp.tool(
@@ -450,30 +483,23 @@ async def tabelog_get_area_suggestions(query: str) -> list[SuggestionOutput]:
 
         # Call API
         suggestions = await get_area_suggestions_async(query.strip())
-
-        # Convert to output schema
-        results = []
-        for s in suggestions:
-            results.append(
-                SuggestionOutput(
-                    name=s.name,
-                    datatype=s.datatype,
-                    id_in_datatype=s.id_in_datatype,
-                    lat=s.lat,
-                    lng=s.lng,
-                )
-            )
-
-        return results
-
     except ValueError as e:
         raise ValueError(f"Invalid query parameter: {e}") from e
-    except Exception as e:
+    except RuntimeError as e:
         raise RuntimeError(
             f"Area suggestion request failed: {e}. "
             "This may be due to network issues or Tabelog API being temporarily unavailable. "
             "Please try again in a moment."
         ) from e
+    except BaseException as e:
+        _reraise_if_fatal(e)
+        raise RuntimeError(
+            f"Area suggestion request failed: {e}. "
+            "This may be due to network issues or Tabelog API being temporarily unavailable. "
+            "Please try again in a moment."
+        ) from e
+    else:
+        return _to_suggestion_outputs(suggestions)
 
 
 @mcp.tool(
@@ -520,7 +546,8 @@ async def tabelog_get_keyword_suggestions(query: str) -> list[SuggestionOutput]:
        - Best for: Finding a known restaurant by name
 
     3. **'Genre2 DetailCondition'**: Cuisine + condition/modifier
-       - Examples: 'すき焼き ランチ' (sukiyaki lunch), '寿司 接待' (sushi business dinner), 'ラーメン 深夜' (ramen late-night)
+       - Examples: 'すき焼き ランチ' (sukiyaki lunch), '寿司 接待' (sushi business dinner),
+         'ラーメン 深夜' (ramen late-night)
        - USE WITH: Parse into separate parameters (cuisine + keyword or other filters)
        - Best for: Discovering popular search combinations
 
@@ -575,30 +602,23 @@ async def tabelog_get_keyword_suggestions(query: str) -> list[SuggestionOutput]:
 
         # Call API
         suggestions = await get_keyword_suggestions_async(query.strip())
-
-        # Convert to output schema
-        results = []
-        for s in suggestions:
-            results.append(
-                SuggestionOutput(
-                    name=s.name,
-                    datatype=s.datatype,
-                    id_in_datatype=s.id_in_datatype,
-                    lat=s.lat,
-                    lng=s.lng,
-                )
-            )
-
-        return results
-
     except ValueError as e:
         raise ValueError(f"Invalid query parameter: {e}") from e
-    except Exception as e:
+    except RuntimeError as e:
         raise RuntimeError(
             f"Keyword suggestion request failed: {e}. "
             "This may be due to network issues or Tabelog API being temporarily unavailable. "
             "Please try again in a moment."
         ) from e
+    except BaseException as e:
+        _reraise_if_fatal(e)
+        raise RuntimeError(
+            f"Keyword suggestion request failed: {e}. "
+            "This may be due to network issues or Tabelog API being temporarily unavailable. "
+            "Please try again in a moment."
+        ) from e
+    else:
+        return _to_suggestion_outputs(suggestions)
 
 
 # ============================================================================

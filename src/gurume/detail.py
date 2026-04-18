@@ -3,12 +3,20 @@ from __future__ import annotations
 import contextlib
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
 
 from .exceptions import InvalidParameterError
 from .restaurant import Restaurant
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/91.0.4472.124 Safari/537.36"
+)
+DETAIL_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 
 
 @dataclass
@@ -63,7 +71,7 @@ class RestaurantDetailRequest:
     fetch_courses: bool = True
     max_review_pages: int = 1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.restaurant_url:
             raise InvalidParameterError("restaurant_url 不能為空")
 
@@ -89,55 +97,10 @@ class RestaurantDetailRequest:
 
         for item in review_items:
             try:
-                # 評論者名稱
-                reviewer_elem = item.find("a", class_="rvw-item__rvwr-name")
-                if not reviewer_elem:
-                    continue
-                reviewer = reviewer_elem.get_text(strip=True)
-
-                # 評論內容
-                content_elem = item.find("div", class_="rvw-item__rvw-comment")
-                if not content_elem:
-                    continue
-                content = content_elem.get_text(strip=True)
-
-                # 評分
-                rating = None
-                rating_elem = item.find("span", class_="c-rating__val")
-                if rating_elem:
-                    with contextlib.suppress(ValueError):
-                        rating = float(rating_elem.get_text(strip=True))
-
-                # 訪問日期
-                visit_date = None
-                visit_elem = item.find("p", class_="rvw-item__date")
-                if visit_elem:
-                    visit_date = visit_elem.get_text(strip=True)
-
-                # 評論標題
-                title = None
-                title_elem = item.find("p", class_="rvw-item__rvw-title")
-                if title_elem:
-                    title = title_elem.get_text(strip=True)
-
-                # 有用數
-                helpful_count = None
-                helpful_elem = item.find("em", class_="rvw-item__usefulpost-count")
-                if helpful_elem:
-                    with contextlib.suppress(ValueError):
-                        helpful_count = int(helpful_elem.get_text(strip=True))
-
-                review = Review(
-                    reviewer=reviewer,
-                    content=content,
-                    rating=rating,
-                    visit_date=visit_date,
-                    title=title,
-                    helpful_count=helpful_count,
-                )
-                reviews.append(review)
-
-            except Exception:
+                review = self._parse_review(item)
+                if review is not None:
+                    reviews.append(review)
+            except DETAIL_PARSE_EXCEPTIONS:
                 continue
 
         return reviews
@@ -151,40 +114,12 @@ class RestaurantDetailRequest:
         menu_sections = soup.find_all("div", class_="c-offerlist-item")
 
         for section in menu_sections:
-            try:
-                # 分類名稱
-                category_elem = section.find("h4")
-                category = category_elem.get_text(strip=True) if category_elem else None
-
-                # 查找該分類下的所有項目
-                items = section.find_all("dl")
-
-                for item_elem in items:
-                    try:
-                        # 料理名稱
-                        name_elem = item_elem.find("dt")
-                        if not name_elem:
-                            continue
-                        name = name_elem.get_text(strip=True)
-
-                        # 價格
-                        price = None
-                        price_elem = item_elem.find("dd")
-                        if price_elem:
-                            price = price_elem.get_text(strip=True)
-
-                        menu_item = MenuItem(
-                            name=name,
-                            price=price,
-                            category=category,
-                        )
+            category = self._get_text(section.find("h4"))
+            for item_elem in section.find_all("dl"):
+                with contextlib.suppress(*DETAIL_PARSE_EXCEPTIONS):
+                    menu_item = self._parse_menu_item(item_elem, category)
+                    if menu_item is not None:
                         menu_items.append(menu_item)
-
-                    except Exception:
-                        continue
-
-            except Exception:
-                continue
 
         return menu_items
 
@@ -197,53 +132,73 @@ class RestaurantDetailRequest:
         course_items = soup.find_all("div", class_="c-offerlist-item")
 
         for item in course_items:
-            try:
-                # 套餐名稱
-                name_elem = item.find("h4")
-                if not name_elem:
-                    continue
-                name = name_elem.get_text(strip=True)
-
-                # 價格
-                price = None
-                price_elem = item.find("p", class_="c-offerlist-item__price")
-                if price_elem:
-                    price = price_elem.get_text(strip=True)
-
-                # 描述
-                description = None
-                desc_elem = item.find("p", class_="c-offerlist-item__comment")
-                if desc_elem:
-                    description = desc_elem.get_text(strip=True)
-
-                # 套餐內容項目
-                items = []
-                items_elem = item.find("ul")
-                if items_elem:
-                    item_elems = items_elem.find_all("li")
-                    for item_elem in item_elems:
-                        item_text = item_elem.get_text(strip=True)
-                        if item_text:
-                            items.append(item_text)
-
-                course = Course(
-                    name=name,
-                    price=price,
-                    description=description,
-                    items=items,
-                )
-                courses.append(course)
-
-            except Exception:
-                continue
+            with contextlib.suppress(*DETAIL_PARSE_EXCEPTIONS):
+                course = self._parse_course(item)
+                if course is not None:
+                    courses.append(course)
 
         return courses
 
+    def _parse_review(self, item: Any) -> Review | None:
+        reviewer = self._get_required_text(item.find("a", class_="rvw-item__rvwr-name"))
+        content = self._get_required_text(item.find("div", class_="rvw-item__rvw-comment"))
+        return Review(
+            reviewer=reviewer,
+            content=content,
+            rating=self._parse_float(item.find("span", class_="c-rating__val")),
+            visit_date=self._get_text(item.find("p", class_="rvw-item__date")),
+            title=self._get_text(item.find("p", class_="rvw-item__rvw-title")),
+            helpful_count=self._parse_int(item.find("em", class_="rvw-item__usefulpost-count")),
+        )
+
+    def _parse_menu_item(self, item_elem: Any, category: str | None) -> MenuItem | None:
+        name = self._get_required_text(item_elem.find("dt"))
+        return MenuItem(
+            name=name,
+            price=self._get_text(item_elem.find("dd")),
+            category=category,
+        )
+
+    def _parse_course(self, item: Any) -> Course | None:
+        name = self._get_required_text(item.find("h4"))
+        items = []
+        items_elem = item.find("ul")
+        if items_elem:
+            items = [item_text for element in items_elem.find_all("li") if (item_text := element.get_text(strip=True))]
+
+        return Course(
+            name=name,
+            price=self._get_text(item.find("p", class_="c-offerlist-item__price")),
+            description=self._get_text(item.find("p", class_="c-offerlist-item__comment")),
+            items=items,
+        )
+
+    def _get_text(self, element: Any) -> str | None:
+        return element.get_text(strip=True) if element else None
+
+    def _get_required_text(self, element: Any) -> str:
+        text = self._get_text(element)
+        if text is None:
+            raise ValueError("required element missing")
+        return text
+
+    def _parse_float(self, element: Any) -> float | None:
+        if not element:
+            return None
+        with contextlib.suppress(ValueError):
+            return float(element.get_text(strip=True))
+        return None
+
+    def _parse_int(self, element: Any) -> int | None:
+        if not element:
+            return None
+        with contextlib.suppress(ValueError):
+            return int(element.get_text(strip=True))
+        return None
+
     def fetch_sync(self) -> RestaurantDetail:
         """同步抓取餐廳詳細資訊"""
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
+        headers = {"User-Agent": USER_AGENT}
 
         base_url = self._get_base_url()
 
@@ -290,9 +245,7 @@ class RestaurantDetailRequest:
 
     async def fetch(self) -> RestaurantDetail:
         """異步抓取餐廳詳細資訊"""
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
+        headers = {"User-Agent": USER_AGENT}
 
         base_url = self._get_base_url()
 

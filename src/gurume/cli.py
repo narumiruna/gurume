@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
-from enum import Enum
+from collections.abc import Sequence
+from enum import StrEnum
 from typing import Annotated
 
 import typer
+from openai import OpenAIError
 from rich.console import Console
 from rich.table import Table
 
@@ -25,7 +27,7 @@ app = typer.Typer(
 console = Console()
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """輸出格式"""
 
     TABLE = "table"
@@ -33,13 +35,82 @@ class OutputFormat(str, Enum):
     SIMPLE = "simple"
 
 
-class SortOption(str, Enum):
+class SortOption(StrEnum):
     """排序選項"""
 
     RANKING = "ranking"
     REVIEW_COUNT = "review-count"
     NEW_OPEN = "new-open"
     STANDARD = "standard"
+
+
+SORT_TYPE_MAP = {
+    SortOption.RANKING: SortType.RANKING,
+    SortOption.REVIEW_COUNT: SortType.REVIEW_COUNT,
+    SortOption.NEW_OPEN: SortType.NEW_OPEN,
+    SortOption.STANDARD: SortType.STANDARD,
+}
+
+
+def _apply_query_parse(
+    query: str | None,
+    area: str | None,
+    keyword: str | None,
+) -> tuple[str | None, str | None]:
+    if not query:
+        return area, keyword
+
+    console.print(f"[cyan]🤖 使用 AI 解析自然語言：{query}[/cyan]")
+    try:
+        result = parse_user_input(query)
+    except (OpenAIError, RuntimeError, ValueError) as e:
+        console.print(f"[yellow]警告：AI 解析失敗（{e}），請確認 OpenAI API 金鑰已設定[/yellow]")
+        console.print("[yellow]繼續使用原始參數進行搜尋...[/yellow]")
+        return area, keyword
+
+    if not area and result.area:
+        area = result.area
+        console.print(f"[green]  ✓ 解析地區：{area}[/green]")
+    if not keyword and result.keyword:
+        keyword = result.keyword
+        console.print(f"[green]  ✓ 解析關鍵字：{keyword}[/green]")
+    return area, keyword
+
+
+def _resolve_genre_code(cuisine: str | None, keyword: str | None) -> tuple[str | None, str | None]:
+    genre_code = None
+    if cuisine:
+        genre_code = get_genre_code(cuisine)
+        if genre_code:
+            console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
+            return genre_code, keyword
+
+        console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
+        return None, cuisine
+
+    if keyword:
+        detected_genre_code = get_genre_code(keyword)
+        if detected_genre_code:
+            console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
+            return detected_genre_code, keyword
+
+    return None, keyword
+
+
+def _build_json_data(restaurants: Sequence) -> list[dict[str, object]]:
+    return [
+        {
+            "name": r.name,
+            "rating": r.rating,
+            "review_count": r.review_count,
+            "area": r.area,
+            "genres": r.genres,
+            "url": r.url,
+            "lunch_price": r.lunch_price,
+            "dinner_price": r.dinner_price,
+        }
+        for r in restaurants
+    ]
 
 
 @app.command()
@@ -60,50 +131,14 @@ def search(
       gurume search --area 大阪 --cuisine ラーメン -o json
       gurume search -q 三重すきやき
     """
-    # 如果提供了自然語言查詢，自動解析
-    if query:
-        console.print(f"[cyan]🤖 使用 AI 解析自然語言：{query}[/cyan]")
-        try:
-            result = parse_user_input(query)
-            # 只在未提供的情況下填入解析結果
-            if not area and result.area:
-                area = result.area
-                console.print(f"[green]  ✓ 解析地區：{area}[/green]")
-            if not keyword and result.keyword:
-                keyword = result.keyword
-                console.print(f"[green]  ✓ 解析關鍵字：{keyword}[/green]")
-        except Exception as e:
-            console.print(f"[yellow]警告：AI 解析失敗（{e}），請確認 OpenAI API 金鑰已設定[/yellow]")
-            console.print("[yellow]繼續使用原始參數進行搜尋...[/yellow]")
+    area, keyword = _apply_query_parse(query, area, keyword)
 
     if not area and not keyword and not cuisine:
         console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一（或使用 -q 自然語言查詢）[/red]")
         raise typer.Exit(1)
 
-    # 處理料理類別
-    genre_code = None
-    if cuisine:
-        genre_code = get_genre_code(cuisine)
-        if genre_code:
-            console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
-        else:
-            console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
-            keyword = cuisine
-    # 如果沒有指定 cuisine，但 keyword 是料理類型，自動轉換為精確過濾
-    elif keyword:
-        detected_genre_code = get_genre_code(keyword)
-        if detected_genre_code:
-            genre_code = detected_genre_code
-            console.print(f"[cyan]自動偵測料理類別：{keyword} ({genre_code})[/cyan]")
-
-    # 轉換排序選項
-    sort_type_map = {
-        SortOption.RANKING: SortType.RANKING,
-        SortOption.REVIEW_COUNT: SortType.REVIEW_COUNT,
-        SortOption.NEW_OPEN: SortType.NEW_OPEN,
-        SortOption.STANDARD: SortType.STANDARD,
-    }
-    sort_type = sort_type_map[sort]
+    genre_code, keyword = _resolve_genre_code(cuisine, keyword)
+    sort_type = SORT_TYPE_MAP[sort]
 
     # 執行搜尋
     console.print("[green]搜尋中...[/green]")
@@ -163,21 +198,7 @@ def _output_table(restaurants: list) -> None:
 
 def _output_json(restaurants: list) -> None:
     """以 JSON 格式輸出"""
-    data = []
-    for r in restaurants:
-        data.append(
-            {
-                "name": r.name,
-                "rating": r.rating,
-                "review_count": r.review_count,
-                "area": r.area,
-                "genres": r.genres,
-                "url": r.url,
-                "lunch_price": r.lunch_price,
-                "dinner_price": r.dinner_price,
-            }
-        )
-    console.print(json.dumps(data, ensure_ascii=False, indent=2))
+    console.print(json.dumps(_build_json_data(restaurants), ensure_ascii=False, indent=2))
 
 
 def _output_simple(restaurants: list) -> None:

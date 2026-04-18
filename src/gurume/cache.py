@@ -22,6 +22,8 @@ from typing import Any
 
 from loguru import logger
 
+_CACHE_FILE_EXCEPTIONS = (OSError, ValueError, TypeError, json.JSONDecodeError)
+
 
 @dataclass
 class CacheEntry:
@@ -134,7 +136,7 @@ class FileCache:
             return None
 
         try:
-            with open(file_path) as f:
+            with file_path.open() as f:
                 entry_dict = json.load(f)
                 entry = CacheEntry(**entry_dict)
 
@@ -145,7 +147,7 @@ class FileCache:
 
                 logger.debug(f"Cache hit: {key[:50]}...")
                 return entry.data
-        except Exception as e:
+        except _CACHE_FILE_EXCEPTIONS as e:
             logger.warning(f"Failed to read cache file: {e}")
             return None
 
@@ -157,14 +159,14 @@ class FileCache:
         entry = CacheEntry(data=value, timestamp=time.time(), ttl=ttl)
 
         try:
-            with open(file_path, "w") as f:
+            with file_path.open("w") as f:
                 json.dump(
                     {"data": entry.data, "timestamp": entry.timestamp, "ttl": entry.ttl},
                     f,
                     ensure_ascii=False,
                 )
             logger.debug(f"Cache set: {key[:50]}... (ttl={ttl}s)")
-        except Exception as e:
+        except _CACHE_FILE_EXCEPTIONS as e:
             logger.warning(f"Failed to write cache file: {e}")
 
     def clear(self) -> None:

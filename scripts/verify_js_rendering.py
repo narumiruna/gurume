@@ -15,9 +15,11 @@ import sys
 import time
 from dataclasses import asdict
 from dataclasses import dataclass
+from datetime import UTC
 from datetime import datetime
 from pathlib import Path
 
+import httpx
 from rich.console import Console
 from rich.progress import Progress
 from rich.progress import SpinnerColumn
@@ -57,6 +59,10 @@ class TestResult:
     error: str | None
     duration_seconds: float
     timestamp: str
+
+
+def _now_iso() -> str:
+    return datetime.now(UTC).isoformat()
 
 
 def create_test_cases() -> list[TestCase]:
@@ -189,10 +195,10 @@ def run_test_case(test_case: TestCase) -> TestResult:
             restaurant_count=len(restaurants),
             error=None,
             duration_seconds=round(duration, 2),
-            timestamp=datetime.now().isoformat(),
+            timestamp=_now_iso(),
         )
 
-    except Exception as e:
+    except (httpx.HTTPError, RuntimeError, ValueError) as e:
         duration = time.time() - start_time
         console.print(f"[red]Error in {test_case.name}: {e!s}[/red]")
 
@@ -206,7 +212,7 @@ def run_test_case(test_case: TestCase) -> TestResult:
             restaurant_count=0,
             error=str(e),
             duration_seconds=round(duration, 2),
-            timestamp=datetime.now().isoformat(),
+            timestamp=_now_iso(),
         )
 
 
@@ -382,7 +388,7 @@ def main():
     # Save to JSON
     output_data = {
         "metadata": {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": _now_iso(),
             "total_tests": len(results),
             "python_version": sys.version,
         },
