@@ -46,16 +46,22 @@ Step 2: Get keyword/cuisine suggestions (if searching by cuisine/keyword)
 Step 3: Search with validated parameters
 → Use: tabelog_search_restaurants(area=validated_area, cuisine=validated_cuisine)
 
+Optional Step 4: Filter by reservation availability
+→ Add reservation_date='YYYYMMDD', reservation_time='HHMM', party_size=N
+→ Example: reservation_date='20260427', reservation_time='1900', party_size=2
+
 🔑 KEY PRINCIPLES:
 - Cuisine searches: Use `cuisine` parameter (more accurate than `keyword`)
 - Always validate user input with suggestion tools before searching
 - All parameters and results are in Japanese
+- Use reservation filters to check availability on specific dates
 
 Example:
-User: "Find sukiyaki in Tokyo"
+User: "Find sukiyaki in Tokyo available April 27 at 7pm for 2 people"
 1. tabelog_get_area_suggestions(query="Tokyo") → Get "東京都"
 2. tabelog_get_keyword_suggestions(query="sukiyaki") → Get "すき焼き" (Genre2)
-3. tabelog_search_restaurants(area="東京都", cuisine="すき焼き")
+3. tabelog_search_restaurants(area="東京都", cuisine="すき焼き",
+   reservation_date="20260427", reservation_time="1900", party_size=2)
 """,
 )
 
@@ -112,6 +118,9 @@ async def tabelog_search_restaurants(
     cuisine: str | None = None,
     sort: str = "ranking",
     limit: int = 20,
+    reservation_date: str | None = None,
+    reservation_time: str | None = None,
+    party_size: int | None = None,
 ) -> list[RestaurantOutput]:
     """Search for restaurants on Tabelog with precise filtering by area, cuisine type, or keywords.
 
@@ -133,6 +142,7 @@ async def tabelog_search_restaurants(
     - Finding restaurants in a specific area or cuisine type
     - Getting top-rated restaurants based on Tabelog rankings
     - Searching for specific restaurant names or keywords
+    - Filtering by reservation availability on a specific date/time
 
     **PARAMETER GUIDE**:
     - `area`: Geographic filtering (e.g., '東京', '大阪', '三重')
@@ -151,6 +161,19 @@ async def tabelog_search_restaurants(
       - Searches in restaurant names, descriptions, reviews, etc.
       - Less precise than `cuisine` for cuisine-type searches
 
+    - `reservation_date`: Filter by reservation availability on a specific date
+      - Format: 'YYYYMMDD' (e.g., '20260427' for April 27, 2026)
+      - USE: When you need to confirm a restaurant has open slots on a given date
+      - Combine with `reservation_time` and `party_size` for precise availability search
+
+    - `reservation_time`: Filter by reservation availability at a specific time
+      - Format: 'HHMM' in 24-hour time (e.g., '1900' for 7:00 PM, '2030' for 8:30 PM)
+      - USE: Together with `reservation_date` for time-specific availability
+
+    - `party_size`: Filter by number of guests the restaurant can accommodate
+      - Format: Integer (e.g., 2 for a couple, 4 for a group of four)
+      - USE: To ensure the restaurant has capacity for your group size
+
     **IMPORTANT**: `cuisine` parameter provides more accurate results than using cuisine names in `keyword`.
     Example: Use `cuisine='すき焼き'` instead of `keyword='すき焼き'` to find sukiyaki specialists.
 
@@ -160,6 +183,7 @@ async def tabelog_search_restaurants(
     3. Use `keyword` only for restaurant names or non-cuisine searches
     4. Call `tabelog_list_cuisines` first to verify supported cuisine types
     5. Call `tabelog_get_area_suggestions` if user's area name is ambiguous
+    6. Use `reservation_date` + `reservation_time` + `party_size` together for availability filtering
 
     **RETURN FORMAT**:
     Returns list of restaurants with:
@@ -177,6 +201,8 @@ async def tabelog_search_restaurants(
     2. Find top ramen shops in Tokyo: area='東京', cuisine='ラーメン', sort='ranking'
     3. Search for a specific restaurant: keyword='和田金'
     4. Find new restaurants in Osaka: area='大阪', sort='new-open'
+    5. Find available yakiniku in Kyoto on Apr 27 at 7pm for 2: area='京都市', cuisine='焼肉',
+       reservation_date='20260427', reservation_time='1900', party_size=2
 
     Args:
         area: Geographic area to search (prefecture, city, or region name).
@@ -197,12 +223,22 @@ async def tabelog_search_restaurants(
             - 'new-open': Sort by opening date (newest first)
             - 'standard': Tabelog default sorting (relevance)
         limit: Maximum number of results to return (default: 20, max: 60)
+        reservation_date: Filter by reservation availability on a specific date.
+            Format: 'YYYYMMDD' (e.g., '20260427' for April 27, 2026).
+            Must be used with reservation_time for meaningful results.
+        reservation_time: Filter by reservation availability at a specific time.
+            Format: 'HHMM' in 24-hour time (e.g., '1900' for 7:00 PM, '2030' for 8:30 PM).
+            Must be used with reservation_date for meaningful results.
+        party_size: Number of guests to filter by seating capacity.
+            Examples: 2 (couple), 4 (group of four).
+            Combine with reservation_date and reservation_time for full availability check.
 
     Returns:
         List of restaurant search results
 
     Raises:
-        ValueError: If parameters are invalid (e.g., unknown sort type, limit out of range)
+        ValueError: If parameters are invalid (e.g., unknown sort type, limit out of range,
+                    invalid date/time format)
         RuntimeError: If search operation fails (network error, parsing error, etc.)
     """
     try:
@@ -222,6 +258,20 @@ async def tabelog_search_restaurants(
             raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(sort_map.keys())}")
         sort_type = sort_map[sort_lower]
 
+        # Validate reservation_date format (YYYYMMDD)
+        if reservation_date is not None:
+            if not reservation_date.isdigit() or len(reservation_date) != 8:
+                raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
+
+        # Validate reservation_time format (HHMM)
+        if reservation_time is not None:
+            if not reservation_time.isdigit() or len(reservation_time) != 4:
+                raise ValueError("reservation_time must be in HHMM format (e.g., '1900' for 7:00 PM)")
+
+        # Validate party_size
+        if party_size is not None and party_size < 1:
+            raise ValueError("party_size must be a positive integer")
+
         # Get genre code if cuisine is specified
         genre_code = None
         if cuisine:
@@ -236,6 +286,9 @@ async def tabelog_search_restaurants(
             area=area,
             keyword=keyword,
             genre_code=genre_code,
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
+            party_size=party_size,
             sort_type=sort_type,
             max_pages=1,  # Only fetch first page for MCP
         )
