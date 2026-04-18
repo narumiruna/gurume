@@ -94,12 +94,11 @@ def handle_http_errors(response: httpx.Response) -> None:
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 429:
             raise RateLimitError("Rate limit exceeded. Please slow down requests.") from e
-        elif 500 <= e.response.status_code < 600:
+        if 500 <= e.response.status_code < 600:
             raise NetworkError(f"Server error: {e.response.status_code}") from e
-        elif 400 <= e.response.status_code < 500:
+        if 400 <= e.response.status_code < 500:
             raise NetworkError(f"Client error: {e.response.status_code}") from e
-        else:
-            raise NetworkError(f"HTTP error: {e.response.status_code}") from e
+        raise NetworkError(f"HTTP error: {e.response.status_code}") from e
 
 
 @retry_on_failure
@@ -152,7 +151,7 @@ async def fetch_with_retry_async(
     url: str,
     params: dict | None = None,
     headers: dict | None = None,
-    timeout: float = 10.0,
+    request_timeout: float = 10.0,
 ) -> httpx.Response:
     """Fetch URL with automatic retry on transient failures (async version)
 
@@ -160,7 +159,7 @@ async def fetch_with_retry_async(
         url: URL to fetch
         params: Query parameters
         headers: HTTP headers
-        timeout: Request timeout in seconds
+        request_timeout: Request timeout in seconds
 
     Returns:
         HTTP response
@@ -176,7 +175,7 @@ async def fetch_with_retry_async(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
                 response = await client.get(url=url, params=params, headers=headers)
                 handle_http_errors(response)
                 return response

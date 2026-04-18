@@ -6,8 +6,9 @@ from collections.abc import Callable
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
+from datetime import UTC
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 import httpx
 from bs4 import BeautifulSoup
@@ -17,8 +18,20 @@ from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
 
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+SEARCH_EXCEPTIONS = (httpx.HTTPError, RuntimeError, ValueError, TypeError)
 
-class SearchStatus(str, Enum):
+
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+def _reraise_if_fatal(error: BaseException) -> None:
+    if isinstance(error, KeyboardInterrupt | SystemExit):
+        raise error
+
+
+class SearchStatus(StrEnum):
     """搜尋狀態"""
 
     SUCCESS = "success"
@@ -36,7 +49,7 @@ class SearchMeta:
     total_pages: int
     has_next_page: bool
     has_prev_page: bool
-    search_time: datetime = field(default_factory=datetime.now)
+    search_time: datetime = field(default_factory=_now)
 
 
 @dataclass
@@ -216,148 +229,127 @@ class SearchRequest:
             page=page,
         )
 
+    def _build_headers(self) -> dict[str, str]:
+        return {"User-Agent": USER_AGENT}
+
+    def _build_url_and_params(self, request: RestaurantSearchRequest) -> tuple[str, dict[str, str]]:
+        params = request._build_params()
+        url = "https://tabelog.com/rst/rstsearch"
+        area_slug = get_area_slug(self.area) if self.area else None
+
+        if area_slug and self.genre_code:
+            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+            params.pop("sa", None)
+        elif area_slug:
+            url = f"https://tabelog.com/{area_slug}/rstLst/"
+            params.pop("sa", None)
+        elif self.genre_code:
+            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
+
+        return url, params
+
+    def _update_meta(self, meta: SearchMeta | None, html: str, page: int) -> SearchMeta | None:
+        if page != 1 or not self.include_meta:
+            return meta
+
+        meta = self._parse_meta(html, page)
+        if self.max_pages > meta.total_pages:
+            self.max_pages = meta.total_pages
+        return meta
+
+    def _search_page_sync(self, request: RestaurantSearchRequest) -> tuple[str, list[Restaurant]]:
+        url, params = self._build_url_and_params(request)
+        try:
+            resp = httpx.get(
+                url=url,
+                params=params,
+                headers=self._build_headers(),
+                timeout=self.timeout,
+                follow_redirects=True,
+            )
+            resp.raise_for_status()
+        except BaseException as e:
+            _reraise_if_fatal(e)
+            raise RuntimeError(str(e)) from e
+        else:
+            return resp.text, request._parse_restaurants(resp.text)
+
+    async def _search_page_async(
+        self,
+        client: httpx.AsyncClient,
+        request: RestaurantSearchRequest,
+    ) -> tuple[str, list[Restaurant]]:
+        url, params = self._build_url_and_params(request)
+        try:
+            resp = await client.get(url=url, params=params, headers=self._build_headers())
+            resp.raise_for_status()
+        except BaseException as e:
+            _reraise_if_fatal(e)
+            raise RuntimeError(str(e)) from e
+        else:
+            return resp.text, request._parse_restaurants(resp.text)
+
     def search_sync(self) -> SearchResponse:
         """同步執行搜尋"""
         try:
-            all_restaurants = []
+            all_restaurants: list[Restaurant] = []
             meta = None
 
             for page in range(1, self.max_pages + 1):
                 request = self._create_restaurant_request(page)
-
-                # 使用自定義的 HTTP 請求來獲取 HTML (用於解析 meta)
-                params = request._build_params()
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-
-                # 嘗試使用地區路徑（更準確的地區過濾）
-                url = "https://tabelog.com/rst/rstsearch"
-                area_slug = get_area_slug(self.area) if self.area else None
-
-                # 根據 area 和 genre_code 決定 URL 格式
-                if area_slug and self.genre_code:
-                    # 有地區 + 類別：/area/rstLst/GENRE_CODE/
-                    url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
-                    params.pop("sa", None)
-                elif area_slug:
-                    # 只有地區：/area/rstLst/
-                    url = f"https://tabelog.com/{area_slug}/rstLst/"
-                    params.pop("sa", None)
-                elif self.genre_code:
-                    # 只有類別：/rstLst/GENRE_CODE/
-                    url = f"https://tabelog.com/rstLst/{self.genre_code}/"
-
-                resp = httpx.get(
-                    url=url,
-                    params=params,
-                    headers=headers,
-                    timeout=self.timeout,
-                    follow_redirects=True,
-                )
-                resp.raise_for_status()
-
-                # 解析餐廳
-                restaurants = request._parse_restaurants(resp.text)
+                html, restaurants = self._search_page_sync(request)
                 all_restaurants.extend(restaurants)
-
-                # 解析元資料 (只在第一頁)
-                if page == 1 and self.include_meta:
-                    meta = self._parse_meta(resp.text, page)
-
-                    # 如果沒有結果，提前結束
-                    if meta.total_count == 0:
-                        break
-
-                    # 更新最大頁數限制
-                    if self.max_pages > meta.total_pages:
-                        self.max_pages = meta.total_pages
+                meta = self._update_meta(meta, html, page)
+                if meta and meta.total_count == 0:
+                    break
 
                 # 如果這一頁沒有結果，停止搜尋
                 if not restaurants:
                     break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
-
+        except SEARCH_EXCEPTIONS as e:
+            return SearchResponse(
+                status=SearchStatus.ERROR,
+                error_message=str(e),
+            )
+        else:
             return SearchResponse(
                 status=status,
                 restaurants=all_restaurants,
                 meta=meta,
             )
 
-        except Exception as e:
-            return SearchResponse(
-                status=SearchStatus.ERROR,
-                error_message=str(e),
-            )
-
     async def search(self) -> SearchResponse:
         """異步執行搜尋"""
         try:
-            all_restaurants = []
+            all_restaurants: list[Restaurant] = []
             meta = None
 
             async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
                 for page in range(1, self.max_pages + 1):
                     request = self._create_restaurant_request(page)
-
-                    params = request._build_params()
-                    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-
-                    # 嘗試使用地區路徑（更準確的地區過濾）
-                    url = "https://tabelog.com/rst/rstsearch"
-                    area_slug = get_area_slug(self.area) if self.area else None
-
-                    # 根據 area 和 genre_code 決定 URL 格式
-                    if area_slug and self.genre_code:
-                        # 有地區 + 類別：/area/rstLst/GENRE_CODE/
-                        url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
-                        params.pop("sa", None)
-                    elif area_slug:
-                        # 只有地區：/area/rstLst/
-                        url = f"https://tabelog.com/{area_slug}/rstLst/"
-                        params.pop("sa", None)
-                    elif self.genre_code:
-                        # 只有類別：/rstLst/GENRE_CODE/
-                        url = f"https://tabelog.com/rstLst/{self.genre_code}/"
-
-                    resp = await client.get(
-                        url=url,
-                        params=params,
-                        headers=headers,
-                    )
-                    resp.raise_for_status()
-
-                    # 解析餐廳
-                    restaurants = request._parse_restaurants(resp.text)
+                    html, restaurants = await self._search_page_async(client, request)
                     all_restaurants.extend(restaurants)
-
-                    # 解析元資料 (只在第一頁)
-                    if page == 1 and self.include_meta:
-                        meta = self._parse_meta(resp.text, page)
-
-                        # 如果沒有結果，提前結束
-                        if meta.total_count == 0:
-                            break
-
-                        # 更新最大頁數限制
-                        if self.max_pages > meta.total_pages:
-                            self.max_pages = meta.total_pages
+                    meta = self._update_meta(meta, html, page)
+                    if meta and meta.total_count == 0:
+                        break
 
                     # 如果這一頁沒有結果，停止搜尋
                     if not restaurants:
                         break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
-
+        except SEARCH_EXCEPTIONS as e:
+            return SearchResponse(
+                status=SearchStatus.ERROR,
+                error_message=str(e),
+            )
+        else:
             return SearchResponse(
                 status=status,
                 restaurants=all_restaurants,
                 meta=meta,
-            )
-
-        except Exception as e:
-            return SearchResponse(
-                status=SearchStatus.ERROR,
-                error_message=str(e),
             )
 
     def do_sync(self) -> SearchResponse:

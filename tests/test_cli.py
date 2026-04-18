@@ -1,6 +1,7 @@
 """Test CLI functionality"""
 
 import asyncio
+from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
 from unittest.mock import Mock
@@ -13,6 +14,10 @@ from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
 class TestCLIHelpers:
     """Test CLI helper functions"""
 
@@ -21,7 +26,7 @@ class TestCLIHelpers:
         from examples.cli_example import format_date
 
         result = format_date("today")
-        expected = datetime.now().strftime("%Y%m%d")
+        expected = _now().strftime("%Y%m%d")
 
         assert result == expected
 
@@ -30,7 +35,7 @@ class TestCLIHelpers:
         from examples.cli_example import format_date
 
         result = format_date("tomorrow")
-        expected = (datetime.now() + timedelta(days=1)).strftime("%Y%m%d")
+        expected = (_now() + timedelta(days=1)).strftime("%Y%m%d")
 
         assert result == expected
 
