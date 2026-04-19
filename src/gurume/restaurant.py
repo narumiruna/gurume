@@ -81,6 +81,11 @@ class Restaurant:
     description: str | None = None
     lunch_price: str | None = None
     dinner_price: str | None = None
+    address: str | None = None
+    phone: str | None = None
+    business_hours: str | None = None
+    closed_days: str | None = None
+    reservation_url: str | None = None
     has_vpoint: bool = False
     has_reservation: bool = False
     image_urls: list[str] = field(default_factory=list)
