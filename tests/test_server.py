@@ -115,8 +115,15 @@ def sample_keyword_suggestions():
 @pytest.fixture
 def sample_restaurant_detail(sample_restaurants):
     """Sample restaurant detail for MCP detail tool tests"""
+    restaurant = sample_restaurants[0]
+    restaurant.station = "銀座駅"
+    restaurant.address = "東京都中央区銀座1-2-3"
+    restaurant.phone = "03-1111-2222"
+    restaurant.business_hours = "11:00 - 22:00"
+    restaurant.closed_days = "日曜日"
+    restaurant.reservation_url = "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
     return RestaurantDetail(
-        restaurant=sample_restaurants[0],
+        restaurant=restaurant,
         reviews=[
             Review(
                 reviewer="評論者A",
@@ -476,6 +483,11 @@ async def test_get_restaurant_details_success(sample_restaurant_detail):
     assert result.review_count == 1
     assert result.menu_item_count == 1
     assert result.course_count == 1
+    assert result.restaurant.name == "テスト寿司"
+    assert result.station == "銀座駅"
+    assert result.address == "東京都中央区銀座1-2-3"
+    assert result.phone == "03-1111-2222"
+    assert str(result.reservation_url) == "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
     assert result.fetch_courses is False
     assert result.max_review_pages == 2
     assert result.reviews[0].reviewer == "評論者A"
@@ -853,6 +865,9 @@ async def test_mcp_tool_schema_exposes_detail_constraints():
 
     assert detail_tool.outputSchema is not None
     output_schema = detail_tool.outputSchema
+    assert "restaurant" in output_schema["properties"]
+    assert "address" in output_schema["properties"]
+    assert "reservation_url" in output_schema["properties"]
     assert "review_count" in output_schema["properties"]
     assert "menu_items" in output_schema["properties"]
     assert "courses" in output_schema["properties"]
@@ -906,6 +921,10 @@ async def test_mcp_call_detail_tool_returns_structured_data(sample_restaurant_de
     assert structured_data["review_count"] == 1
     assert structured_data["menu_item_count"] == 1
     assert structured_data["course_count"] == 1
+    assert structured_data["restaurant"]["name"] == "テスト寿司"
+    assert structured_data["station"] == "銀座駅"
+    assert structured_data["address"] == "東京都中央区銀座1-2-3"
+    assert structured_data["reservation_url"] == "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
     assert structured_data["max_review_pages"] == 2
     assert structured_data["fetch_courses"] is False
     assert structured_data["reviews"][0]["reviewer"] == "評論者A"

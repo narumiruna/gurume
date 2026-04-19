@@ -106,7 +106,7 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
       - `fetch_menu` (optional): Include menu page items (default: `true`)
       - `fetch_courses` (optional): Include course page entries (default: `true`)
       - `max_review_pages` (optional): Number of review pages to fetch when reviews are enabled (default: `1`)
-    - Returns: Structured `RestaurantDetailOutput` with counts plus `reviews`, `menu_items`, and `courses`
+    - Returns: Structured `RestaurantDetailOutput` with base restaurant info (`name`, `address`, `station`, `phone`, `business_hours`, `reservation_url`), plus `reviews`, `menu_items`, and `courses`
     - Annotations: `readOnly=true`, `idempotent=true`, `openWorld=true`
 
 4. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API

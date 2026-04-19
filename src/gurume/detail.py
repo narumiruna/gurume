@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import contextlib
+import json
+import re
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 from bs4 import BeautifulSoup
@@ -17,6 +20,9 @@ USER_AGENT = (
     "Chrome/91.0.4472.124 Safari/537.36"
 )
 DETAIL_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
+PHONE_PATTERN = re.compile(r"0\d{1,4}-\d{1,4}-\d{3,4}|0\d{9,10}")
+STATION_PATTERN = re.compile(r"([^\s、,，]+駅)")
+BUDGET_PATTERN = re.compile(r"￥[^\s]+")
 
 
 @dataclass
@@ -196,16 +202,279 @@ class RestaurantDetailRequest:
             return int(element.get_text(strip=True))
         return None
 
+    def _parse_restaurant(self, html: str, base_url: str) -> Restaurant:
+        soup = BeautifulSoup(html, "lxml")
+        ld_data = self._extract_restaurant_json_ld(soup)
+        info_map = self._extract_info_map(soup)
+
+        address = self._extract_address(ld_data) or info_map.get("住所")
+        traffic_text = info_map.get("交通手段")
+
+        return Restaurant(
+            name=self._extract_restaurant_name(soup, ld_data),
+            url=base_url,
+            rating=self._extract_rating(soup, ld_data),
+            review_count=self._extract_review_count(soup, ld_data),
+            area=self._extract_area(ld_data, address),
+            station=self._extract_station(soup, traffic_text),
+            genres=self._extract_genres(soup, ld_data, info_map),
+            description=self._extract_description(soup, ld_data),
+            lunch_price=self._extract_budget(soup, index=1),
+            dinner_price=self._extract_budget(soup, index=0),
+            address=address,
+            phone=self._extract_phone(info_map),
+            business_hours=info_map.get("営業時間") or info_map.get("営業時間・定休日"),
+            closed_days=info_map.get("定休日"),
+            reservation_url=self._extract_reservation_url(soup, base_url),
+            image_urls=self._extract_image_urls(ld_data),
+        )
+
+    def _extract_restaurant_json_ld(self, soup: BeautifulSoup) -> dict[str, Any] | None:
+        for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
+            raw = script.string or script.get_text(strip=True)
+            if not raw:
+                continue
+
+            with contextlib.suppress(json.JSONDecodeError, TypeError):
+                data = json.loads(raw)
+                restaurant = self._find_restaurant_ld_node(data)
+                if restaurant is not None:
+                    return restaurant
+
+        return None
+
+    def _find_restaurant_ld_node(self, data: Any) -> dict[str, Any] | None:
+        if isinstance(data, dict):
+            node_type = data.get("@type")
+            if node_type == "Restaurant" or (isinstance(node_type, list) and "Restaurant" in node_type):
+                return data
+
+            for key in ("@graph", "mainEntity"):
+                if key in data and (node := self._find_restaurant_ld_node(data[key])) is not None:
+                    return node
+
+        if isinstance(data, list):
+            for item in data:
+                if (node := self._find_restaurant_ld_node(item)) is not None:
+                    return node
+
+        return None
+
+    def _extract_info_map(self, soup: BeautifulSoup) -> dict[str, str]:
+        info_map: dict[str, str] = {}
+        for row in soup.find_all("tr"):
+            header = row.find("th")
+            value = row.find("td")
+            if header is None or value is None:
+                continue
+
+            key = self._normalize_info_key(header.get_text(" ", strip=True))
+            text = value.get_text(" ", strip=True)
+            if key and text and key not in info_map:
+                info_map[key] = text
+
+        return info_map
+
+    def _normalize_info_key(self, text: str) -> str:
+        return re.sub(r"\s+", "", text)
+
+    def _extract_restaurant_name(self, soup: BeautifulSoup, ld_data: dict[str, Any] | None) -> str:
+        if ld_data and isinstance(ld_data.get("name"), str):
+            return ld_data["name"].strip()
+
+        selectors = [
+            "h2.display-name",
+            "h2.rdheader-rstname",
+            "h2",
+            "h1",
+        ]
+        for selector in selectors:
+            if element := soup.select_one(selector):
+                text = element.get_text(" ", strip=True)
+                if text:
+                    return text
+
+        return ""
+
+    def _extract_rating(self, soup: BeautifulSoup, ld_data: dict[str, Any] | None) -> float | None:
+        aggregate = ld_data.get("aggregateRating") if ld_data else None
+        if isinstance(aggregate, dict):
+            rating_value = aggregate.get("ratingValue")
+            if isinstance(rating_value, str | int | float):
+                with contextlib.suppress(ValueError):
+                    return float(rating_value)
+
+        for selector in ("strong.rdheader-rating__score-val-dtl", "span.c-rating__val"):
+            if value := self._parse_float(soup.select_one(selector)):
+                return value
+
+        return None
+
+    def _extract_review_count(self, soup: BeautifulSoup, ld_data: dict[str, Any] | None) -> int | None:
+        aggregate = ld_data.get("aggregateRating") if ld_data else None
+        if isinstance(aggregate, dict):
+            review_count = aggregate.get("reviewCount")
+            if isinstance(review_count, str | int):
+                with contextlib.suppress(ValueError):
+                    return int(review_count)
+
+        text = soup.get_text("\n", strip=True)
+        match = re.search(r"口コミ\s*([0-9,]+)\s*人", text)
+        if match:
+            with contextlib.suppress(ValueError):
+                return int(match.group(1).replace(",", ""))
+
+        return None
+
+    def _extract_address(self, ld_data: dict[str, Any] | None) -> str | None:
+        address = ld_data.get("address") if ld_data else None
+        if not isinstance(address, dict):
+            return None
+
+        parts = [
+            address.get("addressRegion"),
+            address.get("addressLocality"),
+            address.get("streetAddress"),
+        ]
+        text = " ".join(part.strip() for part in parts if isinstance(part, str) and part.strip())
+        return text or None
+
+    def _extract_area(self, ld_data: dict[str, Any] | None, address: str | None) -> str | None:
+        address_obj = ld_data.get("address") if ld_data else None
+        if isinstance(address_obj, dict):
+            for key in ("addressRegion", "addressLocality"):
+                value = address_obj.get(key)
+                if isinstance(value, str) and value.strip():
+                    return value.strip()
+
+        if address:
+            return address.split()[0]
+
+        return None
+
+    def _extract_station(self, soup: BeautifulSoup, traffic_text: str | None) -> str | None:
+        if traffic_text:
+            if match := STATION_PATTERN.search(traffic_text):
+                return match.group(1)
+            return traffic_text
+
+        text = soup.get_text("\n", strip=True)
+        if match := re.search(r"最寄り駅[:：]\s*([^\n]+駅)", text):
+            return match.group(1).strip()
+
+        return None
+
+    def _extract_genres(
+        self,
+        soup: BeautifulSoup,
+        ld_data: dict[str, Any] | None,
+        info_map: dict[str, str],
+    ) -> list[str]:
+        serves_cuisine = ld_data.get("servesCuisine") if ld_data else None
+        if isinstance(serves_cuisine, list):
+            return [item.strip() for item in serves_cuisine if isinstance(item, str) and item.strip()]
+        if isinstance(serves_cuisine, str) and serves_cuisine.strip():
+            return [item.strip() for item in re.split(r"[、,/]", serves_cuisine) if item.strip()]
+
+        genres_text = info_map.get("ジャンル")
+        if genres_text:
+            return [item.strip() for item in re.split(r"[、,/]", genres_text) if item.strip()]
+
+        text = soup.get_text("\n", strip=True)
+        if match := re.search(r"ジャンル[:：]\s*([^\n]+)", text):
+            return [item.strip() for item in re.split(r"[、,/]", match.group(1)) if item.strip()]
+
+        return []
+
+    def _extract_description(self, soup: BeautifulSoup, ld_data: dict[str, Any] | None) -> str | None:
+        if ld_data and isinstance(ld_data.get("description"), str) and ld_data["description"].strip():
+            return ld_data["description"].strip()
+
+        for meta in (
+            soup.find("meta", attrs={"name": "description"}),
+            soup.find("meta", attrs={"property": "og:description"}),
+        ):
+            if meta is not None:
+                content = meta.get("content")
+                if isinstance(content, str) and content.strip():
+                    return content.strip()
+
+        for selector in ("p.rdheader-caption__comment", "div.rdheader-caption__comment"):
+            if element := soup.select_one(selector):
+                text = element.get_text(" ", strip=True)
+                if text:
+                    return text
+
+        return None
+
+    def _extract_budget(self, soup: BeautifulSoup, index: int) -> str | None:
+        text = soup.get_text("\n", strip=True)
+        budget_start = text.find("予算")
+        if budget_start == -1:
+            return None
+
+        window = text[budget_start : budget_start + 200]
+        matches = BUDGET_PATTERN.findall(window)
+        if len(matches) > index:
+            return matches[index]
+
+        return None
+
+    def _extract_phone(self, info_map: dict[str, str]) -> str | None:
+        for key in ("予約・お問い合わせ", "お問い合わせ", "電話番号"):
+            value = info_map.get(key)
+            if value and (match := PHONE_PATTERN.search(value)):
+                return match.group(0)
+
+        return None
+
+    def _extract_reservation_url(self, soup: BeautifulSoup, base_url: str) -> str | None:
+        candidates: list[tuple[int, str]] = []
+        for link in soup.find_all("a", href=True):
+            text = link.get_text(" ", strip=True)
+            href = link.get("href")
+            if not text or not isinstance(href, str) or "予約" not in text:
+                continue
+            if text in {"予約確認", "予約内容確認"}:
+                continue
+
+            score = 0
+            if "ネット予約" in text:
+                score += 3
+            if "予約する" in text:
+                score += 2
+            if any(token in href for token in ("reserve", "booking", "yoyaku")):
+                score += 2
+            if href.startswith(("/", "http")):
+                score += 1
+            candidates.append((score, urljoin(f"{base_url}/", href)))
+
+        if candidates:
+            candidates.sort(reverse=True)
+            return candidates[0][1]
+
+        return None
+
+    def _extract_image_urls(self, ld_data: dict[str, Any] | None) -> list[str]:
+        if not ld_data:
+            return []
+
+        image = ld_data.get("image")
+        if isinstance(image, str) and image:
+            return [image]
+        if isinstance(image, list):
+            return [item for item in image if isinstance(item, str) and item]
+        return []
+
     def fetch_sync(self) -> RestaurantDetail:
         """同步抓取餐廳詳細資訊"""
         headers = {"User-Agent": USER_AGENT}
 
         base_url = self._get_base_url()
 
-        # 抓取基本資訊 (從餐廳主頁)
-        # TODO: 可以從主頁解析更多基本資訊
-        # 暫時使用空的 Restaurant 物件
-        restaurant = Restaurant(name="", url=base_url)
+        main_resp = httpx.get(base_url, headers=headers, timeout=30.0, follow_redirects=True)
+        main_resp.raise_for_status()
+        restaurant = self._parse_restaurant(main_resp.text, base_url)
 
         reviews = []
         menu_items = []
@@ -249,16 +518,15 @@ class RestaurantDetailRequest:
 
         base_url = self._get_base_url()
 
-        # 抓取基本資訊 (從餐廳主頁)
-        # TODO: 可以從主頁解析更多基本資訊
-        # 暫時使用空的 Restaurant 物件
-        restaurant = Restaurant(name="", url=base_url)
-
         reviews = []
         menu_items = []
         courses = []
 
         async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            main_resp = await client.get(base_url, headers=headers)
+            main_resp.raise_for_status()
+            restaurant = self._parse_restaurant(main_resp.text, base_url)
+
             # 抓取評論
             if self.fetch_reviews:
                 for page in range(1, self.max_review_pages + 1):

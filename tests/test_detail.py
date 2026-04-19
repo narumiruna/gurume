@@ -219,13 +219,75 @@ class TestRestaurantDetailRequest:
         assert courses[0].description == "最高級的食材"
         assert len(courses[0].items) == 3
 
+    def test_parse_restaurant_basic_info(self):
+        html = """
+        <html>
+            <head>
+                <meta name="description" content="主廚精選壽司與天婦羅" />
+                <script type="application/ld+json">
+                {
+                    "@context": "https://schema.org",
+                    "@type": "Restaurant",
+                    "name": "測試壽司",
+                    "aggregateRating": {"ratingValue": "3.55", "reviewCount": "42"},
+                    "servesCuisine": ["寿司", "天ぷら"],
+                    "address": {
+                        "addressRegion": "東京都",
+                        "addressLocality": "中央区",
+                        "streetAddress": "銀座1-2-3"
+                    },
+                    "image": ["https://example.com/a.jpg", "https://example.com/b.jpg"]
+                }
+                </script>
+            </head>
+            <body>
+                <table>
+                    <tr><th>交通手段</th><td>銀座駅から徒歩3分</td></tr>
+                    <tr><th>予約・お問い合わせ</th><td>050-1234-5678</td></tr>
+                    <tr><th>営業時間</th><td>11:00 - 22:00</td></tr>
+                    <tr><th>定休日</th><td>水曜日</td></tr>
+                </table>
+                <div>予算 ￥8,000～￥9,999 ￥2,000～￥2,999</div>
+                <a href="/tokyo/A1301/A130101/13000001/reserve/">ネット予約</a>
+            </body>
+        </html>
+        """
+
+        request = RestaurantDetailRequest(restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/")
+        restaurant = request._parse_restaurant(html, "https://tabelog.com/tokyo/A1301/A130101/13000001")
+
+        assert restaurant.name == "測試壽司"
+        assert restaurant.rating == 3.55
+        assert restaurant.review_count == 42
+        assert restaurant.area == "東京都"
+        assert restaurant.station == "銀座駅"
+        assert restaurant.genres == ["寿司", "天ぷら"]
+        assert restaurant.description == "主廚精選壽司與天婦羅"
+        assert restaurant.dinner_price == "￥8,000～￥9,999"
+        assert restaurant.lunch_price == "￥2,000～￥2,999"
+        assert restaurant.address == "東京都 中央区 銀座1-2-3"
+        assert restaurant.phone == "050-1234-5678"
+        assert restaurant.business_hours == "11:00 - 22:00"
+        assert restaurant.closed_days == "水曜日"
+        assert restaurant.reservation_url == "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
+        assert restaurant.image_urls == ["https://example.com/a.jpg", "https://example.com/b.jpg"]
+
     @patch("httpx.get")
     def test_fetch_sync(self, mock_get):
         # Mock HTTP responses
-        mock_response = Mock()
-        mock_response.text = "<html><body></body></html>"
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        main_response = Mock()
+        main_response.text = """
+        <html><body>
+            <table><tr><th>予約・お問い合わせ</th><td>03-1111-2222</td></tr></table>
+            <div>予算 ￥5,000～￥5,999 ￥2,000～￥2,999</div>
+        </body></html>
+        """
+        main_response.raise_for_status = Mock()
+
+        sub_response = Mock()
+        sub_response.text = "<html><body></body></html>"
+        sub_response.raise_for_status = Mock()
+        mock_get.side_effect = [main_response, sub_response, sub_response, sub_response]
 
         request = RestaurantDetailRequest(
             restaurant_url="https://tabelog.com/tokyo/A1307/A130704/13053564/",
@@ -239,18 +301,27 @@ class TestRestaurantDetailRequest:
 
         assert isinstance(detail, RestaurantDetail)
         assert detail.restaurant.url == "https://tabelog.com/tokyo/A1307/A130704/13053564"
-        assert mock_get.call_count == 3
+        assert detail.restaurant.phone == "03-1111-2222"
+        assert mock_get.call_count == 4
 
     @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_fetch_async(self, mock_client):
         # Mock HTTP responses
-        mock_response = Mock()
-        mock_response.text = "<html><body></body></html>"
-        mock_response.raise_for_status = Mock()
+        main_response = Mock()
+        main_response.text = """
+        <html><body>
+            <table><tr><th>営業時間</th><td>17:00 - 23:00</td></tr></table>
+        </body></html>
+        """
+        main_response.raise_for_status = Mock()
+
+        sub_response = Mock()
+        sub_response.text = "<html><body></body></html>"
+        sub_response.raise_for_status = Mock()
 
         mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_response)
+        mock_client_instance.get = AsyncMock(side_effect=[main_response, sub_response, sub_response, sub_response])
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock()
         mock_client.return_value = mock_client_instance
@@ -267,14 +338,19 @@ class TestRestaurantDetailRequest:
 
         assert isinstance(detail, RestaurantDetail)
         assert detail.restaurant.url == "https://tabelog.com/tokyo/A1307/A130704/13053564"
-        assert mock_client_instance.get.call_count == 3
+        assert detail.restaurant.business_hours == "17:00 - 23:00"
+        assert mock_client_instance.get.call_count == 4
 
     @patch("httpx.get")
     def test_fetch_sync_only_reviews(self, mock_get):
-        mock_response = Mock()
-        mock_response.text = "<html><body></body></html>"
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        main_response = Mock()
+        main_response.text = "<html><body></body></html>"
+        main_response.raise_for_status = Mock()
+
+        review_response = Mock()
+        review_response.text = "<html><body></body></html>"
+        review_response.raise_for_status = Mock()
+        mock_get.side_effect = [main_response, review_response]
 
         request = RestaurantDetailRequest(
             restaurant_url="https://tabelog.com/tokyo/A1307/A130704/13053564/",
@@ -286,14 +362,18 @@ class TestRestaurantDetailRequest:
         detail = request.fetch_sync()
 
         assert isinstance(detail, RestaurantDetail)
-        assert mock_get.call_count == 1
+        assert mock_get.call_count == 2
 
     @patch("httpx.get")
     def test_fetch_sync_multiple_review_pages(self, mock_get):
-        mock_response = Mock()
-        mock_response.text = "<html><body></body></html>"
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        main_response = Mock()
+        main_response.text = "<html><body></body></html>"
+        main_response.raise_for_status = Mock()
+
+        review_response = Mock()
+        review_response.text = "<html><body></body></html>"
+        review_response.raise_for_status = Mock()
+        mock_get.side_effect = [main_response, review_response, review_response, review_response]
 
         request = RestaurantDetailRequest(
             restaurant_url="https://tabelog.com/tokyo/A1307/A130704/13053564/",
@@ -306,4 +386,4 @@ class TestRestaurantDetailRequest:
         detail = request.fetch_sync()
 
         assert isinstance(detail, RestaurantDetail)
-        assert mock_get.call_count == 3
+        assert mock_get.call_count == 4

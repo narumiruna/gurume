@@ -208,7 +208,14 @@ class RestaurantDetailOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
+    restaurant: RestaurantOutput = Field(description="Structured base restaurant information from the detail page")
     restaurant_url: HttpUrl = Field(description="Canonical Tabelog restaurant URL used for detail fetches")
+    address: str | None = Field(description="Street address shown on the detail page")
+    station: str | None = Field(description="Nearest station text if available")
+    phone: str | None = Field(description="Contact phone number if available")
+    business_hours: str | None = Field(description="Business hours text if available")
+    closed_days: str | None = Field(description="Closed day text if available")
+    reservation_url: HttpUrl | None = Field(description="Reservation URL if one can be identified from the page")
     review_count: int = Field(description="Number of review entries returned in this response")
     menu_item_count: int = Field(description="Number of menu items returned in this response")
     course_count: int = Field(description="Number of courses returned in this response")
@@ -444,7 +451,23 @@ def _to_detail_output(
     max_review_pages: int,
 ) -> RestaurantDetailOutput:
     return RestaurantDetailOutput(
+        restaurant=RestaurantOutput(
+            name=detail.restaurant.name,
+            rating=detail.restaurant.rating,
+            review_count=detail.restaurant.review_count,
+            area=detail.restaurant.area,
+            genres=detail.restaurant.genres,
+            url=_as_http_url(detail.restaurant.url),
+            lunch_price=detail.restaurant.lunch_price,
+            dinner_price=detail.restaurant.dinner_price,
+        ),
         restaurant_url=_as_http_url(detail.restaurant.url),
+        address=detail.restaurant.address,
+        station=detail.restaurant.station,
+        phone=detail.restaurant.phone,
+        business_hours=detail.restaurant.business_hours,
+        closed_days=detail.restaurant.closed_days,
+        reservation_url=_as_http_url(detail.restaurant.reservation_url) if detail.restaurant.reservation_url else None,
         review_count=len(detail.reviews),
         menu_item_count=len(detail.menu_items),
         course_count=len(detail.courses),
