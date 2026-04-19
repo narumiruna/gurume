@@ -17,10 +17,12 @@ from gurume.restaurant import Restaurant
 from gurume.search import SearchMeta
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
+from gurume.server import CuisineListOutput
 from gurume.server import CuisineOutput
 from gurume.server import RestaurantDetailOutput
 from gurume.server import RestaurantOutput
 from gurume.server import RestaurantSearchOutput
+from gurume.server import SuggestionListOutput
 from gurume.server import SuggestionOutput
 from gurume.server import mcp
 from gurume.server import tabelog_get_area_suggestions
@@ -298,69 +300,106 @@ async def test_search_restaurants_limit_applied(sample_restaurants):
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_limit():
     """Test validation of limit parameter"""
-    # Test limit < 1
-    with pytest.raises(ValueError, match="limit must be between 1 and 60"):
-        await tabelog_search_restaurants(limit=0)
+    low_limit = await tabelog_search_restaurants(limit=0)
+    high_limit = await tabelog_search_restaurants(limit=100)
 
-    # Test limit > 60
-    with pytest.raises(ValueError, match="limit must be between 1 and 60"):
-        await tabelog_search_restaurants(limit=100)
+    assert low_limit.status == "error"
+    assert low_limit.error is not None
+    assert low_limit.error.error_code == "invalid_parameters"
+    assert "limit must be between 1 and 60" in low_limit.error.detail
+
+    assert high_limit.status == "error"
+    assert high_limit.error is not None
+    assert high_limit.error.error_code == "invalid_parameters"
+    assert "limit must be between 1 and 60" in high_limit.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_page():
     """Test validation of page parameter"""
-    with pytest.raises(ValueError, match="page must be greater than or equal to 1"):
-        await tabelog_search_restaurants(page=0)
+    result = await tabelog_search_restaurants(page=0)
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "page must be greater than or equal to 1" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_sort():
     """Test validation of sort parameter"""
-    with pytest.raises(ValueError, match="Invalid sort type"):
-        await tabelog_search_restaurants(sort="invalid-sort-type")
+    result = await tabelog_search_restaurants(sort="invalid-sort-type")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "Invalid sort type" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_reservation_date():
     """Test validation of reservation_date parameter"""
-    with pytest.raises(ValueError, match="reservation_date must be in YYYYMMDD format"):
-        await tabelog_search_restaurants(reservation_date="2026-04-27")
+    result = await tabelog_search_restaurants(reservation_date="2026-04-27")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "reservation_date must be in YYYYMMDD format" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_reservation_time():
     """Test validation of reservation_time parameter"""
-    with pytest.raises(ValueError, match="reservation_time must be in HHMM format"):
-        await tabelog_search_restaurants(reservation_time="19:00")
+    result = await tabelog_search_restaurants(reservation_time="19:00")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "reservation_time must be in HHMM format" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_requires_reservation_time_with_date():
     """Test semantic validation for reservation filters"""
-    with pytest.raises(ValueError, match="reservation_time is required"):
-        await tabelog_search_restaurants(reservation_date="20260427")
+    result = await tabelog_search_restaurants(reservation_date="20260427")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "reservation_time is required" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_requires_reservation_date_with_party_size():
     """Test reservation bundle validation when party_size is set"""
-    with pytest.raises(ValueError, match="reservation_date is required"):
-        await tabelog_search_restaurants(party_size=2)
+    result = await tabelog_search_restaurants(party_size=2)
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "reservation_date is required" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_reservation_time_value():
     """Test semantic validation of HHMM values"""
-    with pytest.raises(ValueError, match="valid 24-hour time"):
-        await tabelog_search_restaurants(reservation_date="20260427", reservation_time="2460")
+    result = await tabelog_search_restaurants(reservation_date="20260427", reservation_time="2460")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "valid 24-hour time" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_unknown_cuisine():
     """Test error handling for unknown cuisine type"""
-    with pytest.raises(ValueError, match="Unknown cuisine type"):
-        await tabelog_search_restaurants(cuisine="存在しない料理")
+    result = await tabelog_search_restaurants(cuisine="存在しない料理")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "unsupported_cuisine"
+    assert "Unknown cuisine type" in result.error.detail
 
 
 @pytest.mark.asyncio
@@ -388,13 +427,18 @@ async def test_search_restaurants_runtime_error():
     with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
         mock_search.side_effect = Exception("Network error")
 
-        with pytest.raises(RuntimeError, match="Restaurant search failed"):
-            await tabelog_search_restaurants(area="東京")
+        result = await tabelog_search_restaurants(area="東京")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "internal_error"
+    assert result.error.retryable is True
+    assert result.error.detail == "Network error"
 
 
 @pytest.mark.asyncio
 async def test_search_restaurants_raises_for_error_status():
-    """Test MCP wrapper surfaces SearchResponse errors instead of returning empty data"""
+    """Test MCP wrapper returns structured errors for SearchResponse failures"""
     mock_response = SearchResponse(
         status=SearchStatus.ERROR,
         restaurants=[],
@@ -405,8 +449,12 @@ async def test_search_restaurants_raises_for_error_status():
     with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
         mock_search.return_value = mock_response
 
-        with pytest.raises(RuntimeError, match="upstream error"):
-            await tabelog_search_restaurants(area="東京")
+        result = await tabelog_search_restaurants(area="東京")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "upstream_unavailable"
+    assert result.error.detail == "upstream error"
 
 
 @pytest.mark.asyncio
@@ -479,6 +527,7 @@ async def test_get_restaurant_details_success(sample_restaurant_detail):
         )
 
     assert isinstance(result, RestaurantDetailOutput)
+    assert result.status == "success"
     assert str(result.restaurant_url) == "https://tabelog.com/tokyo/A1301/A130101/13000001/"
     assert result.review_count == 1
     assert result.menu_item_count == 1
@@ -499,20 +548,28 @@ async def test_get_restaurant_details_success(sample_restaurant_detail):
 @pytest.mark.asyncio
 async def test_get_restaurant_details_requires_one_enabled_fetch():
     """Test detail tool rejects empty fetch selection"""
-    with pytest.raises(ValueError, match="At least one of fetch_reviews"):
-        await tabelog_get_restaurant_details(
-            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
-            fetch_reviews=False,
-            fetch_menu=False,
-            fetch_courses=False,
-        )
+    result = await tabelog_get_restaurant_details(
+        restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+        fetch_reviews=False,
+        fetch_menu=False,
+        fetch_courses=False,
+    )
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "At least one of fetch_reviews" in result.error.detail
 
 
 @pytest.mark.asyncio
 async def test_get_restaurant_details_invalid_url():
     """Test detail tool validates Tabelog URL"""
-    with pytest.raises(ValueError, match="restaurant_url must be a Tabelog HTTPS URL"):
-        await tabelog_get_restaurant_details(restaurant_url="https://example.com/restaurant")
+    result = await tabelog_get_restaurant_details(restaurant_url="https://example.com/restaurant")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "restaurant_url must be a Tabelog HTTPS URL" in result.error.detail
 
 
 @pytest.mark.asyncio
@@ -522,10 +579,14 @@ async def test_get_restaurant_details_runtime_error():
         mock_request = mock_request_class.return_value
         mock_request.fetch = AsyncMock(side_effect=RuntimeError("timeout"))
 
-        with pytest.raises(RuntimeError, match="Restaurant detail request failed"):
-            await tabelog_get_restaurant_details(
-                restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
-            )
+        result = await tabelog_get_restaurant_details(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+        )
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "upstream_unavailable"
+    assert result.error.detail == "timeout"
 
 
 # ============================================================================
@@ -539,18 +600,20 @@ async def test_list_cuisines_success():
     results = await tabelog_list_cuisines()
 
     # Verify results
-    assert len(results) > 0  # Should have many cuisines
-    assert isinstance(results[0], CuisineOutput)
+    assert isinstance(results, CuisineListOutput)
+    assert results.status == "success"
+    assert len(results.items) > 0  # Should have many cuisines
+    assert isinstance(results.items[0], CuisineOutput)
 
     # Verify common cuisines are present
-    cuisine_names = [c.name for c in results]
+    cuisine_names = [c.name for c in results.items]
     assert "すき焼き" in cuisine_names
     assert "寿司" in cuisine_names
     assert "ラーメン" in cuisine_names
     assert "焼肉" in cuisine_names
 
     # Verify each cuisine has a code
-    for cuisine in results:
+    for cuisine in results.items:
         assert cuisine.name
         assert cuisine.code
         assert cuisine.code.startswith("RC")
@@ -572,10 +635,10 @@ async def test_list_cuisines_matches_genre_mapping():
             expected_cuisines.append(genre)
 
     # Verify counts match
-    assert len(results) == len(expected_cuisines)
+    assert len(results.items) == len(expected_cuisines)
 
     # Verify all expected cuisines are present
-    result_names = [c.name for c in results]
+    result_names = [c.name for c in results.items]
     for expected in expected_cuisines:
         assert expected in result_names
 
@@ -586,8 +649,12 @@ async def test_list_cuisines_runtime_error():
     with patch("gurume.server.get_all_genres") as mock_get_all:
         mock_get_all.side_effect = Exception("Unexpected error")
 
-        with pytest.raises(RuntimeError, match="Failed to retrieve cuisine list"):
-            await tabelog_list_cuisines()
+        result = await tabelog_list_cuisines()
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "internal_error"
+    assert result.error.detail == "Unexpected error"
 
 
 # ============================================================================
@@ -607,16 +674,18 @@ async def test_get_area_suggestions_success(sample_area_suggestions):
         results = await tabelog_get_area_suggestions(query="東京")
 
         # Verify results
-        assert len(results) == 2
-        assert isinstance(results[0], SuggestionOutput)
-        assert results[0].name == "東京都"
-        assert results[0].datatype == "AddressMaster"
-        assert results[0].id_in_datatype == 13
-        assert results[0].lat == 35.6895
-        assert results[0].lng == 139.6917
+        assert isinstance(results, SuggestionListOutput)
+        assert results.status == "success"
+        assert len(results.items) == 2
+        assert isinstance(results.items[0], SuggestionOutput)
+        assert results.items[0].name == "東京都"
+        assert results.items[0].datatype == "AddressMaster"
+        assert results.items[0].id_in_datatype == 13
+        assert results.items[0].lat == 35.6895
+        assert results.items[0].lng == 139.6917
 
-        assert results[1].name == "渋谷駅"
-        assert results[1].datatype == "RailroadStation"
+        assert results.items[1].name == "渋谷駅"
+        assert results.items[1].datatype == "RailroadStation"
 
         # Verify API was called with stripped query
         mock_get_suggestions.assert_called_once_with("東京")
@@ -640,11 +709,18 @@ async def test_get_area_suggestions_strips_whitespace(sample_area_suggestions):
 @pytest.mark.asyncio
 async def test_get_area_suggestions_empty_query():
     """Test validation of empty query"""
-    with pytest.raises(ValueError, match="query parameter cannot be empty"):
-        await tabelog_get_area_suggestions(query="")
+    empty_result = await tabelog_get_area_suggestions(query="")
+    blank_result = await tabelog_get_area_suggestions(query="   ")
 
-    with pytest.raises(ValueError, match="query parameter cannot be empty"):
-        await tabelog_get_area_suggestions(query="   ")
+    assert empty_result.status == "error"
+    assert empty_result.error is not None
+    assert empty_result.error.error_code == "invalid_parameters"
+    assert "query parameter cannot be empty" in empty_result.error.detail
+
+    assert blank_result.status == "error"
+    assert blank_result.error is not None
+    assert blank_result.error.error_code == "invalid_parameters"
+    assert "query parameter cannot be empty" in blank_result.error.detail
 
 
 @pytest.mark.asyncio
@@ -656,8 +732,12 @@ async def test_get_area_suggestions_runtime_error():
     ) as mock_get_suggestions:
         mock_get_suggestions.side_effect = Exception("Network error")
 
-        with pytest.raises(RuntimeError, match="Area suggestion request failed"):
-            await tabelog_get_area_suggestions(query="東京")
+        result = await tabelog_get_area_suggestions(query="東京")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "internal_error"
+    assert result.error.detail == "Network error"
 
 
 # ============================================================================
@@ -677,23 +757,25 @@ async def test_get_keyword_suggestions_success(sample_keyword_suggestions):
         results = await tabelog_get_keyword_suggestions(query="すき")
 
         # Verify results
-        assert len(results) == 3
-        assert isinstance(results[0], SuggestionOutput)
+        assert isinstance(results, SuggestionListOutput)
+        assert results.status == "success"
+        assert len(results.items) == 3
+        assert isinstance(results.items[0], SuggestionOutput)
 
         # Genre2 suggestion
-        assert results[0].name == "すき焼き"
-        assert results[0].datatype == "Genre2"
-        assert results[0].id_in_datatype == 107
-        assert results[0].lat is None
-        assert results[0].lng is None
+        assert results.items[0].name == "すき焼き"
+        assert results.items[0].datatype == "Genre2"
+        assert results.items[0].id_in_datatype == 107
+        assert results.items[0].lat is None
+        assert results.items[0].lng is None
 
         # Restaurant suggestion
-        assert results[1].name == "和田金"
-        assert results[1].datatype == "Restaurant"
+        assert results.items[1].name == "和田金"
+        assert results.items[1].datatype == "Restaurant"
 
         # DetailCondition suggestion
-        assert results[2].name == "すき焼き ランチ"
-        assert results[2].datatype == "Genre2 DetailCondition"
+        assert results.items[2].name == "すき焼き ランチ"
+        assert results.items[2].datatype == "Genre2 DetailCondition"
 
         # Verify API was called with stripped query
         mock_get_suggestions.assert_called_once_with("すき")
@@ -717,11 +799,18 @@ async def test_get_keyword_suggestions_strips_whitespace(sample_keyword_suggesti
 @pytest.mark.asyncio
 async def test_get_keyword_suggestions_empty_query():
     """Test validation of empty query"""
-    with pytest.raises(ValueError, match="query parameter cannot be empty"):
-        await tabelog_get_keyword_suggestions(query="")
+    empty_result = await tabelog_get_keyword_suggestions(query="")
+    blank_result = await tabelog_get_keyword_suggestions(query="   ")
 
-    with pytest.raises(ValueError, match="query parameter cannot be empty"):
-        await tabelog_get_keyword_suggestions(query="   ")
+    assert empty_result.status == "error"
+    assert empty_result.error is not None
+    assert empty_result.error.error_code == "invalid_parameters"
+    assert "query parameter cannot be empty" in empty_result.error.detail
+
+    assert blank_result.status == "error"
+    assert blank_result.error is not None
+    assert blank_result.error.error_code == "invalid_parameters"
+    assert "query parameter cannot be empty" in blank_result.error.detail
 
 
 @pytest.mark.asyncio
@@ -733,8 +822,12 @@ async def test_get_keyword_suggestions_runtime_error():
     ) as mock_get_suggestions:
         mock_get_suggestions.side_effect = Exception("Network error")
 
-        with pytest.raises(RuntimeError, match="Keyword suggestion request failed"):
-            await tabelog_get_keyword_suggestions(query="すき")
+        result = await tabelog_get_keyword_suggestions(query="すき")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "internal_error"
+    assert result.error.detail == "Network error"
 
 
 # ============================================================================
@@ -747,14 +840,14 @@ async def test_workflow_cuisine_validation():
     """Test recommended workflow: list cuisines → validate → search"""
     # Step 1: List cuisines
     cuisines = await tabelog_list_cuisines()
-    cuisine_names = [c.name for c in cuisines]
+    cuisine_names = [c.name for c in cuisines.items]
 
     # Step 2: Verify user's cuisine is in the list
     user_cuisine = "すき焼き"
     assert user_cuisine in cuisine_names
 
     # Step 3: Get cuisine code
-    cuisine_obj = next(c for c in cuisines if c.name == user_cuisine)
+    cuisine_obj = next(c for c in cuisines.items if c.name == user_cuisine)
     assert cuisine_obj.code == "RC0107"
 
 
@@ -770,7 +863,7 @@ async def test_workflow_area_validation(sample_area_suggestions, sample_restaura
         area_suggestions = await tabelog_get_area_suggestions(query="東京")
 
     # Step 2: Select best area suggestion
-    selected_area = area_suggestions[0].name  # "東京都"
+    selected_area = area_suggestions.items[0].name  # "東京都"
     assert selected_area == "東京都"
 
     # Step 3: Search with validated area
@@ -799,7 +892,7 @@ async def test_workflow_keyword_to_cuisine(sample_keyword_suggestions, sample_re
         keyword_suggestions = await tabelog_get_keyword_suggestions(query="すき")
 
     # Step 2: Identify Genre2 suggestions (cuisine types)
-    genre_suggestions = [s for s in keyword_suggestions if s.datatype == "Genre2"]
+    genre_suggestions = [s for s in keyword_suggestions.items if s.datatype == "Genre2"]
     assert len(genre_suggestions) > 0
     selected_cuisine = genre_suggestions[0].name  # "すき焼き"
 
@@ -840,9 +933,10 @@ async def test_mcp_tool_schema_exposes_search_constraints():
 
     assert search_tool.outputSchema is not None
     output_schema = search_tool.outputSchema
-    assert output_schema["properties"]["status"]["enum"] == ["success", "no_results"]
+    assert output_schema["properties"]["status"]["enum"] == ["success", "no_results", "error"]
     assert "applied_filters" in output_schema["properties"]
     assert "has_more" in output_schema["properties"]
+    assert "error" in output_schema["properties"]
     assert output_schema["properties"]["applied_filters"]["$ref"] == "#/$defs/SearchFiltersOutput"
 
 
@@ -865,6 +959,7 @@ async def test_mcp_tool_schema_exposes_detail_constraints():
 
     assert detail_tool.outputSchema is not None
     output_schema = detail_tool.outputSchema
+    assert output_schema["properties"]["status"]["enum"] == ["success", "error"]
     assert "restaurant" in output_schema["properties"]
     assert "address" in output_schema["properties"]
     assert "reservation_url" in output_schema["properties"]
@@ -922,9 +1017,39 @@ async def test_mcp_call_detail_tool_returns_structured_data(sample_restaurant_de
     assert structured_data["menu_item_count"] == 1
     assert structured_data["course_count"] == 1
     assert structured_data["restaurant"]["name"] == "テスト寿司"
+    assert structured_data["status"] == "success"
     assert structured_data["station"] == "銀座駅"
     assert structured_data["address"] == "東京都中央区銀座1-2-3"
     assert structured_data["reservation_url"] == "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
     assert structured_data["max_review_pages"] == 2
     assert structured_data["fetch_courses"] is False
     assert structured_data["reviews"][0]["reviewer"] == "評論者A"
+
+
+@pytest.mark.asyncio
+async def test_mcp_call_tool_returns_structured_error_for_unknown_cuisine():
+    """Test FastMCP search calls preserve structured error details for agent recovery"""
+    content, structured = await mcp.call_tool(
+        "tabelog_search_restaurants",
+        {"cuisine": "存在しない料理"},
+    )
+
+    structured_data = cast(dict[str, Any], structured)
+    assert content
+    assert structured_data["status"] == "error"
+    assert structured_data["error"]["error_code"] == "unsupported_cuisine"
+    assert structured_data["error"]["retryable"] is False
+
+
+@pytest.mark.asyncio
+async def test_mcp_call_area_suggestions_returns_structured_error_for_empty_query():
+    """Test FastMCP suggestion calls preserve structured validation errors"""
+    content, structured = await mcp.call_tool(
+        "tabelog_get_area_suggestions",
+        {"query": "   "},
+    )
+
+    structured_data = cast(dict[str, Any], structured)
+    assert content
+    assert structured_data["status"] == "error"
+    assert structured_data["error"]["error_code"] == "invalid_parameters"
