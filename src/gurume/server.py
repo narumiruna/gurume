@@ -144,6 +144,7 @@ class SearchFiltersOutput(BaseModel):
     cuisine: str | None = Field(description="Cuisine filter used for the search")
     genre_code: str | None = Field(description="Resolved Tabelog genre code for the cuisine filter")
     sort: SortOption = Field(description="Sort option used for the search")
+    page: int = Field(description="Requested result page", ge=1)
     reservation_date: str | None = Field(description="Reservation date used for filtering, if any")
     reservation_time: str | None = Field(description="Reservation time used for filtering, if any")
     party_size: int | None = Field(description="Party size used for filtering, if any")
@@ -175,16 +176,32 @@ SORT_MAP = {
 def _validate_search_params(
     sort: SortOption,
     limit: int,
+    page: int,
     reservation_date: str | None,
     reservation_time: str | None,
     party_size: int | None,
 ) -> SortType:
+    _validate_pagination_params(limit, page, sort)
+    _validate_reservation_params(reservation_date, reservation_time, party_size)
+    return SORT_MAP[sort]
+
+
+def _validate_pagination_params(limit: int, page: int, sort: SortOption) -> None:
     if limit < 1 or limit > 60:
         raise ValueError("limit must be between 1 and 60")
+
+    if page < 1:
+        raise ValueError("page must be greater than or equal to 1")
 
     if sort not in SORT_MAP:
         raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(SORT_MAP)}")
 
+
+def _validate_reservation_params(
+    reservation_date: str | None,
+    reservation_time: str | None,
+    party_size: int | None,
+) -> None:
     if reservation_date is not None and (not reservation_date.isdigit() or len(reservation_date) != 8):
         raise ValueError("reservation_date must be in YYYYMMDD format (e.g., '20260427')")
 
@@ -192,7 +209,7 @@ def _validate_search_params(
         raise ValueError("reservation_time must be in HHMM format (e.g., '1900')")
 
     if reservation_date is None and reservation_time is None and party_size is None:
-        return SORT_MAP[sort]
+        return
 
     if reservation_date is None:
         raise ValueError("reservation_date is required when using reservation_time or party_size")
@@ -209,8 +226,6 @@ def _validate_search_params(
         time(int(reservation_time[:2]), int(reservation_time[2:4]))
     except ValueError as e:
         raise ValueError("reservation_time must be a valid 24-hour time in HHMM format (e.g., '1900')") from e
-
-    return SORT_MAP[sort]
 
 
 def _resolve_genre_code(cuisine: str | None) -> str | None:
@@ -304,6 +319,7 @@ def _build_search_output(
     cuisine: str | None,
     genre_code: str | None,
     sort: SortOption,
+    page: int,
     reservation_date: str | None,
     reservation_time: str | None,
     party_size: int | None,
@@ -311,11 +327,8 @@ def _build_search_output(
 ) -> RestaurantSearchOutput:
     meta_output = _to_search_meta_output(meta)
     returned_count = len(items)
-    total_count = meta.total_count if meta is not None else None
     has_more = False
-    if total_count is not None:
-        has_more = total_count > returned_count
-    elif meta is not None:
+    if meta is not None:
         has_more = meta.has_next_page
 
     return RestaurantSearchOutput(
@@ -331,6 +344,7 @@ def _build_search_output(
             cuisine=cuisine,
             genre_code=genre_code,
             sort=sort,
+            page=page,
             reservation_date=reservation_date,
             reservation_time=reservation_time,
             party_size=party_size,
@@ -403,6 +417,14 @@ async def tabelog_search_restaurants(
             le=60,
         ),
     ] = 20,
+    page: Annotated[
+        int,
+        Field(
+            default=1,
+            description="1-based result page to fetch from Tabelog. Use the returned metadata to continue paging.",
+            ge=1,
+        ),
+    ] = 1,
     reservation_date: Annotated[
         str | None,
         Field(
@@ -430,12 +452,13 @@ async def tabelog_search_restaurants(
     1. Validate ambiguous areas with `tabelog_get_area_suggestions`.
     2. Validate cuisines or names with `tabelog_get_keyword_suggestions`.
     3. Search using the normalized area and cuisine values.
+    4. Use `page` together with the returned `meta.has_next_page` and `has_more` fields to fetch later pages.
 
     Returns a structured envelope with restaurants, applied filters, pagination metadata,
     and non-fatal warnings that help the caller refine follow-up tool calls.
     """
     try:
-        sort_type = _validate_search_params(sort, limit, reservation_date, reservation_time, party_size)
+        sort_type = _validate_search_params(sort, limit, page, reservation_date, reservation_time, party_size)
         genre_code = _resolve_genre_code(cuisine)
 
         # Create search request
@@ -447,6 +470,7 @@ async def tabelog_search_restaurants(
             reservation_time=reservation_time,
             party_size=party_size,
             sort_type=sort_type,
+            page=page,
             max_pages=1,  # Only fetch first page for MCP
         )
 
@@ -490,6 +514,7 @@ async def tabelog_search_restaurants(
             cuisine=cuisine,
             genre_code=genre_code,
             sort=sort,
+            page=page,
             reservation_date=reservation_date,
             reservation_time=reservation_time,
             party_size=party_size,

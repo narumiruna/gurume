@@ -81,6 +81,7 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
       - `cuisine` (optional): Precise cuisine filter (e.g., "すき焼き", "焼肉") - **RECOMMENDED** for cuisine searches
       - `sort` (optional): "ranking" | "review-count" | "new-open" | "standard" (default: "ranking")
       - `limit` (optional): Max results 1-60 (default: 20)
+      - `page` (optional): 1-based result page to fetch (default: 1)
       - `reservation_date` (optional): Date in `YYYYMMDD`, must be used with `reservation_time`
       - `reservation_time` (optional): 24-hour time in `HHMM`, must be used with `reservation_date`
       - `party_size` (optional): Positive integer, only meaningful with reservation filters
@@ -126,6 +127,9 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
 3. Search with validated parameters
    → tabelog_search_restaurants(area=validated, cuisine=validated)
    → Inspect `applied_filters`, `has_more`, and `warnings` in the response
+
+4. Continue pagination when needed
+   → If `meta.has_next_page` is true, call `tabelog_search_restaurants(..., page=current_page+1)`
 ```
 
 **Usage Examples** (in Claude Desktop):

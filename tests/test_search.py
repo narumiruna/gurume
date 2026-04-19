@@ -98,6 +98,7 @@ class TestSearchRequest:
         request = SearchRequest(
             area="銀座",
             keyword="寿司",
+            page=2,
             max_pages=3,
             include_meta=True,
             timeout=30.0,
@@ -105,6 +106,7 @@ class TestSearchRequest:
 
         assert request.area == "銀座"
         assert request.keyword == "寿司"
+        assert request.page == 2
         assert request.max_pages == 3
         assert request.include_meta is True
         assert request.timeout == 30.0
@@ -151,6 +153,32 @@ class TestSearchRequest:
         assert restaurant_request.reservation_time == "1900"
         assert restaurant_request.party_size == 2
         assert restaurant_request.page == 2
+
+    @patch("httpx.get")
+    def test_do_sync_respects_start_page(self, mock_get, mock_html_response):
+        """Test synchronous search starts from the requested page"""
+        mock_response = Mock()
+        mock_response.text = mock_html_response
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        request = SearchRequest(
+            area="銀座",
+            keyword="寿司",
+            page=2,
+            max_pages=1,
+            include_meta=True,
+        )
+
+        response = request.do_sync()
+
+        assert response.status == SearchStatus.SUCCESS
+        assert response.meta is not None
+        assert response.meta.current_page == 2
+        assert response.meta.has_prev_page is True
+
+        called_params = mock_get.call_args.kwargs["params"]
+        assert called_params["PG"] == "2"
 
     @patch("httpx.get")
     def test_do_sync_single_page(self, mock_get, mock_html_response):
