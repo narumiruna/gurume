@@ -10,6 +10,7 @@ import pytest
 from gurume.genre_mapping import get_all_genres
 from gurume.genre_mapping import get_genre_code
 from gurume.restaurant import Restaurant
+from gurume.search import SearchMeta
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 from gurume.server import CuisineOutput
@@ -116,7 +117,14 @@ async def test_search_restaurants_success(sample_restaurants):
     mock_response = SearchResponse(
         status=SearchStatus.SUCCESS,
         restaurants=sample_restaurants,
-        meta=None,
+        meta=SearchMeta(
+            total_count=2,
+            current_page=1,
+            results_per_page=2,
+            total_pages=1,
+            has_next_page=False,
+            has_prev_page=False,
+        ),
     )
 
     with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
@@ -146,7 +154,10 @@ async def test_search_restaurants_success(sample_restaurants):
         assert results.applied_filters.area == "東京"
         assert results.applied_filters.cuisine == "寿司"
         assert results.applied_filters.genre_code == "RC0201"
+        assert results.applied_filters.page == 1
         assert results.has_more is False
+        assert results.meta is not None
+        assert results.meta.current_page == 1
 
         # Verify SearchRequest was called correctly
         mock_search.assert_called_once()
@@ -174,6 +185,7 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
         assert len(results.items) == 2
         assert results.applied_filters.keyword == "ラーメン"
         assert results.applied_filters.sort == "review-count"
+        assert results.applied_filters.page == 1
         mock_search.assert_called_once()
 
 
@@ -201,6 +213,7 @@ async def test_search_restaurants_with_reservation_filters(sample_restaurants):
         assert results.applied_filters.reservation_date == "20260427"
         assert results.applied_filters.reservation_time == "1900"
         assert results.applied_filters.party_size == 2
+        assert results.applied_filters.page == 1
         mock_request.search.assert_awaited_once()
         mock_request_class.assert_called_once()
 
@@ -245,6 +258,13 @@ async def test_search_restaurants_invalid_limit():
     # Test limit > 60
     with pytest.raises(ValueError, match="limit must be between 1 and 60"):
         await tabelog_search_restaurants(limit=100)
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_invalid_page():
+    """Test validation of page parameter"""
+    with pytest.raises(ValueError, match="page must be greater than or equal to 1"):
+        await tabelog_search_restaurants(page=0)
 
 
 @pytest.mark.asyncio
@@ -360,6 +380,35 @@ async def test_search_restaurants_no_results_envelope():
     assert results.items == []
     assert results.returned_count == 0
     assert results.has_more is False
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_forwards_page_and_has_more(sample_restaurants):
+    """Test explicit MCP page requests propagate to SearchRequest and metadata"""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=SearchMeta(
+            total_count=10,
+            current_page=2,
+            results_per_page=2,
+            total_pages=5,
+            has_next_page=True,
+            has_prev_page=True,
+        ),
+    )
+
+    with patch("gurume.server.SearchRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.search = AsyncMock(return_value=mock_response)
+
+        results = await tabelog_search_restaurants(area="東京", cuisine="寿司", page=2, limit=2)
+
+    assert results.applied_filters.page == 2
+    assert results.meta is not None
+    assert results.meta.current_page == 2
+    assert results.has_more is True
+    assert mock_request_class.call_args.kwargs["page"] == 2
 
 
 # ============================================================================
@@ -666,6 +715,9 @@ async def test_mcp_tool_schema_exposes_search_constraints():
     assert limit_schema["minimum"] == 1
     assert limit_schema["maximum"] == 60
 
+    page_schema = search_tool.inputSchema["properties"]["page"]
+    assert page_schema["minimum"] == 1
+
     sort_schema = search_tool.inputSchema["properties"]["sort"]
     assert sort_schema["enum"] == ["ranking", "review-count", "new-open", "standard"]
 
@@ -674,6 +726,7 @@ async def test_mcp_tool_schema_exposes_search_constraints():
     assert output_schema["properties"]["status"]["enum"] == ["success", "no_results"]
     assert "applied_filters" in output_schema["properties"]
     assert "has_more" in output_schema["properties"]
+    assert output_schema["properties"]["applied_filters"]["$ref"] == "#/$defs/SearchFiltersOutput"
 
 
 @pytest.mark.asyncio
@@ -689,7 +742,7 @@ async def test_mcp_call_tool_returns_structured_envelope(sample_restaurants):
         mock_search.return_value = mock_response
         content, structured = await mcp.call_tool(
             "tabelog_search_restaurants",
-            {"area": "東京", "cuisine": "寿司", "limit": 5},
+            {"area": "東京", "cuisine": "寿司", "limit": 5, "page": 2},
         )
 
     structured_data = cast(dict[str, Any], structured)
@@ -698,5 +751,6 @@ async def test_mcp_call_tool_returns_structured_envelope(sample_restaurants):
     assert structured_data["status"] == "success"
     assert structured_data["returned_count"] == 2
     assert structured_data["limit"] == 5
+    assert structured_data["applied_filters"]["page"] == 2
     assert structured_data["applied_filters"]["cuisine"] == "寿司"
     assert structured_data["items"][0]["name"] == "テスト寿司"

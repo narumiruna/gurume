@@ -177,6 +177,7 @@ class SearchRequest:
     reservation_time: str | None = None
     party_size: int | None = None
     sort_type: SortType = SortType.STANDARD
+    page: int = 1
 
     # 額外的搜尋配置
     max_pages: int = 1
@@ -249,12 +250,13 @@ class SearchRequest:
         return url, params
 
     def _update_meta(self, meta: SearchMeta | None, html: str, page: int) -> SearchMeta | None:
-        if page != 1 or not self.include_meta:
+        if meta is not None or not self.include_meta:
             return meta
 
         meta = self._parse_meta(html, page)
-        if self.max_pages > meta.total_pages:
-            self.max_pages = meta.total_pages
+        remaining_pages = max(meta.total_pages - self.page + 1, 0)
+        if self.max_pages > remaining_pages:
+            self.max_pages = remaining_pages
         return meta
 
     def _search_page_sync(self, request: RestaurantSearchRequest) -> tuple[str, list[Restaurant]]:
@@ -295,7 +297,10 @@ class SearchRequest:
             all_restaurants: list[Restaurant] = []
             meta = None
 
-            for page in range(1, self.max_pages + 1):
+            start_page = self.page
+            end_page = self.page + self.max_pages
+
+            for page in range(start_page, end_page):
                 request = self._create_restaurant_request(page)
                 html, restaurants = self._search_page_sync(request)
                 all_restaurants.extend(restaurants)
@@ -327,7 +332,10 @@ class SearchRequest:
             meta = None
 
             async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
-                for page in range(1, self.max_pages + 1):
+                start_page = self.page
+                end_page = self.page + self.max_pages
+
+                for page in range(start_page, end_page):
                     request = self._create_restaurant_request(page)
                     html, restaurants = await self._search_page_async(client, request)
                     all_restaurants.extend(restaurants)
