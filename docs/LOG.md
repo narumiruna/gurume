@@ -11,3 +11,4 @@
 2026-04-18 | test(mcp): add comprehensive MCP server tests and verification for tool behavior and error guidance (#history)
 2026-04-18 | docs(project): move MEMORY and CHANGELOG into `docs/` and normalize changelog entries to the required single-line format (#local)
 2026-04-18 | docs(tui): move TUI usage guide into docs and translate it to English (#local)
+2026-04-19 | feat(mcp): return structured search envelopes with schema-first validation (#local)

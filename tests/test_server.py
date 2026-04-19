@@ -1,5 +1,7 @@
 """Tests for MCP server tools (FastMCP implementation)"""
 
+from typing import Any
+from typing import cast
 from unittest.mock import AsyncMock
 from unittest.mock import patch
 
@@ -12,7 +14,9 @@ from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 from gurume.server import CuisineOutput
 from gurume.server import RestaurantOutput
+from gurume.server import RestaurantSearchOutput
 from gurume.server import SuggestionOutput
+from gurume.server import mcp
 from gurume.server import tabelog_get_area_suggestions
 from gurume.server import tabelog_get_keyword_suggestions
 from gurume.server import tabelog_list_cuisines
@@ -126,15 +130,23 @@ async def test_search_restaurants_success(sample_restaurants):
         )
 
         # Verify results
-        assert len(results) == 2
-        assert isinstance(results[0], RestaurantOutput)
-        assert results[0].name == "テスト寿司"
-        assert results[0].rating == 4.5
-        assert results[0].review_count == 123
-        assert results[0].area == "銀座"
-        assert results[0].genres == ["寿司", "和食"]
-        assert results[0].lunch_price == "¥5,000～¥5,999"
-        assert results[0].dinner_price == "¥10,000～¥14,999"
+        assert isinstance(results, RestaurantSearchOutput)
+        assert results.status == "success"
+        assert len(results.items) == 2
+        assert isinstance(results.items[0], RestaurantOutput)
+        assert results.items[0].name == "テスト寿司"
+        assert results.items[0].rating == 4.5
+        assert results.items[0].review_count == 123
+        assert results.items[0].area == "銀座"
+        assert results.items[0].genres == ["寿司", "和食"]
+        assert results.items[0].lunch_price == "¥5,000～¥5,999"
+        assert results.items[0].dinner_price == "¥10,000～¥14,999"
+        assert results.returned_count == 2
+        assert results.limit == 20
+        assert results.applied_filters.area == "東京"
+        assert results.applied_filters.cuisine == "寿司"
+        assert results.applied_filters.genre_code == "RC0201"
+        assert results.has_more is False
 
         # Verify SearchRequest was called correctly
         mock_search.assert_called_once()
@@ -159,7 +171,9 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
             limit=10,
         )
 
-        assert len(results) == 2
+        assert len(results.items) == 2
+        assert results.applied_filters.keyword == "ラーメン"
+        assert results.applied_filters.sort == "review-count"
         mock_search.assert_called_once()
 
 
@@ -183,7 +197,10 @@ async def test_search_restaurants_with_reservation_filters(sample_restaurants):
             party_size=2,
         )
 
-        assert len(results) == 2
+        assert len(results.items) == 2
+        assert results.applied_filters.reservation_date == "20260427"
+        assert results.applied_filters.reservation_time == "1900"
+        assert results.applied_filters.party_size == 2
         mock_request.search.assert_awaited_once()
         mock_request_class.assert_called_once()
 
@@ -214,7 +231,8 @@ async def test_search_restaurants_limit_applied(sample_restaurants):
         )
 
         # Should only return 3 results, not all 6
-        assert len(results) == 3
+        assert len(results.items) == 3
+        assert results.returned_count == 3
 
 
 @pytest.mark.asyncio
@@ -251,6 +269,27 @@ async def test_search_restaurants_invalid_reservation_time():
 
 
 @pytest.mark.asyncio
+async def test_search_restaurants_requires_reservation_time_with_date():
+    """Test semantic validation for reservation filters"""
+    with pytest.raises(ValueError, match="reservation_time is required"):
+        await tabelog_search_restaurants(reservation_date="20260427")
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_requires_reservation_date_with_party_size():
+    """Test reservation bundle validation when party_size is set"""
+    with pytest.raises(ValueError, match="reservation_date is required"):
+        await tabelog_search_restaurants(party_size=2)
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_invalid_reservation_time_value():
+    """Test semantic validation of HHMM values"""
+    with pytest.raises(ValueError, match="valid 24-hour time"):
+        await tabelog_search_restaurants(reservation_date="20260427", reservation_time="2460")
+
+
+@pytest.mark.asyncio
 async def test_search_restaurants_unknown_cuisine():
     """Test error handling for unknown cuisine type"""
     with pytest.raises(ValueError, match="Unknown cuisine type"):
@@ -273,7 +312,7 @@ async def test_search_restaurants_all_sort_types(sample_restaurants):
             mock_search.return_value = mock_response
 
             results = await tabelog_search_restaurants(sort=sort_type)
-            assert len(results) == 2
+        assert len(results.items) == 2
 
 
 @pytest.mark.asyncio
@@ -284,6 +323,43 @@ async def test_search_restaurants_runtime_error():
 
         with pytest.raises(RuntimeError, match="Restaurant search failed"):
             await tabelog_search_restaurants(area="東京")
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_raises_for_error_status():
+    """Test MCP wrapper surfaces SearchResponse errors instead of returning empty data"""
+    mock_response = SearchResponse(
+        status=SearchStatus.ERROR,
+        restaurants=[],
+        meta=None,
+        error_message="upstream error",
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+
+        with pytest.raises(RuntimeError, match="upstream error"):
+            await tabelog_search_restaurants(area="東京")
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_no_results_envelope():
+    """Test empty searches return a no_results envelope"""
+    mock_response = SearchResponse(
+        status=SearchStatus.NO_RESULTS,
+        restaurants=[],
+        meta=None,
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+
+        results = await tabelog_search_restaurants(area="東京")
+
+    assert results.status == "no_results"
+    assert results.items == []
+    assert results.returned_count == 0
+    assert results.has_more is False
 
 
 # ============================================================================
@@ -542,7 +618,7 @@ async def test_workflow_area_validation(sample_area_suggestions, sample_restaura
         mock_search.return_value = mock_response
         results = await tabelog_search_restaurants(area=selected_area)
 
-    assert len(results) == 2
+    assert len(results.items) == 2
 
 
 @pytest.mark.asyncio
@@ -572,4 +648,55 @@ async def test_workflow_keyword_to_cuisine(sample_keyword_suggestions, sample_re
         mock_search.return_value = mock_response
         results = await tabelog_search_restaurants(cuisine=selected_cuisine)
 
-    assert len(results) == 2
+    assert len(results.items) == 2
+
+
+@pytest.mark.asyncio
+async def test_mcp_tool_schema_exposes_search_constraints():
+    """Test FastMCP exposes the richer search schema and annotations"""
+    tools = await mcp.list_tools()
+    search_tool = next(tool for tool in tools if tool.name == "tabelog_search_restaurants")
+
+    assert search_tool.annotations is not None
+    assert search_tool.annotations.readOnlyHint is True
+    assert search_tool.annotations.idempotentHint is True
+    assert search_tool.annotations.openWorldHint is True
+
+    limit_schema = search_tool.inputSchema["properties"]["limit"]
+    assert limit_schema["minimum"] == 1
+    assert limit_schema["maximum"] == 60
+
+    sort_schema = search_tool.inputSchema["properties"]["sort"]
+    assert sort_schema["enum"] == ["ranking", "review-count", "new-open", "standard"]
+
+    assert search_tool.outputSchema is not None
+    output_schema = search_tool.outputSchema
+    assert output_schema["properties"]["status"]["enum"] == ["success", "no_results"]
+    assert "applied_filters" in output_schema["properties"]
+    assert "has_more" in output_schema["properties"]
+
+
+@pytest.mark.asyncio
+async def test_mcp_call_tool_returns_structured_envelope(sample_restaurants):
+    """Test calling the tool through FastMCP returns the structured envelope"""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=None,
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+        content, structured = await mcp.call_tool(
+            "tabelog_search_restaurants",
+            {"area": "東京", "cuisine": "寿司", "limit": 5},
+        )
+
+    structured_data = cast(dict[str, Any], structured)
+    assert mock_search.await_count == 1
+    assert content
+    assert structured_data["status"] == "success"
+    assert structured_data["returned_count"] == 2
+    assert structured_data["limit"] == 5
+    assert structured_data["applied_filters"]["cuisine"] == "寿司"
+    assert structured_data["items"][0]["name"] == "テスト寿司"

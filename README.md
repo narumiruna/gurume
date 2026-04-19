@@ -76,18 +76,27 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
 
 1. **`tabelog_search_restaurants`** - Search restaurants by area, keyword, or cuisine type
    - Parameters:
-     - `area` (optional): Prefecture/city name (e.g., "東京", "大阪", "三重")
-     - `keyword` (optional): Search keyword for restaurant names (e.g., "和田金")
-     - `cuisine` (optional): Precise cuisine filter (e.g., "すき焼き", "焼肉") - **RECOMMENDED** for cuisine searches
-     - `sort` (optional): "ranking" | "review-count" | "new-open" | "standard" (default: "ranking")
-     - `limit` (optional): Max results 1-60 (default: 20)
-   - Returns: Array of `RestaurantOutput` with name, rating, reviews, area, genres, URL, prices
-   - Annotations: `readOnly=true`, `openWorld=true`
+      - `area` (optional): Prefecture/city name (e.g., "東京", "大阪", "三重")
+      - `keyword` (optional): Search keyword for restaurant names (e.g., "和田金")
+      - `cuisine` (optional): Precise cuisine filter (e.g., "すき焼き", "焼肉") - **RECOMMENDED** for cuisine searches
+      - `sort` (optional): "ranking" | "review-count" | "new-open" | "standard" (default: "ranking")
+      - `limit` (optional): Max results 1-60 (default: 20)
+      - `reservation_date` (optional): Date in `YYYYMMDD`, must be used with `reservation_time`
+      - `reservation_time` (optional): 24-hour time in `HHMM`, must be used with `reservation_date`
+      - `party_size` (optional): Positive integer, only meaningful with reservation filters
+    - Returns: Structured `RestaurantSearchOutput` envelope with:
+      - `status`: `success` or `no_results`
+      - `items`: Array of `RestaurantOutput`
+      - `returned_count`, `limit`, `has_more`
+      - `meta`: Tabelog pagination metadata when available
+      - `applied_filters`: normalized area / keyword / cuisine / reservation filters
+      - `warnings`: non-fatal guidance for better follow-up tool calls
+    - Annotations: `readOnly=true`, `idempotent=true`, `openWorld=true`
 
 2. **`tabelog_list_cuisines`** - Get all 45+ supported Japanese cuisine types
-   - Parameters: None
-   - Returns: Array of `CuisineOutput` with `{name, code}` for all supported cuisines
-   - Annotations: `readOnly=true`, `idempotent=true`
+    - Parameters: None
+    - Returns: Array of `CuisineOutput` with `{name, code}` for all supported cuisines
+    - Annotations: `readOnly=true`, `idempotent=true`
 
 3. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API
    - Parameters:
@@ -116,6 +125,7 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
 
 3. Search with validated parameters
    → tabelog_search_restaurants(area=validated, cuisine=validated)
+   → Inspect `applied_filters`, `has_more`, and `warnings` in the response
 ```
 
 **Usage Examples** (in Claude Desktop):
@@ -143,6 +153,7 @@ Claude: [Uses tabelog_get_area_suggestions with query="渋谷"]
 **Architecture** (SKILL.md compliant):
 - ✅ **FastMCP Framework**: Automatic schema generation from type hints
 - ✅ **Pydantic Output Schemas**: Type-safe structured responses
+- ✅ **Schema-First Inputs**: MCP clients can discover `enum`, `min/max`, and format constraints directly
 - ✅ **Tool Annotations**: Proper hints for LLM understanding (readOnly, idempotent, openWorld)
 - ✅ **Comprehensive Error Handling**: Actionable error messages with next steps
 - ✅ **Auto-Serialization**: Returns Pydantic models, framework handles JSON conversion
@@ -157,11 +168,14 @@ Claude: [Uses tabelog_get_area_suggestions with query="渋谷"]
 
 **Testing the MCP Server**:
 ```bash
-# Test if server starts correctly
+# Verify the server imports and exposes MCP tools
+uv run pytest -q tests/test_server.py
+
+# Start the server locally (stdio transport)
 uv run gurume mcp
 
-# The server should start and wait for MCP protocol messages
-# Press Ctrl+C to stop
+# Inspect tools and schemas interactively
+npx @modelcontextprotocol/inspector uv run gurume mcp
 ```
 
 
