@@ -86,17 +86,18 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
       - `reservation_time` (optional): 24-hour time in `HHMM`, must be used with `reservation_date`
       - `party_size` (optional): Positive integer, only meaningful with reservation filters
     - Returns: Structured `RestaurantSearchOutput` envelope with:
-      - `status`: `success` or `no_results`
+      - `status`: `success`, `no_results`, or `error`
       - `items`: Array of `RestaurantOutput`
       - `returned_count`, `limit`, `has_more`
       - `meta`: Tabelog pagination metadata when available
       - `applied_filters`: normalized area / keyword / cuisine / reservation filters
       - `warnings`: non-fatal guidance for better follow-up tool calls
+      - `error`: structured `{error_code, message, retryable, suggested_action, detail}` when `status=error`
     - Annotations: `readOnly=true`, `idempotent=true`, `openWorld=true`
 
 2. **`tabelog_list_cuisines`** - Get all 45+ supported Japanese cuisine types
     - Parameters: None
-    - Returns: Array of `CuisineOutput` with `{name, code}` for all supported cuisines
+    - Returns: Structured `CuisineListOutput` with `status`, `items`, `returned_count`, and `error`
     - Annotations: `readOnly=true`, `idempotent=true`
 
 3. **`tabelog_get_restaurant_details`** - Fetch structured restaurant details from a Tabelog restaurant URL
@@ -106,20 +107,31 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
       - `fetch_menu` (optional): Include menu page items (default: `true`)
       - `fetch_courses` (optional): Include course page entries (default: `true`)
       - `max_review_pages` (optional): Number of review pages to fetch when reviews are enabled (default: `1`)
-    - Returns: Structured `RestaurantDetailOutput` with base restaurant info (`name`, `address`, `station`, `phone`, `business_hours`, `reservation_url`), plus `reviews`, `menu_items`, and `courses`
+    - Returns: Structured `RestaurantDetailOutput` with `status`, base restaurant info (`name`, `address`, `station`, `phone`, `business_hours`, `reservation_url`), plus `reviews`, `menu_items`, `courses`, and `error`
     - Annotations: `readOnly=true`, `idempotent=true`, `openWorld=true`
 
 4. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API
    - Parameters:
-     - `query` (required): Area search query (e.g., "東京", "渋谷")
-   - Returns: Array of `SuggestionOutput` with name, datatype, id, coordinates
-   - Annotations: `readOnly=true`, `openWorld=true`
+      - `query` (required): Area search query (e.g., "東京", "渋谷")
+    - Returns: Structured `SuggestionListOutput` with `status`, normalized `query`, `items`, `returned_count`, and `error`
+    - Annotations: `readOnly=true`, `openWorld=true`
 
 5. **`tabelog_get_keyword_suggestions`** - Get keyword/cuisine/restaurant suggestions from Tabelog API
-    - Parameters:
-      - `query` (required): Keyword search query (e.g., "すき", "寿司")
-    - Returns: Array of `SuggestionOutput` with dynamic suggestions (cuisine types, restaurant names, combinations)
-   - Annotations: `readOnly=true`, `openWorld=true`
+     - Parameters:
+       - `query` (required): Keyword search query (e.g., "すき", "寿司")
+    - Returns: Structured `SuggestionListOutput` with `status`, normalized `query`, `items`, `returned_count`, and `error`
+    - Annotations: `readOnly=true`, `openWorld=true`
+
+**Structured Error Model**:
+
+- All MCP tools now return a structured error envelope instead of relying on free-form exception text.
+- When `status="error"`, inspect `error.error_code` and `error.retryable` first.
+- Stable error codes currently include:
+  - `invalid_parameters`: caller input does not satisfy runtime validation
+  - `unsupported_cuisine`: cuisine name is not in the supported Tabelog mapping
+  - `upstream_unavailable`: Tabelog or an upstream dependency did not return usable data
+  - `internal_error`: unexpected server-side failure
+- Use `error.suggested_action` as the preferred recovery step for the next tool call.
 
 **Recommended Workflow** (for best results):
 
@@ -135,11 +147,15 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
    → Check datatype: Genre2 (cuisine) or Restaurant (name)
 
 3. Search with validated parameters
-   → tabelog_search_restaurants(area=validated, cuisine=validated)
-   → Inspect `applied_filters`, `has_more`, and `warnings` in the response
+    → tabelog_search_restaurants(area=validated, cuisine=validated)
+    → Inspect `applied_filters`, `has_more`, and `warnings` in the response
+
+   If `status="error"`:
+   → Check `error.error_code` and `error.suggested_action`
+   → Retry only when `error.retryable` is `true`
 
 4. Continue pagination when needed
-   → If `meta.has_next_page` is true, call `tabelog_search_restaurants(..., page=current_page+1)`
+    → If `meta.has_next_page` is true, call `tabelog_search_restaurants(..., page=current_page+1)`
 
 5. Fetch details for shortlisted restaurants
    → Call `tabelog_get_restaurant_details(restaurant_url=selected_result.url)`

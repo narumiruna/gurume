@@ -124,6 +124,23 @@ class SuggestionOutput(BaseModel):
     lng: float | None = Field(description="Longitude (decimal degrees)")
 
 
+class ToolErrorOutput(BaseModel):
+    """Structured MCP tool error output for agent-friendly recovery."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    error_code: Literal[
+        "invalid_parameters",
+        "unsupported_cuisine",
+        "upstream_unavailable",
+        "internal_error",
+    ] = Field(description="Stable machine-readable error code")
+    message: str = Field(description="Human-readable error summary")
+    retryable: bool = Field(description="Whether retrying the same tool call may succeed")
+    suggested_action: str = Field(description="Concrete next step for the caller")
+    detail: str | None = Field(description="Optional raw detail for debugging or logging")
+
+
 class SearchMetaOutput(BaseModel):
     """Pagination and result metadata for restaurant search."""
 
@@ -146,8 +163,8 @@ class SearchFiltersOutput(BaseModel):
     keyword: str | None = Field(description="Keyword filter used for the search")
     cuisine: str | None = Field(description="Cuisine filter used for the search")
     genre_code: str | None = Field(description="Resolved Tabelog genre code for the cuisine filter")
-    sort: SortOption = Field(description="Sort option used for the search")
-    page: int = Field(description="Requested result page", ge=1)
+    sort: str = Field(description="Sort option used for the search")
+    page: int = Field(description="Requested result page")
     reservation_date: str | None = Field(description="Reservation date used for filtering, if any")
     reservation_time: str | None = Field(description="Reservation time used for filtering, if any")
     party_size: int | None = Field(description="Party size used for filtering, if any")
@@ -158,14 +175,41 @@ class RestaurantSearchOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["success", "no_results"] = Field(description="Search status after executing the query")
-    items: list[RestaurantOutput] = Field(description="Restaurants returned for the current page")
-    returned_count: int = Field(description="Number of restaurants returned in this response")
+    status: Literal["success", "no_results", "error"] = Field(description="Search status after executing the query")
+    items: list[RestaurantOutput] = Field(default_factory=list, description="Restaurants returned for the current page")
+    returned_count: int = Field(default=0, description="Number of restaurants returned in this response")
     limit: int = Field(description="Maximum number of restaurants requested by the caller")
-    has_more: bool = Field(description="Whether more matching restaurants likely exist beyond this response")
-    meta: SearchMetaOutput | None = Field(description="Tabelog pagination metadata for the current query")
+    has_more: bool = Field(
+        default=False,
+        description="Whether more matching restaurants likely exist beyond this response",
+    )
+    meta: SearchMetaOutput | None = Field(default=None, description="Tabelog pagination metadata for the current query")
     applied_filters: SearchFiltersOutput = Field(description="Normalized search filters used by the server")
-    warnings: list[str] = Field(description="Non-fatal usage guidance for the caller")
+    warnings: list[str] = Field(default_factory=list, description="Non-fatal usage guidance for the caller")
+    error: ToolErrorOutput | None = Field(default=None, description="Structured error details when status is error")
+
+
+class CuisineListOutput(BaseModel):
+    """Structured cuisine list output for MCP clients."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["success", "error"] = Field(description="Cuisine list retrieval status")
+    items: list[CuisineOutput] = Field(default_factory=list, description="Supported cuisine entries")
+    returned_count: int = Field(default=0, description="Number of cuisine entries returned")
+    error: ToolErrorOutput | None = Field(default=None, description="Structured error details when status is error")
+
+
+class SuggestionListOutput(BaseModel):
+    """Structured suggestion list output for MCP clients."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["success", "error"] = Field(description="Suggestion lookup status")
+    query: str = Field(description="Normalized query used for the suggestion lookup")
+    items: list[SuggestionOutput] = Field(default_factory=list, description="Suggestions returned by Tabelog")
+    returned_count: int = Field(default=0, description="Number of suggestions returned")
+    error: ToolErrorOutput | None = Field(default=None, description="Structured error details when status is error")
 
 
 class ReviewOutput(BaseModel):
@@ -208,24 +252,32 @@ class RestaurantDetailOutput(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    restaurant: RestaurantOutput = Field(description="Structured base restaurant information from the detail page")
-    restaurant_url: HttpUrl = Field(description="Canonical Tabelog restaurant URL used for detail fetches")
-    address: str | None = Field(description="Street address shown on the detail page")
-    station: str | None = Field(description="Nearest station text if available")
-    phone: str | None = Field(description="Contact phone number if available")
-    business_hours: str | None = Field(description="Business hours text if available")
-    closed_days: str | None = Field(description="Closed day text if available")
-    reservation_url: HttpUrl | None = Field(description="Reservation URL if one can be identified from the page")
-    review_count: int = Field(description="Number of review entries returned in this response")
-    menu_item_count: int = Field(description="Number of menu items returned in this response")
-    course_count: int = Field(description="Number of courses returned in this response")
+    status: Literal["success", "error"] = Field(description="Restaurant detail retrieval status")
+    restaurant: RestaurantOutput | None = Field(
+        default=None,
+        description="Structured base restaurant information from the detail page",
+    )
+    restaurant_url: str = Field(description="Requested Tabelog restaurant URL used for detail fetches")
+    address: str | None = Field(default=None, description="Street address shown on the detail page")
+    station: str | None = Field(default=None, description="Nearest station text if available")
+    phone: str | None = Field(default=None, description="Contact phone number if available")
+    business_hours: str | None = Field(default=None, description="Business hours text if available")
+    closed_days: str | None = Field(default=None, description="Closed day text if available")
+    reservation_url: HttpUrl | None = Field(
+        default=None,
+        description="Reservation URL if one can be identified from the page",
+    )
+    review_count: int = Field(default=0, description="Number of review entries returned in this response")
+    menu_item_count: int = Field(default=0, description="Number of menu items returned in this response")
+    course_count: int = Field(default=0, description="Number of courses returned in this response")
     fetch_reviews: bool = Field(description="Whether review pages were requested")
     fetch_menu: bool = Field(description="Whether menu pages were requested")
     fetch_courses: bool = Field(description="Whether course pages were requested")
     max_review_pages: int = Field(description="Maximum review pages requested from Tabelog", ge=1)
-    reviews: list[ReviewOutput] = Field(description="Structured review entries")
-    menu_items: list[MenuItemOutput] = Field(description="Structured menu items")
-    courses: list[CourseOutput] = Field(description="Structured course entries")
+    reviews: list[ReviewOutput] = Field(default_factory=list, description="Structured review entries")
+    menu_items: list[MenuItemOutput] = Field(default_factory=list, description="Structured menu items")
+    courses: list[CourseOutput] = Field(default_factory=list, description="Structured course entries")
+    error: ToolErrorOutput | None = Field(default=None, description="Structured error details when status is error")
 
 
 SORT_MAP = {
@@ -236,6 +288,23 @@ SORT_MAP = {
 }
 
 HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
+
+
+def _build_tool_error(
+    *,
+    error_code: Literal["invalid_parameters", "unsupported_cuisine", "upstream_unavailable", "internal_error"],
+    message: str,
+    retryable: bool,
+    suggested_action: str,
+    detail: str | None = None,
+) -> ToolErrorOutput:
+    return ToolErrorOutput(
+        error_code=error_code,
+        message=message,
+        retryable=retryable,
+        suggested_action=suggested_action,
+        detail=detail,
+    )
 
 
 def _validate_search_params(
@@ -422,6 +491,39 @@ def _build_search_output(
     )
 
 
+def _build_search_error_output(
+    *,
+    limit: int,
+    area: str | None,
+    keyword: str | None,
+    cuisine: str | None,
+    sort: SortOption,
+    page: int,
+    reservation_date: str | None,
+    reservation_time: str | None,
+    party_size: int | None,
+    error: ToolErrorOutput,
+) -> RestaurantSearchOutput:
+    genre_code = get_genre_code(cuisine) if cuisine else None
+    return RestaurantSearchOutput(
+        status="error",
+        limit=limit,
+        applied_filters=SearchFiltersOutput(
+            area=area,
+            keyword=keyword,
+            cuisine=cuisine,
+            genre_code=genre_code,
+            sort=sort,
+            page=page,
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
+            party_size=party_size,
+        ),
+        warnings=_build_search_warnings(area, keyword, cuisine, reservation_date),
+        error=error,
+    )
+
+
 def _validate_detail_params(
     restaurant_url: str,
     fetch_reviews: bool,
@@ -451,6 +553,7 @@ def _to_detail_output(
     max_review_pages: int,
 ) -> RestaurantDetailOutput:
     return RestaurantDetailOutput(
+        status="success",
         restaurant=RestaurantOutput(
             name=detail.restaurant.name,
             rating=detail.restaurant.rating,
@@ -461,7 +564,7 @@ def _to_detail_output(
             lunch_price=detail.restaurant.lunch_price,
             dinner_price=detail.restaurant.dinner_price,
         ),
-        restaurant_url=_as_http_url(detail.restaurant.url),
+        restaurant_url=detail.restaurant.url,
         address=detail.restaurant.address,
         station=detail.restaurant.station,
         phone=detail.restaurant.phone,
@@ -507,9 +610,40 @@ def _to_detail_output(
     )
 
 
-def _reraise_if_fatal(error: BaseException) -> None:
-    if isinstance(error, KeyboardInterrupt | SystemExit):
-        raise error
+def _build_detail_error_output(
+    *,
+    restaurant_url: str,
+    fetch_reviews: bool,
+    fetch_menu: bool,
+    fetch_courses: bool,
+    max_review_pages: int,
+    error: ToolErrorOutput,
+) -> RestaurantDetailOutput:
+    return RestaurantDetailOutput(
+        status="error",
+        restaurant_url=restaurant_url,
+        fetch_reviews=fetch_reviews,
+        fetch_menu=fetch_menu,
+        fetch_courses=fetch_courses,
+        max_review_pages=max_review_pages,
+        error=error,
+    )
+
+
+def _build_cuisine_list_output(items: list[CuisineOutput]) -> CuisineListOutput:
+    return CuisineListOutput(status="success", items=items, returned_count=len(items))
+
+
+def _build_cuisine_list_error_output(error: ToolErrorOutput) -> CuisineListOutput:
+    return CuisineListOutput(status="error", error=error)
+
+
+def _build_suggestion_list_output(query: str, items: list[SuggestionOutput]) -> SuggestionListOutput:
+    return SuggestionListOutput(status="success", query=query, items=items, returned_count=len(items))
+
+
+def _build_suggestion_list_error_output(query: str, error: ToolErrorOutput) -> SuggestionListOutput:
+    return SuggestionListOutput(status="error", query=query, error=error)
 
 
 # ============================================================================
@@ -615,7 +749,6 @@ async def tabelog_search_restaurants(
         sort_type = _validate_search_params(sort, limit, page, reservation_date, reservation_time, party_size)
         genre_code = _resolve_genre_code(cuisine)
 
-        # Create search request
         request = SearchRequest(
             area=area,
             keyword=keyword,
@@ -625,55 +758,114 @@ async def tabelog_search_restaurants(
             party_size=party_size,
             sort_type=sort_type,
             page=page,
-            max_pages=1,  # Only fetch first page for MCP
+            max_pages=1,
         )
-
-        # Execute search
         response = await request.search()
     except ValueError as e:
-        # Re-raise validation errors with clear messages
-        raise ValueError(f"Invalid parameters: {e}") from e
-    except RuntimeError as e:
-        # Wrap other errors with context
-        raise RuntimeError(
-            f"Restaurant search failed: {e}. "
-            "Please check your search parameters and try again. "
-            "If the problem persists, the Tabelog service may be unavailable."
-        ) from e
-    except BaseException as e:
-        _reraise_if_fatal(e)
-        raise RuntimeError(
-            f"Restaurant search failed: {e}. "
-            "Please check your search parameters and try again. "
-            "If the problem persists, the Tabelog service may be unavailable."
-        ) from e
-    else:
-        if response.status == SearchStatus.ERROR:
-            raise RuntimeError(
-                f"Restaurant search failed: {response.error_message}. "
-                "Try validating the area or cuisine first, then retry the search."
-            )
-
-        items = _to_restaurant_outputs(response.restaurants, limit)
-        status: Literal["success", "no_results"] = "success"
-        if response.status == SearchStatus.NO_RESULTS:
-            status = "no_results"
-
-        return _build_search_output(
-            items=items,
+        error_code = "unsupported_cuisine" if cuisine and "Unknown cuisine type" in str(e) else "invalid_parameters"
+        return _build_search_error_output(
             limit=limit,
-            meta=response.meta,
             area=area,
             keyword=keyword,
             cuisine=cuisine,
-            genre_code=genre_code,
             sort=sort,
             page=page,
             reservation_date=reservation_date,
             reservation_time=reservation_time,
             party_size=party_size,
-            status=status,
+            error=_build_tool_error(
+                error_code=error_code,
+                message=f"Invalid search parameters: {e}",
+                retryable=False,
+                suggested_action=(
+                    "Call `tabelog_list_cuisines` or `tabelog_get_keyword_suggestions` to validate the cuisine first."
+                    if error_code == "unsupported_cuisine"
+                    else "Check the input fields and retry with values that satisfy the tool schema."
+                ),
+                detail=str(e),
+            ),
         )
+    except RuntimeError as e:
+        return _build_search_error_output(
+            limit=limit,
+            area=area,
+            keyword=keyword,
+            cuisine=cuisine,
+            sort=sort,
+            page=page,
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
+            party_size=party_size,
+            error=_build_tool_error(
+                error_code="upstream_unavailable",
+                message="Restaurant search failed because the upstream service did not return usable results.",
+                retryable=True,
+                suggested_action=(
+                    "Retry later, or validate the area and cuisine with suggestion tools before searching again."
+                ),
+                detail=str(e),
+            ),
+        )
+    except Exception as e:  # noqa: BLE001
+        return _build_search_error_output(
+            limit=limit,
+            area=area,
+            keyword=keyword,
+            cuisine=cuisine,
+            sort=sort,
+            page=page,
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
+            party_size=party_size,
+            error=_build_tool_error(
+                error_code="internal_error",
+                message="Restaurant search failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            ),
+        )
+
+    if response.status == SearchStatus.ERROR:
+        return _build_search_error_output(
+            limit=limit,
+            area=area,
+            keyword=keyword,
+            cuisine=cuisine,
+            sort=sort,
+            page=page,
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
+            party_size=party_size,
+            error=_build_tool_error(
+                error_code="upstream_unavailable",
+                message="Restaurant search failed because Tabelog returned an error response.",
+                retryable=True,
+                suggested_action="Validate the area or cuisine first, then retry the search.",
+                detail=response.error_message,
+            ),
+        )
+
+    items = _to_restaurant_outputs(response.restaurants, limit)
+    status: Literal["success", "no_results"] = "success"
+    if response.status == SearchStatus.NO_RESULTS:
+        status = "no_results"
+
+    return _build_search_output(
+        items=items,
+        limit=limit,
+        meta=response.meta,
+        area=area,
+        keyword=keyword,
+        cuisine=cuisine,
+        genre_code=genre_code,
+        sort=sort,
+        page=page,
+        reservation_date=reservation_date,
+        reservation_time=reservation_time,
+        party_size=party_size,
+        status=status,
+    )
 
 
 @mcp.tool(
@@ -725,26 +917,60 @@ async def tabelog_get_restaurant_details(
         )
         detail = await request.fetch()
     except ValueError as e:
-        raise ValueError(f"Invalid parameters: {e}") from e
-    except RuntimeError as e:
-        raise RuntimeError(
-            f"Restaurant detail request failed: {e}. "
-            "Please verify the restaurant URL and try again. If the issue persists, Tabelog may be unavailable."
-        ) from e
-    except BaseException as e:
-        _reraise_if_fatal(e)
-        raise RuntimeError(
-            f"Restaurant detail request failed: {e}. "
-            "Please verify the restaurant URL and try again. If the issue persists, Tabelog may be unavailable."
-        ) from e
-    else:
-        return _to_detail_output(
-            detail,
+        return _build_detail_error_output(
+            restaurant_url=restaurant_url,
             fetch_reviews=fetch_reviews,
             fetch_menu=fetch_menu,
             fetch_courses=fetch_courses,
             max_review_pages=max_review_pages,
+            error=_build_tool_error(
+                error_code="invalid_parameters",
+                message=f"Invalid detail request parameters: {e}",
+                retryable=False,
+                suggested_action=(
+                    "Pass a non-empty `https://tabelog.com/` restaurant URL and enable at least one fetch option."
+                ),
+                detail=str(e),
+            ),
         )
+    except RuntimeError as e:
+        return _build_detail_error_output(
+            restaurant_url=restaurant_url,
+            fetch_reviews=fetch_reviews,
+            fetch_menu=fetch_menu,
+            fetch_courses=fetch_courses,
+            max_review_pages=max_review_pages,
+            error=_build_tool_error(
+                error_code="upstream_unavailable",
+                message="Restaurant detail request failed because the upstream service did not return usable data.",
+                retryable=True,
+                suggested_action="Verify the restaurant URL from search results and retry later.",
+                detail=str(e),
+            ),
+        )
+    except Exception as e:  # noqa: BLE001
+        return _build_detail_error_output(
+            restaurant_url=restaurant_url,
+            fetch_reviews=fetch_reviews,
+            fetch_menu=fetch_menu,
+            fetch_courses=fetch_courses,
+            max_review_pages=max_review_pages,
+            error=_build_tool_error(
+                error_code="internal_error",
+                message="Restaurant detail request failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            ),
+        )
+
+    return _to_detail_output(
+        detail,
+        fetch_reviews=fetch_reviews,
+        fetch_menu=fetch_menu,
+        fetch_courses=fetch_courses,
+        max_review_pages=max_review_pages,
+    )
 
 
 @mcp.tool(
@@ -754,7 +980,7 @@ async def tabelog_get_restaurant_details(
     ),
     structured_output=True,
 )
-async def tabelog_list_cuisines() -> list[CuisineOutput]:
+async def tabelog_list_cuisines() -> CuisineListOutput:
     """Get complete list of all 45+ supported Japanese cuisine types with their Tabelog genre codes.
 
     **WHEN TO USE**:
@@ -792,16 +1018,29 @@ async def tabelog_list_cuisines() -> list[CuisineOutput]:
     try:
         cuisines = get_all_genres()
     except ValueError as e:
-        raise RuntimeError(
-            f"Failed to retrieve cuisine list: {e}. This is an unexpected error as cuisine data is static."
-        ) from e
-    except BaseException as e:
-        _reraise_if_fatal(e)
-        raise RuntimeError(
-            f"Failed to retrieve cuisine list: {e}. This is an unexpected error as cuisine data is static."
-        ) from e
-    else:
-        return [CuisineOutput(name=cuisine, code=code) for cuisine in cuisines if (code := get_genre_code(cuisine))]
+        return _build_cuisine_list_error_output(
+            _build_tool_error(
+                error_code="internal_error",
+                message="Cuisine list retrieval failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            )
+        )
+    except Exception as e:  # noqa: BLE001
+        return _build_cuisine_list_error_output(
+            _build_tool_error(
+                error_code="internal_error",
+                message="Cuisine list retrieval failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            )
+        )
+
+    return _build_cuisine_list_output(
+        [CuisineOutput(name=cuisine, code=code) for cuisine in cuisines if (code := get_genre_code(cuisine))]
+    )
 
 
 @mcp.tool(
@@ -822,32 +1061,50 @@ async def tabelog_get_area_suggestions(
             min_length=1,
         ),
     ],
-) -> list[SuggestionOutput]:
+) -> SuggestionListOutput:
     """Get area and station suggestions for validating user-provided locations."""
+    normalized_query = query.strip()
+
     try:
-        # Validate input
-        if not query or not query.strip():
+        if not normalized_query:
             raise ValueError("query parameter cannot be empty")
 
-        # Call API
-        suggestions = await get_area_suggestions_async(query.strip())
+        suggestions = await get_area_suggestions_async(normalized_query)
     except ValueError as e:
-        raise ValueError(f"Invalid query parameter: {e}") from e
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="invalid_parameters",
+                message=f"Invalid suggestion query: {e}",
+                retryable=False,
+                suggested_action="Pass a non-empty area query string before calling this tool again.",
+                detail=str(e),
+            ),
+        )
     except RuntimeError as e:
-        raise RuntimeError(
-            f"Area suggestion request failed: {e}. "
-            "This may be due to network issues or Tabelog API being temporarily unavailable. "
-            "Please try again in a moment."
-        ) from e
-    except BaseException as e:
-        _reraise_if_fatal(e)
-        raise RuntimeError(
-            f"Area suggestion request failed: {e}. "
-            "This may be due to network issues or Tabelog API being temporarily unavailable. "
-            "Please try again in a moment."
-        ) from e
-    else:
-        return _to_suggestion_outputs(suggestions)
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="upstream_unavailable",
+                message="Area suggestion request failed because the upstream service was unavailable.",
+                retryable=True,
+                suggested_action="Retry later, or try a broader area query.",
+                detail=str(e),
+            ),
+        )
+    except Exception as e:  # noqa: BLE001
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="internal_error",
+                message="Area suggestion request failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            ),
+        )
+
+    return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
 
 
 @mcp.tool(
@@ -869,32 +1126,50 @@ async def tabelog_get_keyword_suggestions(
             min_length=1,
         ),
     ],
-) -> list[SuggestionOutput]:
+) -> SuggestionListOutput:
     """Get keyword suggestions for cuisine names, restaurant names, and popular search variants."""
+    normalized_query = query.strip()
+
     try:
-        # Validate input
-        if not query or not query.strip():
+        if not normalized_query:
             raise ValueError("query parameter cannot be empty")
 
-        # Call API
-        suggestions = await get_keyword_suggestions_async(query.strip())
+        suggestions = await get_keyword_suggestions_async(normalized_query)
     except ValueError as e:
-        raise ValueError(f"Invalid query parameter: {e}") from e
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="invalid_parameters",
+                message=f"Invalid suggestion query: {e}",
+                retryable=False,
+                suggested_action="Pass a non-empty keyword query string before calling this tool again.",
+                detail=str(e),
+            ),
+        )
     except RuntimeError as e:
-        raise RuntimeError(
-            f"Keyword suggestion request failed: {e}. "
-            "This may be due to network issues or Tabelog API being temporarily unavailable. "
-            "Please try again in a moment."
-        ) from e
-    except BaseException as e:
-        _reraise_if_fatal(e)
-        raise RuntimeError(
-            f"Keyword suggestion request failed: {e}. "
-            "This may be due to network issues or Tabelog API being temporarily unavailable. "
-            "Please try again in a moment."
-        ) from e
-    else:
-        return _to_suggestion_outputs(suggestions)
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="upstream_unavailable",
+                message="Keyword suggestion request failed because the upstream service was unavailable.",
+                retryable=True,
+                suggested_action="Retry later, or try a shorter keyword query.",
+                detail=str(e),
+            ),
+        )
+    except Exception as e:  # noqa: BLE001
+        return _build_suggestion_list_error_output(
+            normalized_query,
+            _build_tool_error(
+                error_code="internal_error",
+                message="Keyword suggestion request failed unexpectedly.",
+                retryable=True,
+                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+                detail=str(e),
+            ),
+        )
+
+    return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
 
 
 # ============================================================================
