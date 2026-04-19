@@ -12,4 +12,5 @@
 2026-04-18 | docs(project): move MEMORY and CHANGELOG into `docs/` and normalize changelog entries to the required single-line format (#local)
 2026-04-18 | docs(tui): move TUI usage guide into docs and translate it to English (#local)
 2026-04-19 | feat(mcp): add page-based pagination to structured restaurant search results (#local)
+2026-04-19 | feat(mcp): expose structured restaurant detail retrieval as a tool (#local)
 2026-04-19 | feat(mcp): return structured search envelopes with schema-first validation (#local)

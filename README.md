@@ -99,16 +99,26 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
     - Returns: Array of `CuisineOutput` with `{name, code}` for all supported cuisines
     - Annotations: `readOnly=true`, `idempotent=true`
 
-3. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API
+3. **`tabelog_get_restaurant_details`** - Fetch structured restaurant details from a Tabelog restaurant URL
+    - Parameters:
+      - `restaurant_url` (required): Tabelog restaurant URL from search results
+      - `fetch_reviews` (optional): Include review pages (default: `true`)
+      - `fetch_menu` (optional): Include menu page items (default: `true`)
+      - `fetch_courses` (optional): Include course page entries (default: `true`)
+      - `max_review_pages` (optional): Number of review pages to fetch when reviews are enabled (default: `1`)
+    - Returns: Structured `RestaurantDetailOutput` with counts plus `reviews`, `menu_items`, and `courses`
+    - Annotations: `readOnly=true`, `idempotent=true`, `openWorld=true`
+
+4. **`tabelog_get_area_suggestions`** - Get area/station suggestions from Tabelog API
    - Parameters:
      - `query` (required): Area search query (e.g., "東京", "渋谷")
    - Returns: Array of `SuggestionOutput` with name, datatype, id, coordinates
    - Annotations: `readOnly=true`, `openWorld=true`
 
-4. **`tabelog_get_keyword_suggestions`** - Get keyword/cuisine/restaurant suggestions from Tabelog API
-   - Parameters:
-     - `query` (required): Keyword search query (e.g., "すき", "寿司")
-   - Returns: Array of `SuggestionOutput` with dynamic suggestions (cuisine types, restaurant names, combinations)
+5. **`tabelog_get_keyword_suggestions`** - Get keyword/cuisine/restaurant suggestions from Tabelog API
+    - Parameters:
+      - `query` (required): Keyword search query (e.g., "すき", "寿司")
+    - Returns: Array of `SuggestionOutput` with dynamic suggestions (cuisine types, restaurant names, combinations)
    - Annotations: `readOnly=true`, `openWorld=true`
 
 **Recommended Workflow** (for best results):
@@ -130,6 +140,9 @@ The Gurume MCP server provides restaurant search functionality to AI assistants 
 
 4. Continue pagination when needed
    → If `meta.has_next_page` is true, call `tabelog_search_restaurants(..., page=current_page+1)`
+
+5. Fetch details for shortlisted restaurants
+   → Call `tabelog_get_restaurant_details(restaurant_url=selected_result.url)`
 ```
 
 **Usage Examples** (in Claude Desktop):
