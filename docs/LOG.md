@@ -18,3 +18,4 @@
 2026-04-19 | feat(mcp): standardize structured error envelopes across MCP tools (#local)
 2026-04-19 | docs(readme): rewrite README in English and align interface docs (#local)
 2026-04-19 | refactor(mcp): split server schemas and helpers out of the FastMCP entrypoint module (#local)
+2026-04-19 | fix(deps): declare pydantic as a direct project dependency for type checking (#local)
