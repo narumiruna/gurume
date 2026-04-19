@@ -17,3 +17,4 @@
 2026-04-19 | feat(mcp): return structured search envelopes with schema-first validation (#local)
 2026-04-19 | feat(mcp): standardize structured error envelopes across MCP tools (#local)
 2026-04-19 | docs(readme): rewrite README in English and align interface docs (#local)
+2026-04-19 | refactor(mcp): split server schemas and helpers out of the FastMCP entrypoint module (#local)
