@@ -7,6 +7,10 @@ from unittest.mock import patch
 
 import pytest
 
+from gurume.detail import Course
+from gurume.detail import MenuItem
+from gurume.detail import RestaurantDetail
+from gurume.detail import Review
 from gurume.genre_mapping import get_all_genres
 from gurume.genre_mapping import get_genre_code
 from gurume.restaurant import Restaurant
@@ -14,12 +18,14 @@ from gurume.search import SearchMeta
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 from gurume.server import CuisineOutput
+from gurume.server import RestaurantDetailOutput
 from gurume.server import RestaurantOutput
 from gurume.server import RestaurantSearchOutput
 from gurume.server import SuggestionOutput
 from gurume.server import mcp
 from gurume.server import tabelog_get_area_suggestions
 from gurume.server import tabelog_get_keyword_suggestions
+from gurume.server import tabelog_get_restaurant_details
 from gurume.server import tabelog_list_cuisines
 from gurume.server import tabelog_search_restaurants
 from gurume.suggest import AreaSuggestion
@@ -104,6 +110,40 @@ def sample_keyword_suggestions():
             lng=None,
         ),
     ]
+
+
+@pytest.fixture
+def sample_restaurant_detail(sample_restaurants):
+    """Sample restaurant detail for MCP detail tool tests"""
+    return RestaurantDetail(
+        restaurant=sample_restaurants[0],
+        reviews=[
+            Review(
+                reviewer="評論者A",
+                content="服務很好",
+                rating=4.2,
+                visit_date="2026/04訪問",
+                title="值得再訪",
+                helpful_count=3,
+            )
+        ],
+        menu_items=[
+            MenuItem(
+                name="特上壽司",
+                price="¥4,800",
+                description="主廚精選握壽司",
+                category="握り",
+            )
+        ],
+        courses=[
+            Course(
+                name="旬のコース",
+                price="¥12,000",
+                description="季節限定套餐",
+                items=["前菜", "握壽司", "味噌湯"],
+            )
+        ],
+    )
 
 
 # ============================================================================
@@ -409,6 +449,71 @@ async def test_search_restaurants_forwards_page_and_has_more(sample_restaurants)
     assert results.meta.current_page == 2
     assert results.has_more is True
     assert mock_request_class.call_args.kwargs["page"] == 2
+
+
+# ============================================================================
+# Test tabelog_get_restaurant_details
+# ============================================================================
+
+
+@pytest.mark.asyncio
+async def test_get_restaurant_details_success(sample_restaurant_detail):
+    """Test successful restaurant detail fetch"""
+    with patch("gurume.server.RestaurantDetailRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.fetch = AsyncMock(return_value=sample_restaurant_detail)
+
+        result = await tabelog_get_restaurant_details(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=True,
+            fetch_menu=True,
+            fetch_courses=False,
+            max_review_pages=2,
+        )
+
+    assert isinstance(result, RestaurantDetailOutput)
+    assert str(result.restaurant_url) == "https://tabelog.com/tokyo/A1301/A130101/13000001/"
+    assert result.review_count == 1
+    assert result.menu_item_count == 1
+    assert result.course_count == 1
+    assert result.fetch_courses is False
+    assert result.max_review_pages == 2
+    assert result.reviews[0].reviewer == "評論者A"
+    assert result.menu_items[0].name == "特上壽司"
+    assert result.courses[0].items == ["前菜", "握壽司", "味噌湯"]
+    assert mock_request_class.call_args.kwargs["max_review_pages"] == 2
+
+
+@pytest.mark.asyncio
+async def test_get_restaurant_details_requires_one_enabled_fetch():
+    """Test detail tool rejects empty fetch selection"""
+    with pytest.raises(ValueError, match="At least one of fetch_reviews"):
+        await tabelog_get_restaurant_details(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=False,
+        )
+
+
+@pytest.mark.asyncio
+async def test_get_restaurant_details_invalid_url():
+    """Test detail tool validates Tabelog URL"""
+    with pytest.raises(ValueError, match="restaurant_url must be a Tabelog HTTPS URL"):
+        await tabelog_get_restaurant_details(restaurant_url="https://example.com/restaurant")
+
+
+@pytest.mark.asyncio
+async def test_get_restaurant_details_runtime_error():
+    """Test detail tool wraps runtime errors with actionable context"""
+    with patch("gurume.server.RestaurantDetailRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.fetch = AsyncMock(side_effect=RuntimeError("timeout"))
+
+        with pytest.raises(RuntimeError, match="Restaurant detail request failed"):
+            await tabelog_get_restaurant_details(
+                restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            )
 
 
 # ============================================================================
@@ -730,6 +835,30 @@ async def test_mcp_tool_schema_exposes_search_constraints():
 
 
 @pytest.mark.asyncio
+async def test_mcp_tool_schema_exposes_detail_constraints():
+    """Test FastMCP exposes the restaurant detail tool schema"""
+    tools = await mcp.list_tools()
+    detail_tool = next(tool for tool in tools if tool.name == "tabelog_get_restaurant_details")
+
+    assert detail_tool.annotations is not None
+    assert detail_tool.annotations.readOnlyHint is True
+    assert detail_tool.annotations.idempotentHint is True
+    assert detail_tool.annotations.openWorldHint is True
+
+    url_schema = detail_tool.inputSchema["properties"]["restaurant_url"]
+    assert url_schema["pattern"] == r"^https://tabelog\.com/.+"
+
+    review_pages_schema = detail_tool.inputSchema["properties"]["max_review_pages"]
+    assert review_pages_schema["minimum"] == 1
+
+    assert detail_tool.outputSchema is not None
+    output_schema = detail_tool.outputSchema
+    assert "review_count" in output_schema["properties"]
+    assert "menu_items" in output_schema["properties"]
+    assert "courses" in output_schema["properties"]
+
+
+@pytest.mark.asyncio
 async def test_mcp_call_tool_returns_structured_envelope(sample_restaurants):
     """Test calling the tool through FastMCP returns the structured envelope"""
     mock_response = SearchResponse(
@@ -754,3 +883,29 @@ async def test_mcp_call_tool_returns_structured_envelope(sample_restaurants):
     assert structured_data["applied_filters"]["page"] == 2
     assert structured_data["applied_filters"]["cuisine"] == "寿司"
     assert structured_data["items"][0]["name"] == "テスト寿司"
+
+
+@pytest.mark.asyncio
+async def test_mcp_call_detail_tool_returns_structured_data(sample_restaurant_detail):
+    """Test calling the detail tool through FastMCP returns structured content"""
+    with patch("gurume.server.RestaurantDetailRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.fetch = AsyncMock(return_value=sample_restaurant_detail)
+
+        content, structured = await mcp.call_tool(
+            "tabelog_get_restaurant_details",
+            {
+                "restaurant_url": "https://tabelog.com/tokyo/A1301/A130101/13000001/",
+                "max_review_pages": 2,
+                "fetch_courses": False,
+            },
+        )
+
+    structured_data = cast(dict[str, Any], structured)
+    assert content
+    assert structured_data["review_count"] == 1
+    assert structured_data["menu_item_count"] == 1
+    assert structured_data["course_count"] == 1
+    assert structured_data["max_review_pages"] == 2
+    assert structured_data["fetch_courses"] is False
+    assert structured_data["reviews"][0]["reviewer"] == "評論者A"

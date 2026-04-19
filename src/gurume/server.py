@@ -23,7 +23,10 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 from pydantic import HttpUrl
+from pydantic import TypeAdapter
 
+from .detail import RestaurantDetail
+from .detail import RestaurantDetailRequest
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
 from .restaurant import SortType
@@ -165,12 +168,67 @@ class RestaurantSearchOutput(BaseModel):
     warnings: list[str] = Field(description="Non-fatal usage guidance for the caller")
 
 
+class ReviewOutput(BaseModel):
+    """Structured restaurant review output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    reviewer: str = Field(description="Reviewer display name")
+    content: str = Field(description="Review body text")
+    rating: float | None = Field(description="Reviewer rating if available")
+    visit_date: str | None = Field(description="Visit date text shown on Tabelog")
+    title: str | None = Field(description="Review title if available")
+    helpful_count: int | None = Field(description="Helpful vote count if available")
+
+
+class MenuItemOutput(BaseModel):
+    """Structured menu item output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(description="Menu item name")
+    price: str | None = Field(description="Displayed menu item price")
+    description: str | None = Field(description="Menu item description if available")
+    category: str | None = Field(description="Menu section heading if available")
+
+
+class CourseOutput(BaseModel):
+    """Structured course output."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(description="Course name")
+    price: str | None = Field(description="Displayed course price")
+    description: str | None = Field(description="Course description if available")
+    items: list[str] = Field(description="Course item list if available")
+
+
+class RestaurantDetailOutput(BaseModel):
+    """Structured restaurant detail output for MCP clients."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    restaurant_url: HttpUrl = Field(description="Canonical Tabelog restaurant URL used for detail fetches")
+    review_count: int = Field(description="Number of review entries returned in this response")
+    menu_item_count: int = Field(description="Number of menu items returned in this response")
+    course_count: int = Field(description="Number of courses returned in this response")
+    fetch_reviews: bool = Field(description="Whether review pages were requested")
+    fetch_menu: bool = Field(description="Whether menu pages were requested")
+    fetch_courses: bool = Field(description="Whether course pages were requested")
+    max_review_pages: int = Field(description="Maximum review pages requested from Tabelog", ge=1)
+    reviews: list[ReviewOutput] = Field(description="Structured review entries")
+    menu_items: list[MenuItemOutput] = Field(description="Structured menu items")
+    courses: list[CourseOutput] = Field(description="Structured course entries")
+
+
 SORT_MAP = {
     "ranking": SortType.RANKING,
     "review-count": SortType.REVIEW_COUNT,
     "new-open": SortType.NEW_OPEN,
     "standard": SortType.STANDARD,
 }
+
+HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
 
 
 def _validate_search_params(
@@ -252,6 +310,10 @@ def _to_restaurant_outputs(response: list, limit: int) -> list[RestaurantOutput]
         )
         for r in response[:limit]
     ]
+
+
+def _as_http_url(url: str) -> HttpUrl:
+    return HTTP_URL_ADAPTER.validate_python(url)
 
 
 def _to_search_meta_output(meta: SearchMeta | None) -> SearchMetaOutput | None:
@@ -350,6 +412,75 @@ def _build_search_output(
             party_size=party_size,
         ),
         warnings=_build_search_warnings(area, keyword, cuisine, reservation_date),
+    )
+
+
+def _validate_detail_params(
+    restaurant_url: str,
+    fetch_reviews: bool,
+    fetch_menu: bool,
+    fetch_courses: bool,
+    max_review_pages: int,
+) -> None:
+    if not restaurant_url:
+        raise ValueError("restaurant_url cannot be empty")
+
+    if not restaurant_url.startswith("https://tabelog.com/"):
+        raise ValueError("restaurant_url must be a Tabelog HTTPS URL")
+
+    if not any((fetch_reviews, fetch_menu, fetch_courses)):
+        raise ValueError("At least one of fetch_reviews, fetch_menu, or fetch_courses must be true")
+
+    if max_review_pages < 1:
+        raise ValueError("max_review_pages must be greater than or equal to 1")
+
+
+def _to_detail_output(
+    detail: RestaurantDetail,
+    *,
+    fetch_reviews: bool,
+    fetch_menu: bool,
+    fetch_courses: bool,
+    max_review_pages: int,
+) -> RestaurantDetailOutput:
+    return RestaurantDetailOutput(
+        restaurant_url=_as_http_url(detail.restaurant.url),
+        review_count=len(detail.reviews),
+        menu_item_count=len(detail.menu_items),
+        course_count=len(detail.courses),
+        fetch_reviews=fetch_reviews,
+        fetch_menu=fetch_menu,
+        fetch_courses=fetch_courses,
+        max_review_pages=max_review_pages,
+        reviews=[
+            ReviewOutput(
+                reviewer=review.reviewer,
+                content=review.content,
+                rating=review.rating,
+                visit_date=review.visit_date,
+                title=review.title,
+                helpful_count=review.helpful_count,
+            )
+            for review in detail.reviews
+        ],
+        menu_items=[
+            MenuItemOutput(
+                name=item.name,
+                price=item.price,
+                description=item.description,
+                category=item.category,
+            )
+            for item in detail.menu_items
+        ],
+        courses=[
+            CourseOutput(
+                name=course.name,
+                price=course.price,
+                description=course.description,
+                items=course.items,
+            )
+            for course in detail.courses
+        ],
     )
 
 
@@ -519,6 +650,77 @@ async def tabelog_search_restaurants(
             reservation_time=reservation_time,
             party_size=party_size,
             status=status,
+        )
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        readOnlyHint=True,
+        idempotentHint=True,
+        openWorldHint=True,
+    ),
+    structured_output=True,
+)
+async def tabelog_get_restaurant_details(
+    restaurant_url: Annotated[
+        str,
+        Field(
+            description="Tabelog restaurant URL from search results. Must start with https://tabelog.com/.",
+            pattern=r"^https://tabelog\.com/.+",
+        ),
+    ],
+    fetch_reviews: Annotated[
+        bool,
+        Field(default=True, description="Whether to fetch review pages from Tabelog."),
+    ] = True,
+    fetch_menu: Annotated[
+        bool,
+        Field(default=True, description="Whether to fetch the restaurant menu page."),
+    ] = True,
+    fetch_courses: Annotated[
+        bool,
+        Field(default=True, description="Whether to fetch the restaurant course page."),
+    ] = True,
+    max_review_pages: Annotated[
+        int,
+        Field(
+            default=1,
+            description="Maximum number of review pages to fetch when fetch_reviews is true.",
+            ge=1,
+        ),
+    ] = 1,
+) -> RestaurantDetailOutput:
+    """Fetch detailed restaurant information including reviews, menu items, and courses."""
+    try:
+        _validate_detail_params(restaurant_url, fetch_reviews, fetch_menu, fetch_courses, max_review_pages)
+        request = RestaurantDetailRequest(
+            restaurant_url=restaurant_url,
+            fetch_reviews=fetch_reviews,
+            fetch_menu=fetch_menu,
+            fetch_courses=fetch_courses,
+            max_review_pages=max_review_pages,
+        )
+        detail = await request.fetch()
+    except ValueError as e:
+        raise ValueError(f"Invalid parameters: {e}") from e
+    except RuntimeError as e:
+        raise RuntimeError(
+            f"Restaurant detail request failed: {e}. "
+            "Please verify the restaurant URL and try again. If the issue persists, Tabelog may be unavailable."
+        ) from e
+    except BaseException as e:
+        _reraise_if_fatal(e)
+        raise RuntimeError(
+            f"Restaurant detail request failed: {e}. "
+            "Please verify the restaurant URL and try again. If the issue persists, Tabelog may be unavailable."
+        ) from e
+    else:
+        return _to_detail_output(
+            detail,
+            fetch_reviews=fetch_reviews,
+            fetch_menu=fetch_menu,
+            fetch_courses=fetch_courses,
+            max_review_pages=max_review_pages,
         )
 
 
