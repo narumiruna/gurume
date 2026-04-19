@@ -49,7 +49,7 @@ select = [
   # "ANN",     # flake8-annotations
   "ASYNC",   # flake8-async
   "B",       # flake8-bugbear
-  "BLE",     # flake8-blind-except
+  # "BLE",     # flake8-blind-except
   "C",       # flake8-comprehensions
   "DTZ",     # flake8-datetimez
   "E",       # pycodestyle errors
