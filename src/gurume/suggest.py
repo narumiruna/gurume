@@ -16,6 +16,16 @@ SUGGEST_URL = "https://tabelog.com/internal_api/suggest_form_words"
 SUGGEST_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 
 
+class TabelogSuggestUnavailableError(RuntimeError):
+    """Raised when Tabelog's suggest API returns no data (upstream endpoint change)."""
+
+    HELP = (
+        "Tabelog's autocomplete API currently returns empty results upstream. "
+        "Use 'tabelog_list_cuisines' for cuisine types, or pass area names "
+        "directly to 'tabelog_search_restaurants'."
+    )
+
+
 @dataclass
 class AreaSuggestion:
     """地區建議"""
@@ -103,8 +113,12 @@ def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggesti
         )
         resp.raise_for_status()
         data = resp.json()
+        if isinstance(data, dict) and data.get("suggest_empty"):
+            raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
         if not isinstance(data, list):
             return []
+    except TabelogSuggestUnavailableError:
+        raise
     except (httpx.HTTPError, ValueError):
         return []
     else:
@@ -131,8 +145,12 @@ async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) 
             resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
             resp.raise_for_status()
             data = resp.json()
+            if isinstance(data, dict) and data.get("suggest_empty"):
+                raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
             if not isinstance(data, list):
                 return []
+    except TabelogSuggestUnavailableError:
+        raise
     except (httpx.HTTPError, ValueError):
         return []
     else:
@@ -164,8 +182,12 @@ def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSu
         )
         resp.raise_for_status()
         data = resp.json()
+        if isinstance(data, dict) and data.get("suggest_empty"):
+            raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
         if not isinstance(data, list):
             return []
+    except TabelogSuggestUnavailableError:
+        raise
     except (httpx.HTTPError, ValueError):
         return []
     else:
