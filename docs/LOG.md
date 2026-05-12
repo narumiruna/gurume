@@ -20,3 +20,4 @@
 2026-04-19 | refactor(mcp): split server schemas and helpers out of the FastMCP entrypoint module (#local)
 2026-04-19 | fix(deps): declare pydantic as a direct project dependency for type checking (#local)
 2026-05-12 | fix(search): pr40 follow-up — extract URL helper, tighten magazine filter, handle suggest_empty in TUI/async keyword (#local)
+2026-05-12 | feat(mcp): add http/sse transport flags to `gurume mcp` (#39)

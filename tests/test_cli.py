@@ -363,3 +363,63 @@ class TestCLIArguments:
         assert args.max_pages == 2
         assert args.sort == "rt"
         assert args.price_range is None
+
+
+# ============================================================================
+# Test MCP transport CLI flags (issue #39)
+# ============================================================================
+
+
+class TestMcpCommand:
+    """Test `gurume mcp` CLI flag wiring."""
+
+    def test_help_lists_transport_flag(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["mcp", "--help"])
+        assert result.exit_code == 0
+        assert "--transport" in result.output
+        assert "streamable-http" in result.output
+
+    def test_default_invocation_uses_stdio(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        with patch("gurume.server.run") as mock_run:
+            result = runner.invoke(app, ["mcp"])
+            assert result.exit_code == 0
+            mock_run.assert_called_once_with(transport="stdio", host="127.0.0.1", port=8000, path="/mcp")
+
+    def test_http_invocation_passes_kwargs(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        with patch("gurume.server.run") as mock_run:
+            result = runner.invoke(
+                app,
+                [
+                    "mcp",
+                    "--transport",
+                    "streamable-http",
+                    "--host",
+                    "0.0.0.0",
+                    "--port",
+                    "9001",
+                    "--path",
+                    "/api/mcp",
+                ],
+            )
+            assert result.exit_code == 0
+            mock_run.assert_called_once_with(
+                transport="streamable-http",
+                host="0.0.0.0",
+                port=9001,
+                path="/api/mcp",
+            )

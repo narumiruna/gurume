@@ -647,12 +647,34 @@ async def tabelog_get_keyword_suggestions(
 # ============================================================================
 
 
-def run() -> None:
+TransportType = Literal["stdio", "sse", "streamable-http"]
+
+
+def run(
+    transport: TransportType = "stdio",
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    path: str = "/mcp",
+) -> None:
     """Synchronous entry point for CLI
 
     This function is called when running 'gurume mcp' command.
+
+    Args:
+        transport: MCP transport to use ("stdio", "sse", or "streamable-http").
+        host: Bind host for HTTP transports (ignored for stdio).
+        port: Bind port for HTTP transports (ignored for stdio).
+        path: HTTP mount path for the MCP endpoint (streamable-http uses
+            ``streamable_http_path``; sse uses ``sse_path``).
     """
-    mcp.run()
+    if transport != "stdio":
+        mcp.settings.host = host
+        mcp.settings.port = port
+        if transport == "streamable-http":
+            mcp.settings.streamable_http_path = path
+        else:  # sse
+            mcp.settings.sse_path = path
+    mcp.run(transport=transport)
 
 
 if __name__ == "__main__":
