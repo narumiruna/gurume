@@ -374,6 +374,8 @@ class TestMcpCommand:
     """Test `gurume mcp` CLI flag wiring."""
 
     def test_help_lists_transport_flag(self):
+        import re
+
         from typer.testing import CliRunner
 
         from gurume.cli import app
@@ -381,8 +383,11 @@ class TestMcpCommand:
         runner = CliRunner()
         result = runner.invoke(app, ["mcp", "--help"])
         assert result.exit_code == 0
-        assert "--transport" in result.output
-        assert "streamable-http" in result.output
+        # Strip ANSI escape sequences because Typer/Rich may color the help
+        # output, splitting flag names across escape codes in CI.
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+        assert "--transport" in plain
+        assert "streamable-http" in plain
 
     def test_default_invocation_uses_stdio(self):
         from typer.testing import CliRunner
