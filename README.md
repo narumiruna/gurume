@@ -369,6 +369,18 @@ The TUI includes:
 
 Detailed TUI documentation lives in [`docs/TUI_USAGE.md`](docs/TUI_USAGE.md).
 
+## 🧩 Agent Skill
+
+This repo ships an agent skill at [`skills/gurume-cli/`](skills/gurume-cli/) that teaches AI coding assistants (Claude Code, Codex CLI, etc.) when and how to call the `gurume` CLI for restaurant search on Tabelog.
+
+Install it with [`skills`](https://www.npmjs.com/package/skills):
+
+```bash
+npx skills add narumiruna/gurume
+```
+
+This pulls `skills/gurume-cli/` into your local agent skills directory. After installing, your agent will reach for `gurume` automatically whenever you ask it to find restaurants in Japan — by area, cuisine, or a vague "where should I eat" prompt.
+
 ## 📁 Examples
 
 See the `examples/` directory for runnable scripts:
