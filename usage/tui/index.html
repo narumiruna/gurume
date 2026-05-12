@@ -533,10 +533,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-ai-natural-language-parsing" class="md-nav__link">
+  <a href="#natural-language-input" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using AI natural language parsing
+        Natural-language input
       
     </span>
   </a>
@@ -1109,10 +1109,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#using-ai-natural-language-parsing" class="md-nav__link">
+  <a href="#natural-language-input" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Using AI natural language parsing
+        Natural-language input
       
     </span>
   </a>
@@ -1276,7 +1276,6 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>When the keyword has content: calls the API and shows dynamic suggestions such as cuisine types, restaurant names, and combined keywords</li>
 </ul>
 </li>
-<li>Tip: enter natural language and press <code>F4</code> to use AI parsing</li>
 <li>Automatically detects cuisine names and converts them into precise filters</li>
 </ul>
 <p><strong>Second row - Sort options</strong></p>
@@ -1350,10 +1349,6 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <tr>
 <td><code>F3</code></td>
 <td>Intelligent keyword suggestions (empty keyword: cuisine list; non-empty keyword: dynamic API suggestions) (<code>New!</code>)</td>
-</tr>
-<tr>
-<td><code>F4</code></td>
-<td>Parse natural language input with AI (requires natural language input first)</td>
 </tr>
 <tr>
 <td><code>↑</code> / <code>↓</code></td>
@@ -1441,23 +1436,8 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>The system detects it automatically and converts it into a precise filter</li>
 <li>Auto-detection supports all 45+ cuisine categories</li>
 </ul>
-<h3 id="using-ai-natural-language-parsing">Using AI natural language parsing<a class="headerlink" href="#using-ai-natural-language-parsing" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Start the TUI with <code>uv run gurume tui</code></li>
-<li>Enter natural language in the Keyword input box, for example <code>我想吃三重的壽喜燒</code></li>
-<li>Press <code>F4</code> to use AI parsing</li>
-<li>The system parses the area and keyword automatically and fills the corresponding fields</li>
-<li><strong>If an area value is present</strong>: area suggestions are triggered automatically</li>
-<li><strong>If a keyword value is present</strong>: cuisine suggestions are triggered automatically</li>
-<li>Confirm or adjust the fields, then run the search</li>
-</ol>
-<p><strong>Benefits of AI parsing</strong></p>
-<ul>
-<li>Natural language input: describe what you want in your own words</li>
-<li>Automatic classification: AI separates the area and cuisine type for you</li>
-<li>Smart suggestions: related suggestion features are triggered automatically after parsing</li>
-<li>Faster search: fill multiple fields from a single input</li>
-</ul>
+<h3 id="natural-language-input">Natural-language input<a class="headerlink" href="#natural-language-input" title="Permanent link">&para;</a></h3>
+<p>The TUI no longer parses free-form text on its own. To translate sentences like <code>我想吃三重的壽喜燒</code> into the Area and Keyword fields, use an AI assistant with the <a href="https://github.com/narumiruna/gurume/tree/main/skills/gurume-cli"><code>gurume-cli</code> agent skill</a> installed and let it tell you which values to type.</p>
 <h2 id="example-searches">Example Searches<a class="headerlink" href="#example-searches" title="Permanent link">&para;</a></h2>
 <h3 id="search-for-sushi-in-tokyo-rating-ranking">Search for sushi in Tokyo (rating ranking)<a class="headerlink" href="#search-for-sushi-in-tokyo-rating-ranking" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1488,11 +1468,6 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>Area: <code>三重</code></li>
 <li>Keyword: <code>すき焼き</code> (the system detects it automatically and applies precise filtering)</li>
 <li>Run the search</li>
-<li>Method 3: AI parsing (fastest)</li>
-<li>Keyword: <code>三重的すき焼き</code></li>
-<li>Press <code>F4</code> to use AI parsing</li>
-<li>The system fills the area and keyword automatically and triggers suggestion helpers</li>
-<li>Run the search</li>
 <li>Result: only dedicated <code>すき焼き</code> restaurants are shown, such as <code>和田金</code> and <code>牛銀本店</code>, instead of unrelated restaurant types</li>
 </ul>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
@@ -1517,7 +1492,6 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li><strong>Intelligent keyword suggestions (<code>F3</code>)</strong> (<code>New!</code>)</li>
 <li>Empty keyword -&gt; full list of 45+ Japanese cuisine types</li>
 <li>Non-empty keyword -&gt; dynamic API suggestions for cuisines, restaurant names, and combined keywords</li>
-<li><strong>AI natural language parsing (<code>F4</code>)</strong>: parse natural language input with AI</li>
 <li><strong>Automatic cuisine detection</strong>: detect cuisine names and convert them into precise filters automatically</li>
 <li><strong>Area filtering</strong>: accurate filtering for all 47 prefectures</li>
 <li><strong>Cuisine filtering</strong>: precise filtering for dedicated restaurants using cuisine codes (<code>RC codes</code>)</li>
