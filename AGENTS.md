@@ -38,23 +38,6 @@ Recent history favors short imperative messages such as `fix lint errors`, `remo
 ## Security & Configuration Tips
 Do not commit secrets. Natural-language parsing has been removed from the CLI/TUI; route free-form user input through the `gurume-cli` agent skill instead. Treat scraped upstream HTML as unstable: prefer defensive parsing, clear exceptions, and tests that lock in expected behavior.
 
-## Project-Specific Gotchas
-
-### Scraping
-- Tabelog markup changes without warning. Write parsing logic defensively; CSS selectors and HTML structures are not stable contracts.
-- Skip malformed items gracefully when possible, but keep failures debuggable.
-
-### Area filtering
-- Do not assume `sa=<area>` query parameters produce correct area filtering. Accurate prefecture-level filtering depends on path-based area slugs such as `/tokyo/rstLst/`.
-- If an area cannot be mapped, current behavior may fall back to broader results.
-
-### Cuisine filtering
-- Cuisine searches should prefer genre-code-based URL paths over plain keyword matching.
-- Use `genre_mapping.py` to keep cuisine filtering precise before adding ad hoc matching logic.
-
-### Suggestions and details
-- Suggestion endpoints and detail pages are upstream-controlled and may change response shape. Preserve defensive parsing and actionable error messages when touching these flows.
-
 ## MCP and CLI Consistency
 The MCP server (`src/gurume/server.py`, FastMCP), CLI, and TUI all sit on top of the same search APIs. Keep tool outputs structured and validation errors clear, and when you change parameters or output behavior in one interface, check whether the others should change too.
 
