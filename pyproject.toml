@@ -1,10 +1,30 @@
 [project]
 name            = "gurume"
 version         = "0.0.5"
-description     = ""
+description     = "Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on Tabelog"
 readme          = "README.md"
 requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+keywords        = [
+  "tabelog",
+  "restaurant",
+  "japan",
+  "food",
+  "scraping",
+  "mcp",
+  "cli",
+  "tui",
+  "search",
+]
+classifiers     = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies    = [
   "beautifulsoup4>=4.14.3",
   "loguru>=0.7.3",

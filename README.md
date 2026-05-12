@@ -1,25 +1,24 @@
-# Gurume
+# 🍜 Gurume
 
-Gurume is a Python library, CLI, TUI, and MCP server for searching Japanese restaurants on Tabelog.
+[![PyPI](https://img.shields.io/pypi/v/gurume)](https://pypi.org/project/gurume/)
+[![Python](https://img.shields.io/pypi/pyversions/gurume)](https://pypi.org/project/gurume/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/narumiruna/gurume/blob/main/LICENSE)
 
-It focuses on practical restaurant discovery workflows:
+**Gurume** is a Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on [Tabelog](https://tabelog.com) — Japan's largest restaurant review platform.
 
-- search by area, keyword, cuisine, and reservation-related filters
-- fetch structured restaurant detail pages with reviews, menu items, and courses
-- use a Textual TUI with area and keyword suggestions
-- expose the same search flows to MCP clients through structured FastMCP tools
+Search by area, cuisine, date, and party size; parse structured detail pages; and plug the same workflows directly into AI assistants via a FastMCP server.
 
-## Features
+## ✨ Features
 
-- Search restaurants by area, keyword, cuisine, date, time, and party size
-- Filter by 45+ supported Japanese cuisine categories with stable Tabelog genre codes
-- Parse restaurant detail pages into structured review, menu, and course data
-- Use synchronous and asynchronous Python APIs
-- Run an interactive TUI with area suggestions, keyword suggestions, and AI-assisted query parsing
-- Start an MCP server with schema-first inputs and structured outputs
-- Keep responses typed with Pydantic models and Python type hints
+- 🔍 Search restaurants by area, keyword, cuisine, date, time, and party size
+- 🍣 Filter by 45+ supported Japanese cuisine categories with stable Tabelog genre codes
+- 📄 Parse restaurant detail pages into structured review, menu, and course data
+- ⚡ Use synchronous and asynchronous Python APIs
+- 🖥️ Run an interactive TUI with area suggestions, keyword suggestions, and AI-assisted query parsing
+- 🤖 Start an MCP server with schema-first inputs and structured outputs for AI assistant integrations
+- 🔒 Keep responses typed with Pydantic models and Python type hints
 
-## Installation
+## 📦 Installation
 
 ```bash
 uv add gurume
@@ -37,9 +36,9 @@ For local development:
 uv sync --dev
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
-### CLI
+### 💻 CLI
 
 The built-in CLI currently exposes four commands:
 
@@ -88,7 +87,7 @@ Notes:
 - Natural-language parsing in the CLI requires `OPENAI_API_KEY`.
 - Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
 
-### Python Library
+### 🐍 Python Library
 
 #### Simple search
 
@@ -184,11 +183,11 @@ print(get_genre_code("すき焼き"))
 print(get_all_genres()[:5])
 ```
 
-## MCP Server
+## 🤖 MCP Server
 
 Gurume ships a FastMCP server for AI assistants and other MCP-compatible clients.
 
-### MCP Configuration
+### ⚙️ MCP Configuration
 
 GitHub development version:
 
@@ -240,7 +239,7 @@ Local development:
 }
 ```
 
-### MCP Tools
+### 🛠️ MCP Tools
 
 1. `tabelog_search_restaurants`
    Search by area, keyword, or cuisine with structured pagination metadata.
@@ -289,7 +288,7 @@ Local development:
 5. `tabelog_get_keyword_suggestions`
    Return structured keyword suggestions for cuisines, restaurant names, and combined terms.
 
-### Recommended MCP Workflow
+### 📋 Recommended MCP Workflow
 
 1. Validate the area with `tabelog_get_area_suggestions` when the user input is ambiguous.
 2. Validate cuisines or restaurant names with `tabelog_get_keyword_suggestions`.
@@ -297,7 +296,7 @@ Local development:
 4. Continue with `page + 1` when `meta.has_next_page` is true.
 5. Call `tabelog_get_restaurant_details` for shortlisted restaurants.
 
-### Error Model
+### ⚠️ Error Model
 
 All MCP tools return structured error data instead of relying on free-form exception text.
 
@@ -310,7 +309,7 @@ Current stable error codes:
 
 When `status="error"`, inspect `error.error_code`, `error.retryable`, and `error.suggested_action` first.
 
-### Testing the MCP Server
+### 🧪 Testing the MCP Server
 
 ```bash
 # Run the MCP test suite
@@ -323,7 +322,7 @@ uv run gurume mcp
 npx @modelcontextprotocol/inspector uv run gurume mcp
 ```
 
-### HTTP transport
+### 🌐 HTTP transport
 
 `gurume mcp` can also run as an HTTP server for clients that speak streamable
 HTTP (or SSE):
@@ -342,7 +341,7 @@ uv run gurume mcp --transport sse --port 8765 --path /events
 Security note: the default bind is `127.0.0.1`. Use `--host 0.0.0.0` only on
 trusted networks; the MCP endpoint has no built-in authentication.
 
-## TUI
+## 🖥️ TUI
 
 Start the Textual TUI with:
 
@@ -367,7 +366,7 @@ The TUI includes:
 
 Detailed TUI documentation lives in [`docs/TUI_USAGE.md`](docs/TUI_USAGE.md).
 
-## Examples
+## 📁 Examples
 
 See the `examples/` directory for runnable scripts:
 
@@ -375,7 +374,7 @@ See the `examples/` directory for runnable scripts:
 - `examples/restaurant_detail.py`: restaurant detail scraping examples
 - `examples/cli_example.py`: standalone example CLI built on the Python API
 
-## Notes and Limitations
+## 📝 Notes and Limitations
 
 - Gurume scrapes Tabelog pages and internal suggestion endpoints. Upstream HTML or API changes may break parsing.
 - Tabelog data is primarily Japanese. Even when user input is multilingual, normalized search values and many results are Japanese.
@@ -383,7 +382,7 @@ See the `examples/` directory for runnable scripts:
 - Reservation-related search results reflect Tabelog availability data and may change over time.
 - Use the library responsibly and avoid excessive request volume.
 
-## Legal and Ethical Use
+## ⚖️ Legal and Ethical Use
 
 This project is intended for educational and research use.
 
@@ -391,10 +390,10 @@ This project is intended for educational and research use.
 - Do not send excessive or abusive traffic.
 - Add your own rate limiting and operational safeguards for production use.
 
-## License
+## 📄 License
 
 MIT License
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome. Please open an issue or submit a pull request.
