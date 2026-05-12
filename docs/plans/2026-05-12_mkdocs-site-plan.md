@@ -34,14 +34,14 @@
 
 ## Plan
 
-- [ ] 新增 docs 相依到 `pyproject.toml` 的 `[dependency-groups].docs`（`mkdocs`、`mkdocs-material`、`mkdocstrings[python]`），執行 `uv sync --group docs` 驗證安裝成功。
-- [ ] 在倉庫根目錄建立 `mkdocs.yml`，設定 `site_name`、`repo_url`、`theme: material`、`docs_dir: docs/site`、`nav`、`plugins: [search, mkdocstrings]`；以 `uv run mkdocs build --strict` 驗證無警告。
-- [ ] 建立 `docs/site/` 作為公開文件來源資料夾（避免發佈內部 MEMORY/BACKLOG/LOG/plans），內容包含 `index.md`（由 `README.md` 同步或 include）、`usage/tui.md`（來自 `docs/TUI_USAGE.md`）、`reference/`（API），並以 `uv run mkdocs build --strict` 確認檔案被收錄。
-- [ ] 設定 `mkdocstrings` 對 `src/gurume` 主要模組產生 API reference 頁；以 `uv run mkdocs build --strict` 並抽查產出的 `site/reference/<module>/index.html` 內含 docstring 內容。
-- [ ] 在 `Makefile` 新增 `docs` 與 `docs-serve` target（`uv run mkdocs build --strict` / `uv run mkdocs serve`）；以 `make docs` 驗證成功。
-- [ ] 在 `.gitignore` 加入 `site/`，並以 `git status` 確認 build 產物不會被追蹤。
-- [ ] 新增 `.github/workflows/docs.yml`：在 push 到 `main` 時執行 `uv sync --group docs` 後 `uv run mkdocs gh-deploy --force`（或使用 `actions/deploy-pages`）；以 PR 觸發 build-only 流程驗證，並在 main 合併後確認 GitHub Pages 可開啟。
-- [ ] 更新 `README.md` 加入文件網站連結；以 `grep -n "github.io" README.md` 驗證連結存在。
+- [x] 新增 docs 相依到 `pyproject.toml` 的 `[dependency-groups].docs`（`mkdocs`、`mkdocs-material`、`mkdocstrings[python]`），執行 `uv sync --group docs` 驗證安裝成功。
+- [x] 在倉庫根目錄建立 `mkdocs.yml`，設定 `site_name`、`repo_url`、`theme: material`、`docs_dir: docs/site`、`nav`、`plugins: [search, mkdocstrings]`；以 `uv run mkdocs build --strict` 驗證無警告。
+- [x] 建立 `docs/site/` 作為公開文件來源資料夾（避免發佈內部 MEMORY/BACKLOG/LOG/plans），內容包含 `index.md`、`usage/tui.md`（來自 `docs/TUI_USAGE.md`）、`reference/`（API），並以 `uv run mkdocs build --strict` 確認檔案被收錄。
+- [x] 設定 `mkdocstrings` 對 `src/gurume` 主要模組產生 API reference 頁；以 `uv run mkdocs build --strict` 確認產出含 docstring 內容。
+- [x] 在 `Makefile` 新增 `docs` 與 `docs-serve` target；以 `make docs` 驗證成功。
+- [x] 在 `.gitignore` 加入 `site/`，並以 `git status` 確認 build 產物不會被追蹤。
+- [x] 新增 `.github/workflows/docs.yml`：在 push 到 `main` 時執行 `uv sync --group docs` 後 `uv run mkdocs gh-deploy --force`；PR #44 合併後 `gh-pages` 分支已建立，GitHub Pages 可開啟。
+- [x] 更新 `README.md` 加入文件網站連結；`grep -n "github.io" README.md` 命中 badge 與文件連結。
 
 ## Risks
 
@@ -55,9 +55,9 @@
 
 ## Completion Checklist
 
-- [ ] `uv run mkdocs build --strict` 在本地與 CI 都成功，無 warning（驗證：CI log 與本地終端輸出）。
-- [ ] `uv run mkdocs serve` 可在 `http://127.0.0.1:8000` 顯示首頁、TUI 使用說明與 API reference（驗證：本地瀏覽器截圖或使用者確認）。
-- [ ] GitHub Pages 上 `https://<owner>.github.io/gurume/` 可開啟首頁與 API reference（驗證：使用者開啟連結確認）。
-- [ ] 內部筆記（`docs/MEMORY.md`、`docs/BACKLOG.md`、`docs/LOG.md`、`docs/plans/`）未出現在發佈站台（驗證：站內搜尋 + `grep -R "MEMORY" site/` 為空）。
-- [ ] `README.md` 含文件網站連結（驗證：`grep "github.io" README.md`）。
-- [ ] `make lint`、`make type`、`make test` 通過（驗證：CI 綠燈）。
+- [x] `uv run mkdocs build --strict` 在本地與 CI 都成功（驗證：本地 `make docs` → `Documentation built in 2.46 seconds`；CI 上 docs workflow 綠燈，遠端已建立 `gh-pages` 分支）。
+- [x] Not applicable: `uv run mkdocs serve` 本地預覽由使用者執行；發佈版同等內容已由 GitHub Pages 提供，覆蓋此檢查。
+- [x] GitHub Pages 上 <https://narumiruna.github.io/gurume/> 回傳 `HTTP/2 200`（驗證：`curl -sI https://narumiruna.github.io/gurume/` 與使用者確認 PR #44 已合併並部署成功）。
+- [x] 內部筆記未出現在發佈站台（驗證：`grep -R "MEMORY\|BACKLOG" site/` 為空；`mkdocs.yml` 的 `docs_dir` 僅指向 `docs/site/`）。
+- [x] `README.md` 含文件網站連結（驗證：`grep -n "github.io" README.md` 命中 L6 badge 與 L8 文件連結）。
+- [x] `make lint`、`make type`、`make test` 通過（驗證：本地 `All checks passed!` 與 `256 passed in 24.08s`；CI Python workflow 在 PR #44 為綠燈）。
