@@ -8,6 +8,7 @@
 - Tabelog markup changes without warning; CSS selectors and HTML structures are not stable contracts. Write parsing logic defensively and skip malformed items gracefully while keeping failures debuggable.
 - Do not assume `sa=<area>` query parameters produce correct area filtering. Accurate prefecture-level filtering depends on path-based area slugs such as `/tokyo/rstLst/`; unmapped areas may fall back to broader results.
 - Cuisine searches should prefer genre-code-based URL paths over plain keyword matching. Use `genre_mapping.py` to keep cuisine filtering precise before adding ad hoc matching logic.
+- Tabelog prefecture cuisine pages no longer honor the legacy `LstG` query alone; build area+cuisine searches from mapped `/AREA/rstLst/<segment>/` paths, where `<segment>` may be a slug like `yakiniku` or a category token like `RC0107` / `MC0101`.
 - Suggestion endpoints and detail pages are upstream-controlled and may change response shape; preserve defensive parsing and actionable error messages when touching these flows.
 
 ## TASTE

@@ -438,18 +438,32 @@ class TestBuildSearchUrlAndParams:
         assert "/rstLst/RC0201" not in url
         assert params["LstG"] == "RC0201"
 
-    def test_area_and_genre_uses_lstg_query(self):
+    def test_area_and_genre_uses_cuisine_path_segment(self):
         from gurume.restaurant import build_search_url_and_params
 
         url, params = build_search_url_and_params({"SrtT": "standard", "sa": "銀座"}, "tokyo", "RC0201")
-        # area in path, genre in LstG query (NOT in path)
-        assert url == "https://tabelog.com/tokyo/rstLst/"
-        assert "RC0201" not in url
-        assert params["LstG"] == "RC0201"
+        assert url == "https://tabelog.com/tokyo/rstLst/sushi/"
+        assert "LstG" not in params
         assert "sa" not in params
 
-    def test_search_request_build_url_uses_lstg(self):
-        """SearchRequest._build_url_and_params must put genre in LstG query."""
+    def test_area_and_genre_uses_expected_ramen_path(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "東京"}, "tokyo", "RC0501")
+        assert url == "https://tabelog.com/tokyo/rstLst/MC0101/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
+    def test_area_and_genre_uses_expected_yakiniku_path(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "大阪"}, "osaka", "RC1501")
+        assert url == "https://tabelog.com/osaka/rstLst/yakiniku/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
+    def test_search_request_build_url_uses_cuisine_path(self):
+        """SearchRequest._build_url_and_params must embed cuisine filters in the path."""
         from gurume.restaurant import SortType
         from gurume.search import SearchRequest
 
@@ -462,5 +476,5 @@ class TestBuildSearchUrlAndParams:
         rst_req = request._create_restaurant_request(page=1)
         url, params = request._build_url_and_params(rst_req)
 
-        assert "/rstLst/RC0201" not in url, "genre must NOT be in URL path"
-        assert params["LstG"] == "RC0201"
+        assert url == "https://tabelog.com/tokyo/rstLst/sushi/"
+        assert "LstG" not in params
