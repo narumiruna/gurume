@@ -17,6 +17,7 @@ from .area_mapping import get_area_slug
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
+from .restaurant import build_search_url_and_params
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 SEARCH_EXCEPTIONS = (httpx.HTTPError, RuntimeError, ValueError, TypeError)
@@ -235,24 +236,8 @@ class SearchRequest:
 
     def _build_url_and_params(self, request: RestaurantSearchRequest) -> tuple[str, dict[str, str]]:
         params = request._build_params()
-        url = "https://tabelog.com/rst/rstsearch"
         area_slug = get_area_slug(self.area) if self.area else None
-
-        if area_slug and self.genre_code:
-            # Genre must be a query param (LstG), not in the URL path
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)
-            params["LstG"] = self.genre_code
-        elif area_slug:
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)
-        elif self.genre_code:
-            # Genre-only search: base URL with LstG param
-            url = "https://tabelog.com/rst/rstsearch"
-            params["LstG"] = self.genre_code
-            params.pop("sa", None)
-
-        return url, params
+        return build_search_url_and_params(params, area_slug, self.genre_code)
 
     def _update_meta(self, meta: SearchMeta | None, html: str, page: int) -> SearchMeta | None:
         if meta is not None or not self.include_meta:

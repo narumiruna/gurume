@@ -25,6 +25,38 @@ USER_AGENT = (
 )
 ITEM_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 
+# Tabelog restaurant detail URLs follow `/{area}/A{area_code}/A{subarea_code}/{rst_id}/`.
+# This pattern excludes magazine articles, promotional pages, and other non-restaurant links.
+_RESTAURANT_URL_RE = re.compile(r"/A\d+/A\d+/\d+")
+
+
+def build_search_url_and_params(
+    params: dict[str, Any],
+    area_slug: str | None,
+    genre_code: str | None,
+) -> tuple[str, dict[str, Any]]:
+    """Build the Tabelog search URL and adjust params for area/genre filters.
+
+    Tabelog requires the genre code to be passed via the ``LstG`` query parameter,
+    not embedded in the URL path. When an area is provided, ``sa`` is moved into
+    the URL path (``/{area_slug}/rstLst/``) and removed from params.
+
+    Args:
+        params: Search params dict (mutated in place and returned).
+        area_slug: Tabelog area slug like ``"tokyo"`` or ``None``.
+        genre_code: Tabelog genre code like ``"RC0201"`` or ``None``.
+
+    Returns:
+        Tuple of (url, params).
+    """
+    url = "https://tabelog.com/rst/rstsearch"
+    if area_slug:
+        url = f"https://tabelog.com/{area_slug}/rstLst/"
+        params.pop("sa", None)
+    if genre_code:
+        params["LstG"] = genre_code
+    return url, params
+
 
 class SortType(StrEnum):
     """排序方式"""
@@ -252,9 +284,10 @@ class RestaurantSearchRequest:
         name_elem = item.find("a", class_="list-rst__rst-name-target")
         if not name_elem:
             # Fallback: only accept href if it points to a real restaurant page.
-            # Skip magazine.tabelog.com promotional items and ads.
+            # Skip magazine.tabelog.com promotional items, ads, and unrelated paths.
             fallback = item.find("a", href=True)
-            if fallback and "/A" in str(fallback.get("href", "")):
+            fallback_href = str(fallback.get("href", "")) if fallback else ""
+            if fallback and _RESTAURANT_URL_RE.search(fallback_href):
                 name_elem = fallback
             else:
                 return None, ""
@@ -376,26 +409,8 @@ class RestaurantSearchRequest:
         params = self._build_params()
         headers = {"User-Agent": USER_AGENT}
 
-        # 構建 URL：考慮地區和料理類別
-        url = "https://tabelog.com/rst/rstsearch"
-        area_slug = None
-
-        if self.area:
-            area_slug = get_area_slug(self.area)
-
-        # 根據 area 和 genre_code 決定 URL 格式
-        if area_slug and self.genre_code:
-            # 有地區 + 類別：/area/rstLst/ with LstG param
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)  # 移除 area 參數
-            params["LstG"] = self.genre_code
-        elif area_slug:
-            # 只有地區：/area/rstLst/
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)  # 移除 area 參數
-        elif self.genre_code:
-            # 只有類別：base search with LstG param
-            params["LstG"] = self.genre_code
+        area_slug = get_area_slug(self.area) if self.area else None
+        url, params = build_search_url_and_params(params, area_slug, self.genre_code)
 
         # 檢查快取
         if use_cache:
@@ -435,26 +450,8 @@ class RestaurantSearchRequest:
         params = self._build_params()
         headers = {"User-Agent": USER_AGENT}
 
-        # 構建 URL：考慮地區和料理類別
-        url = "https://tabelog.com/rst/rstsearch"
-        area_slug = None
-
-        if self.area:
-            area_slug = get_area_slug(self.area)
-
-        # 根據 area 和 genre_code 決定 URL 格式
-        if area_slug and self.genre_code:
-            # 有地區 + 類別：/area/rstLst/ with LstG param
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)  # 移除 area 參數
-            params["LstG"] = self.genre_code
-        elif area_slug:
-            # 只有地區：/area/rstLst/
-            url = f"https://tabelog.com/{area_slug}/rstLst/"
-            params.pop("sa", None)  # 移除 area 參數
-        elif self.genre_code:
-            # 只有類別：base search with LstG param
-            params["LstG"] = self.genre_code
+        area_slug = get_area_slug(self.area) if self.area else None
+        url, params = build_search_url_and_params(params, area_slug, self.genre_code)
 
         # 檢查快取
         if use_cache:
