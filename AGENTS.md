@@ -23,7 +23,7 @@ Write tests under `tests/` with names like `test_<feature>.py` and test function
 Recent history favors short imperative messages such as `fix lint errors`, `remove codecov from ci workflow`, and scoped prefixes like `feat(mcp): expose ...` or `test: Add comprehensive tests ...`. Keep commit messages specific to one change. Pull requests should explain user-visible impact, list validation steps (`ruff`, `ty`, `pytest`), link related issues, and include screenshots or terminal output when changing CLI or TUI behavior.
 
 ## Security & Configuration Tips
-Do not commit secrets. Natural-language parsing in the CLI uses `OPENAI_API_KEY`, typically provided through a local `.env` file. Treat scraped upstream HTML as unstable: prefer defensive parsing, clear exceptions, and tests that lock in expected behavior.
+Do not commit secrets. Natural-language parsing has been removed from the CLI/TUI; route free-form user input through the `gurume-cli` agent skill instead. Treat scraped upstream HTML as unstable: prefer defensive parsing, clear exceptions, and tests that lock in expected behavior.
 
 ## MEMORY.md
 

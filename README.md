@@ -62,9 +62,6 @@ gurume search --area 三重 --cuisine すき焼き
 # Change sort order and output format
 gurume search --area 大阪 --cuisine ラーメン --sort ranking --output json
 
-# Let the CLI parse a natural-language query
-gurume search --query "I want ramen in Tokyo"
-
 # List all supported cuisines
 gurume list-cuisines
 
@@ -80,14 +77,13 @@ Current `gurume search` options:
 - `--area`, `-a`
 - `--keyword`, `-k`
 - `--cuisine`, `-c`
-- `--query`, `-q`
 - `--sort`, `-s`: `ranking`, `review-count`, `new-open`, `standard`
 - `--limit`, `-n`
 - `--output`, `-o`: `table`, `json`, `simple`
 
 Notes:
 
-- Natural-language parsing in the CLI requires `OPENAI_API_KEY`.
+- For natural-language input, use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant — it decomposes free-form text into the structured flags above.
 - Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
 
 ### 🐍 Python Library
@@ -363,7 +359,6 @@ The TUI includes:
 - a two-column layout with search results and a detail panel
 - area suggestions with `F2`
 - keyword and cuisine suggestions with `F3`
-- AI-assisted natural-language parsing with `F4`
 - automatic cuisine detection for direct cuisine-name input
 - visible sort controls and keyboard navigation
 
@@ -393,7 +388,7 @@ See the `examples/` directory for runnable scripts:
 
 - Gurume scrapes Tabelog pages and internal suggestion endpoints. Upstream HTML or API changes may break parsing.
 - Tabelog data is primarily Japanese. Even when user input is multilingual, normalized search values and many results are Japanese.
-- CLI and TUI natural-language parsing require `OPENAI_API_KEY`.
+- Natural-language input is no longer parsed inside the CLI/TUI. Use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant to translate free-form text into structured flags.
 - Reservation-related search results reflect Tabelog availability data and may change over time.
 - Use the library responsibly and avoid excessive request volume.
 

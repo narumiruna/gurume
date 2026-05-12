@@ -8,13 +8,11 @@ from enum import StrEnum
 from typing import Annotated
 
 import typer
-from openai import OpenAIError
 from rich.console import Console
 from rich.table import Table
 
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
-from .llm import parse_user_input
 from .restaurant import SortType
 from .search import SearchRequest
 
@@ -50,31 +48,6 @@ SORT_TYPE_MAP = {
     SortOption.NEW_OPEN: SortType.NEW_OPEN,
     SortOption.STANDARD: SortType.STANDARD,
 }
-
-
-def _apply_query_parse(
-    query: str | None,
-    area: str | None,
-    keyword: str | None,
-) -> tuple[str | None, str | None]:
-    if not query:
-        return area, keyword
-
-    console.print(f"[cyan]🤖 使用 AI 解析自然語言：{query}[/cyan]")
-    try:
-        result = parse_user_input(query)
-    except (OpenAIError, RuntimeError, ValueError) as e:
-        console.print(f"[yellow]警告：AI 解析失敗（{e}），請確認 OpenAI API 金鑰已設定[/yellow]")
-        console.print("[yellow]繼續使用原始參數進行搜尋...[/yellow]")
-        return area, keyword
-
-    if not area and result.area:
-        area = result.area
-        console.print(f"[green]  ✓ 解析地區：{area}[/green]")
-    if not keyword and result.keyword:
-        keyword = result.keyword
-        console.print(f"[green]  ✓ 解析關鍵字：{keyword}[/green]")
-    return area, keyword
 
 
 def _resolve_genre_code(cuisine: str | None, keyword: str | None) -> tuple[str | None, str | None]:
@@ -118,7 +91,6 @@ def search(
     area: Annotated[str | None, typer.Option("--area", "-a", help="搜尋地區（例如：東京、大阪）")] = None,
     keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="關鍵字（例如：寿司、ラーメン）")] = None,
     cuisine: Annotated[str | None, typer.Option("--cuisine", "-c", help="料理類別（例如：すき焼き、寿司）")] = None,
-    query: Annotated[str | None, typer.Option("--query", "-q", help="自然語言查詢（會自動解析地區和關鍵字）")] = None,
     sort: Annotated[SortOption, typer.Option("--sort", "-s", help="排序方式")] = SortOption.RANKING,
     limit: Annotated[int, typer.Option("--limit", "-n", help="顯示結果數量")] = 20,
     output: Annotated[OutputFormat, typer.Option("--output", "-o", help="輸出格式")] = OutputFormat.TABLE,
@@ -129,12 +101,9 @@ def search(
       gurume search --area 東京 --keyword 寿司
       gurume search -a 三重 -c すき焼き --sort ranking
       gurume search --area 大阪 --cuisine ラーメン -o json
-      gurume search -q 三重すきやき
     """
-    area, keyword = _apply_query_parse(query, area, keyword)
-
     if not area and not keyword and not cuisine:
-        console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一（或使用 -q 自然語言查詢）[/red]")
+        console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")
         raise typer.Exit(1)
 
     genre_code, keyword = _resolve_genre_code(cuisine, keyword)

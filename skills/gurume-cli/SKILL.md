@@ -45,11 +45,7 @@ Flag guidance:
 - `--limit`: 10 is plenty for a conversational reply. Bump to 20+ only if the user asks for a long list.
 - `--output json`: always use this — `table` is decorative and harder to read programmatically.
 
-### 4. Fallback: natural-language `--query`
-
-There is a `--query "..."` flag that uses `OPENAI_API_KEY` on the user's machine to parse free-form text. Prefer building flags yourself (step 1–3) because it's deterministic and doesn't depend on the user's env. Only fall back to `--query` if you genuinely cannot decompose the request into area/cuisine/keyword.
-
-### 5. Present results
+### 4. Present results
 
 After running, parse the JSON and summarize for the user. For each restaurant include:
 
