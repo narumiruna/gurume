@@ -1,0 +1,72 @@
+site_name: Gurume
+site_description: Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on Tabelog
+site_url: https://narumiruna.github.io/gurume/
+repo_url: https://github.com/narumiruna/gurume
+repo_name: narumiruna/gurume
+edit_uri: edit/main/docs/site/
+
+docs_dir: docs/site
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Usage:
+      - TUI: usage/tui.md
+  - API Reference:
+      - Overview: reference/index.md
+      - restaurant: reference/restaurant.md
+      - search: reference/search.md
+      - detail: reference/detail.md
+      - suggest: reference/suggest.md
+      - server: reference/server.md
+      - types: reference/types.md
+      - exceptions: reference/exceptions.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true

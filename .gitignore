@@ -142,3 +142,7 @@ dmypy.json
 
 # Codex CLI
 .codex
+
+# MkDocs build output
+/site/
+
