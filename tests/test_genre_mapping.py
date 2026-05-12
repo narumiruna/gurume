@@ -1,7 +1,10 @@
 """Tests for genre mapping (cuisine type to genre code conversion)"""
 
+from gurume.genre_mapping import CUISINE_SLUG_MAPPING
 from gurume.genre_mapping import GENRE_CODE_MAPPING
 from gurume.genre_mapping import get_all_genres
+from gurume.genre_mapping import get_cuisine_slug
+from gurume.genre_mapping import get_cuisine_slug_by_code
 from gurume.genre_mapping import get_genre_code
 from gurume.genre_mapping import get_genre_name_by_code
 
@@ -305,3 +308,43 @@ def test_get_all_genres_returns_new_list():
     # Should be equal but not the same object
     assert genres1 == genres2
     assert genres1 is not genres2
+
+
+# ============================================================================
+# Test cuisine path segment lookup
+# ============================================================================
+
+
+def test_get_cuisine_slug_sukiyaki():
+    """Test sukiyaki cuisine path segment"""
+    assert get_cuisine_slug("すき焼き") == "RC0107"
+
+
+def test_get_cuisine_slug_ramen():
+    """Test ramen cuisine path segment"""
+    assert get_cuisine_slug("ラーメン") == "MC0101"
+
+
+def test_get_cuisine_slug_yakiniku():
+    """Test yakiniku cuisine path segment"""
+    assert get_cuisine_slug("焼肉") == "yakiniku"
+
+
+def test_get_cuisine_slug_by_code_ramen():
+    """Test cuisine path segment reverse lookup from legacy code"""
+    assert get_cuisine_slug_by_code("RC0501") == "MC0101"
+
+
+def test_get_cuisine_slug_by_code_unknown_code():
+    """Unknown codes should not resolve to a cuisine path segment"""
+    assert get_cuisine_slug_by_code("RC9999") is None
+
+
+def test_cuisine_slug_mapping_covers_all_genres():
+    """Every supported cuisine must have a unique path segment."""
+    assert len(CUISINE_SLUG_MAPPING) == len(GENRE_CODE_MAPPING)
+
+    slugs = [get_cuisine_slug(genre) for genre in get_all_genres()]
+
+    assert all(slug is not None for slug in slugs)
+    assert len(slugs) == len(set(slugs))

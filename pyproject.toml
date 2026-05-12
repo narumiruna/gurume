@@ -65,6 +65,7 @@ pre_commit_hooks = ["uv lock", "git add uv.lock"]
 
 [tool.pytest]
 filterwarnings = ["ignore::DeprecationWarning"]
+markers        = ["integration: live Tabelog integration checks"]
 
 [tool.ruff]
 line-length = 120

@@ -35,3 +35,5 @@
 2026-05-12 | chore: remove stale verify_js_rendering script and scripts/ dir (#local)
 2026-05-12 | docs: merge CLAUDE.md content into AGENTS.md (#local)
 2026-05-12 | docs(plans): add plan to fix cuisine filter regression (#local)
+2026-05-12 | fix(search): restore area+cuisine URL mapping for Tabelog filters (#local)
+2026-05-12 | docs(plans): archive completed fix cuisine filter plan (#local)

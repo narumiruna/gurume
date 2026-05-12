@@ -15,6 +15,7 @@ from .area_mapping import get_area_slug
 from .cache import cache_set
 from .cache import cached_get
 from .exceptions import InvalidParameterError
+from .genre_mapping import get_cuisine_slug_by_code
 from .retry import fetch_with_retry
 from .retry import fetch_with_retry_async
 
@@ -37,9 +38,10 @@ def build_search_url_and_params(
 ) -> tuple[str, dict[str, Any]]:
     """Build the Tabelog search URL and adjust params for area/genre filters.
 
-    Tabelog requires the genre code to be passed via the ``LstG`` query parameter,
-    not embedded in the URL path. When an area is provided, ``sa`` is moved into
-    the URL path (``/{area_slug}/rstLst/``) and removed from params.
+    Area-only searches still use ``/{area_slug}/rstLst/``. Area + cuisine searches
+    now require a cuisine-specific path segment (for example ``.../yakiniku/`` or
+    ``.../MC0101/``) because the legacy ``LstG`` query parameter is ignored by
+    current Tabelog prefecture pages.
 
     Args:
         params: Search params dict (mutated in place and returned).
@@ -50,6 +52,13 @@ def build_search_url_and_params(
         Tuple of (url, params).
     """
     url = "https://tabelog.com/rst/rstsearch"
+    cuisine_slug = get_cuisine_slug_by_code(genre_code) if genre_code else None
+
+    if area_slug and cuisine_slug:
+        params.pop("sa", None)
+        params.pop("LstG", None)
+        return f"https://tabelog.com/{area_slug}/rstLst/{cuisine_slug}/", params
+
     if area_slug:
         url = f"https://tabelog.com/{area_slug}/rstLst/"
         params.pop("sa", None)
