@@ -249,12 +249,21 @@ class RestaurantSearchRequest:
         )
 
     def _parse_basic_info(self, item: Any) -> tuple[str | None, str]:
-        name_elem = item.find("a", class_="list-rst__rst-name-target") or item.find("a", href=True)
+        name_elem = item.find("a", class_="list-rst__rst-name-target")
         if not name_elem:
-            return None, ""
+            # Fallback: only accept href if it points to a real restaurant page.
+            # Skip magazine.tabelog.com promotional items and ads.
+            fallback = item.find("a", href=True)
+            if fallback and "/A" in str(fallback.get("href", "")):
+                name_elem = fallback
+            else:
+                return None, ""
 
         href = name_elem.get("href", "")
         url = href if href.startswith("http") else f"https://tabelog.com{href}"
+        # Skip magazine/promo items that slipped through
+        if "magazine.tabelog.com" in url:
+            return None, ""
         return name_elem.get_text(strip=True), url
 
     def _parse_counts(self, item: Any) -> tuple[int | None, int | None, float | None]:
@@ -376,16 +385,17 @@ class RestaurantSearchRequest:
 
         # 根據 area 和 genre_code 決定 URL 格式
         if area_slug and self.genre_code:
-            # 有地區 + 類別：/area/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+            # 有地區 + 類別：/area/rstLst/ with LstG param
+            url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)  # 移除 area 參數
+            params["LstG"] = self.genre_code
         elif area_slug:
             # 只有地區：/area/rstLst/
             url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)  # 移除 area 參數
         elif self.genre_code:
-            # 只有類別：/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
+            # 只有類別：base search with LstG param
+            params["LstG"] = self.genre_code
 
         # 檢查快取
         if use_cache:
@@ -434,16 +444,17 @@ class RestaurantSearchRequest:
 
         # 根據 area 和 genre_code 決定 URL 格式
         if area_slug and self.genre_code:
-            # 有地區 + 類別：/area/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+            # 有地區 + 類別：/area/rstLst/ with LstG param
+            url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)  # 移除 area 參數
+            params["LstG"] = self.genre_code
         elif area_slug:
             # 只有地區：/area/rstLst/
             url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)  # 移除 area 參數
         elif self.genre_code:
-            # 只有類別：/rstLst/GENRE_CODE/
-            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
+            # 只有類別：base search with LstG param
+            params["LstG"] = self.genre_code
 
         # 檢查快取
         if use_cache:

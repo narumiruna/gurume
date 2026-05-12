@@ -239,13 +239,18 @@ class SearchRequest:
         area_slug = get_area_slug(self.area) if self.area else None
 
         if area_slug and self.genre_code:
-            url = f"https://tabelog.com/{area_slug}/rstLst/{self.genre_code}/"
+            # Genre must be a query param (LstG), not in the URL path
+            url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)
+            params["LstG"] = self.genre_code
         elif area_slug:
             url = f"https://tabelog.com/{area_slug}/rstLst/"
             params.pop("sa", None)
         elif self.genre_code:
-            url = f"https://tabelog.com/rstLst/{self.genre_code}/"
+            # Genre-only search: base URL with LstG param
+            url = "https://tabelog.com/rst/rstsearch"
+            params["LstG"] = self.genre_code
+            params.pop("sa", None)
 
         return url, params
 

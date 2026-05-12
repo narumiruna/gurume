@@ -10,7 +10,14 @@ from pydantic import Field
 from pydantic import HttpUrl
 
 SortOption = Literal["ranking", "review-count", "new-open", "standard"]
-SuggestionDatatype = Literal["AddressMaster", "RailroadStation", "Genre2", "Restaurant", "Genre2 DetailCondition"]
+SuggestionDatatype = Literal[
+    "AddressMaster",
+    "RailroadStation",
+    "Genre2",
+    "Restaurant",
+    "Genre2 DetailCondition",
+    "Prefecture",
+]
 
 
 class RestaurantOutput(BaseModel):
