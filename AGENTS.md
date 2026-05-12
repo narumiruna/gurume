@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`src/gurume/` contains the library, CLI, TUI, and MCP server. Core scraping and search logic lives in modules such as `restaurant.py`, `search.py`, `detail.py`, `suggest.py`, and `server.py`. Tests are in `tests/` and generally mirror module names, for example `tests/test_search.py` and `tests/test_server.py`. Runnable examples live in `examples/`, while one-off verification utilities live in `scripts/`.
+`src/gurume/` contains the library, CLI, TUI, and MCP server. Core scraping and search logic lives in modules such as `restaurant.py`, `search.py`, `detail.py`, `suggest.py`, and `server.py`. Tests are in `tests/` and generally mirror module names, for example `tests/test_search.py` and `tests/test_server.py`. Runnable usage examples live in `examples/`.
 
 ## Build, Test, and Development Commands
 Use `uv` for all local Python workflows.
