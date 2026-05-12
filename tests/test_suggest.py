@@ -9,6 +9,7 @@ import pytest
 
 from gurume.suggest import AreaSuggestion
 from gurume.suggest import KeywordSuggestion
+from gurume.suggest import TabelogSuggestUnavailableError
 from gurume.suggest import get_area_suggestions
 from gurume.suggest import get_area_suggestions_async
 from gurume.suggest import get_keyword_suggestions
@@ -445,3 +446,81 @@ def test_area_and_keyword_dataclass_compatibility():
         id_in_datatype="rest_123",
     )
     assert keyword2.id_in_datatype == "rest_123"
+
+
+# ============================================================================
+# Test TabelogSuggestUnavailableError handling (PR #40 follow-up)
+# ============================================================================
+
+
+def test_get_area_suggestions_raises_on_suggest_empty():
+    """When Tabelog returns {'suggest_empty': true} the function must raise."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"suggest_empty": True}
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
+        get_area_suggestions(query="東京")
+
+
+def test_get_keyword_suggestions_raises_on_suggest_empty():
+    """Keyword endpoint must also raise on suggest_empty."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"suggest_empty": True}
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
+        get_keyword_suggestions(query="すき")
+
+
+@pytest.mark.asyncio
+async def test_get_area_suggestions_async_raises_on_suggest_empty():
+    """Async area endpoint must propagate TabelogSuggestUnavailableError."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"suggest_empty": True}
+    mock_response.raise_for_status = Mock()
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("httpx.AsyncClient", return_value=mock_client), pytest.raises(TabelogSuggestUnavailableError):
+        await get_area_suggestions_async(query="東京")
+
+
+@pytest.mark.asyncio
+async def test_get_keyword_suggestions_async_raises_on_suggest_empty():
+    """Async keyword endpoint must propagate TabelogSuggestUnavailableError."""
+    mock_response = Mock()
+    mock_response.json.return_value = {"suggest_empty": True}
+    mock_response.raise_for_status = Mock()
+
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=None)
+
+    with patch("httpx.AsyncClient", return_value=mock_client), pytest.raises(TabelogSuggestUnavailableError):
+        await get_keyword_suggestions_async(query="すき")
+
+
+def test_get_area_suggestions_parses_prefecture_datatype():
+    """Prefecture datatype responses must parse without error."""
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {
+            "name": "東京都",
+            "datatype": "Prefecture",
+            "id_in_datatype": 13,
+            "lat": 35.6895,
+            "lng": 139.6917,
+        }
+    ]
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response):
+        results = get_area_suggestions(query="東京")
+        assert len(results) == 1
+        assert results[0].name == "東京都"
+        assert results[0].datatype == "Prefecture"

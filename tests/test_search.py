@@ -403,3 +403,64 @@ class TestSearchRequest:
         assert len(response.restaurants) == 0
         assert response.meta is not None
         assert response.meta.total_count == 0
+
+
+# ============================================================================
+# Test build_search_url_and_params (URL helper)
+# ============================================================================
+
+
+class TestBuildSearchUrlAndParams:
+    """Test the shared URL/params builder used by both restaurant.py and search.py."""
+
+    def test_no_area_no_genre(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "standard"}, None, None)
+        assert url == "https://tabelog.com/rst/rstsearch"
+        assert "LstG" not in params
+        assert "sa" not in params
+
+    def test_area_only(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "standard", "sa": "東京"}, "tokyo", None)
+        assert url == "https://tabelog.com/tokyo/rstLst/"
+        assert "sa" not in params, "area param must move into URL path"
+        assert "LstG" not in params
+
+    def test_genre_only_uses_query_param(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "standard"}, None, "RC0201")
+        # Genre code MUST be in query, not in URL path
+        assert url == "https://tabelog.com/rst/rstsearch"
+        assert "/rstLst/RC0201" not in url
+        assert params["LstG"] == "RC0201"
+
+    def test_area_and_genre_uses_lstg_query(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "standard", "sa": "銀座"}, "tokyo", "RC0201")
+        # area in path, genre in LstG query (NOT in path)
+        assert url == "https://tabelog.com/tokyo/rstLst/"
+        assert "RC0201" not in url
+        assert params["LstG"] == "RC0201"
+        assert "sa" not in params
+
+    def test_search_request_build_url_uses_lstg(self):
+        """SearchRequest._build_url_and_params must put genre in LstG query."""
+        from gurume.restaurant import SortType
+        from gurume.search import SearchRequest
+
+        request = SearchRequest(
+            area="東京",
+            keyword="寿司",
+            genre_code="RC0201",
+            sort_type=SortType.STANDARD,
+        )
+        rst_req = request._create_restaurant_request(page=1)
+        url, params = request._build_url_and_params(rst_req)
+
+        assert "/rstLst/RC0201" not in url, "genre must NOT be in URL path"
+        assert params["LstG"] == "RC0201"

@@ -34,6 +34,7 @@ from .restaurant import SortType
 from .search import SearchRequest
 from .suggest import AreaSuggestion
 from .suggest import KeywordSuggestion
+from .suggest import TabelogSuggestUnavailableError
 from .suggest import get_area_suggestions_async
 from .suggest import get_keyword_suggestions_async
 
@@ -630,7 +631,11 @@ URL: {r.url}
         detail_content.update(f"🔍 正在搜尋「{query}」的地區建議...\n\n請稍候...")
 
         # 取得建議
-        suggestions = await get_area_suggestions_async(query)
+        try:
+            suggestions = await get_area_suggestions_async(query)
+        except TabelogSuggestUnavailableError as e:
+            detail_content.update(f"⚠️ 地區建議服務暫時無法使用\n\n{e}")
+            return
 
         if not suggestions:
             detail_content.update(

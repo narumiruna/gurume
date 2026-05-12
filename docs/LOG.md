@@ -19,3 +19,4 @@
 2026-04-19 | docs(readme): rewrite README in English and align interface docs (#local)
 2026-04-19 | refactor(mcp): split server schemas and helpers out of the FastMCP entrypoint module (#local)
 2026-04-19 | fix(deps): declare pydantic as a direct project dependency for type checking (#local)
+2026-05-12 | fix(search): pr40 follow-up — extract URL helper, tighten magazine filter, handle suggest_empty in TUI/async keyword (#local)

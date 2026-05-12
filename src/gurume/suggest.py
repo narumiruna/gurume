@@ -214,8 +214,12 @@ async def get_keyword_suggestions_async(query: str, request_timeout: float = 10.
             resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
             resp.raise_for_status()
             data = resp.json()
+            if isinstance(data, dict) and data.get("suggest_empty"):
+                raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
             if not isinstance(data, list):
                 return []
+    except TabelogSuggestUnavailableError:
+        raise
     except (httpx.HTTPError, ValueError):
         return []
     else:

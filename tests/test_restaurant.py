@@ -261,3 +261,56 @@ class TestQueryRestaurants:
 
         # do_sync should be called twice
         assert mock_search_sync.call_count == 2
+
+
+# ============================================================================
+# Test magazine / promo filtering in _parse_basic_info
+# ============================================================================
+
+
+class TestMagazineFiltering:
+    """Test that magazine articles and non-restaurant links are excluded."""
+
+    def test_skips_magazine_tabelog_links(self):
+        """Items linking to magazine.tabelog.com must be dropped."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target"
+                   href="https://magazine.tabelog.com/articles/12345">
+                   おすすめ特集
+                </a>
+            </div>
+        </body></html>
+        """
+        request = RestaurantSearchRequest()
+        restaurants = request._parse_restaurants(html)
+        assert restaurants == []
+
+    def test_skips_non_restaurant_fallback_links(self):
+        """Fallback to first <a> must NOT pick up /About or other non-restaurant paths."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a href="/About/help/">About Tabelog</a>
+            </div>
+        </body></html>
+        """
+        request = RestaurantSearchRequest()
+        restaurants = request._parse_restaurants(html)
+        assert restaurants == []
+
+    def test_accepts_real_restaurant_fallback_link(self):
+        """Fallback to first <a> must accept real restaurant URL paths."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a href="/tokyo/A1301/A130101/13000999/">本物のレストラン</a>
+            </div>
+        </body></html>
+        """
+        request = RestaurantSearchRequest()
+        restaurants = request._parse_restaurants(html)
+        assert len(restaurants) == 1
+        assert restaurants[0].name == "本物のレストラン"
+        assert restaurants[0].url == "https://tabelog.com/tokyo/A1301/A130101/13000999/"
