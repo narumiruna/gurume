@@ -26,7 +26,7 @@ Allow `gurume mcp` to start the MCP server over HTTP (streamable-http or SSE) in
 - [x] Append a short HTTP usage block to `README.md` under the MCP section showing the new flags and a security caveat about `0.0.0.0`; verify by `rg "streamable-http" README.md` returning a match.
 - [x] Append one line to `docs/LOG.md`: `2026-05-12 | feat(mcp): add http transport flags to \`gurume mcp\` (#39)`.
 - [x] Quality gate: `make lint && make type && make test` all pass.
-- [ ] Push branch and open PR linking issue #39; verify `gh pr view --json state -q .state` returns `OPEN` with CI green.
+- [x] Pushed branch and opened PR #42 linking issue #39; `gh pr view 42 --json state` returns `OPEN` and CI `python (3.12)` conclusion=SUCCESS.
 
 ## Risks
 
@@ -41,4 +41,4 @@ Allow `gurume mcp` to start the MCP server over HTTP (streamable-http or SSE) in
 - [x] `make lint && make type && make test` all pass.
 - [x] README has a short HTTP transport usage block, verified by `rg "streamable-http" README.md`.
 - [x] `docs/LOG.md` has the new feat line, verified by `tail -1 docs/LOG.md`.
-- [ ] PR is OPEN with CI green, verified by `gh pr view <new-pr> --json state,statusCheckRollup`.
+- [x] PR #42 is OPEN with CI green, verified by `gh pr view 42 --json state,statusCheckRollup` (state=OPEN, `python (3.12)` conclusion=SUCCESS after fixup `6339b7c`).
