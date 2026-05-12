@@ -145,7 +145,3 @@ dmypy.json
 
 # MkDocs build output
 /site/
-
-
-# scripts/verify_js_rendering.py output
-verification_results.json

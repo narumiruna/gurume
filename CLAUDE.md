@@ -40,7 +40,6 @@ Use this document as an agent-facing execution guide. For user-facing setup and 
 
 - `tests/`: unit and integration tests, usually mirroring module names
 - `examples/`: runnable usage examples
-- `scripts/`: verification or one-off helper scripts
 
 ## Development Commands
 
