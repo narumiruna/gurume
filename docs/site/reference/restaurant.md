@@ -1,0 +1,3 @@
+# restaurant
+
+::: gurume.restaurant

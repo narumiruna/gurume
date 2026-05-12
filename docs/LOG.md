@@ -23,3 +23,4 @@
 2026-05-12 | feat(mcp): add http/sse transport flags to `gurume mcp` (#39)
 2026-05-12 | docs(readme): polish README with emojis, badges, and SEO improvements (#local)
 2026-05-12 | chore(pyproject): add description, keywords, and classifiers (#local)
+2026-05-12 | docs(site): add MkDocs Material site with API reference and GitHub Pages workflow (#local)

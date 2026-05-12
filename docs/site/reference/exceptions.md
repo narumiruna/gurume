@@ -1,0 +1,3 @@
+# exceptions
+
+::: gurume.exceptions

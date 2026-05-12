@@ -3,6 +3,9 @@
 [![PyPI](https://img.shields.io/pypi/v/gurume)](https://pypi.org/project/gurume/)
 [![Python](https://img.shields.io/pypi/pyversions/gurume)](https://pypi.org/project/gurume/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/narumiruna/gurume/blob/main/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-mkdocs--material-blue)](https://narumiruna.github.io/gurume/)
+
+📚 **Documentation:** <https://narumiruna.github.io/gurume/>
 
 **Gurume** is a Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on [Tabelog](https://tabelog.com) — Japan's largest restaurant review platform.
 
