@@ -31,7 +31,6 @@ The TUI is divided into four main areas:
   - Tip: press `F3` to open intelligent keyword suggestions (`New!`)
     - When the keyword is empty: shows the full list of 45+ cuisine categories
     - When the keyword has content: calls the API and shows dynamic suggestions such as cuisine types, restaurant names, and combined keywords
-  - Tip: enter natural language and press `F4` to use AI parsing
   - Automatically detects cuisine names and converts them into precise filters
 
 **Second row - Sort options**
@@ -84,7 +83,6 @@ The TUI is divided into four main areas:
 | `d` | Focus the detail panel |
 | `F2` | Show area suggestions (requires an area query first) |
 | `F3` | Intelligent keyword suggestions (empty keyword: cuisine list; non-empty keyword: dynamic API suggestions) (`New!`) |
-| `F4` | Parse natural language input with AI (requires natural language input first) |
 | `↑` / `↓` | Move up or down in the results list or suggestion list |
 | `Tab` | Switch between components |
 | `Enter` | Run search in an input box / confirm a suggestion |
@@ -161,22 +159,9 @@ The `F3` key supports two modes and switches automatically based on the keyword 
 - The system detects it automatically and converts it into a precise filter
 - Auto-detection supports all 45+ cuisine categories
 
-### Using AI natural language parsing
+### Natural-language input
 
-1. Start the TUI with `uv run gurume tui`
-2. Enter natural language in the Keyword input box, for example `我想吃三重的壽喜燒`
-3. Press `F4` to use AI parsing
-4. The system parses the area and keyword automatically and fills the corresponding fields
-5. **If an area value is present**: area suggestions are triggered automatically
-6. **If a keyword value is present**: cuisine suggestions are triggered automatically
-7. Confirm or adjust the fields, then run the search
-
-**Benefits of AI parsing**
-
-- Natural language input: describe what you want in your own words
-- Automatic classification: AI separates the area and cuisine type for you
-- Smart suggestions: related suggestion features are triggered automatically after parsing
-- Faster search: fill multiple fields from a single input
+The TUI no longer parses free-form text on its own. To translate sentences like `我想吃三重的壽喜燒` into the Area and Keyword fields, use an AI assistant with the [`gurume-cli` agent skill](https://github.com/narumiruna/gurume/tree/main/skills/gurume-cli) installed and let it tell you which values to type.
 
 ## Example Searches
 
@@ -209,11 +194,6 @@ The `F3` key supports two modes and switches automatically based on the keyword 
   1. Area: `三重`
   2. Keyword: `すき焼き` (the system detects it automatically and applies precise filtering)
   3. Run the search
-- Method 3: AI parsing (fastest)
-  1. Keyword: `三重的すき焼き`
-  2. Press `F4` to use AI parsing
-  3. The system fills the area and keyword automatically and triggers suggestion helpers
-  4. Run the search
 - Result: only dedicated `すき焼き` restaurants are shown, such as `和田金` and `牛銀本店`, instead of unrelated restaurant types
 
 ## Notes
@@ -239,7 +219,6 @@ The `F3` key supports two modes and switches automatically based on the keyword 
 - **Intelligent keyword suggestions (`F3`)** (`New!`)
   - Empty keyword -> full list of 45+ Japanese cuisine types
   - Non-empty keyword -> dynamic API suggestions for cuisines, restaurant names, and combined keywords
-- **AI natural language parsing (`F4`)**: parse natural language input with AI
 - **Automatic cuisine detection**: detect cuisine names and convert them into precise filters automatically
 - **Area filtering**: accurate filtering for all 47 prefectures
 - **Cuisine filtering**: precise filtering for dedicated restaurants using cuisine codes (`RC codes`)

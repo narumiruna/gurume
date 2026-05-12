@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
 
-from openai import OpenAIError
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
@@ -28,7 +26,6 @@ from textual.worker import WorkerCancelled
 
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
-from .llm import parse_user_input
 from .restaurant import Restaurant
 from .restaurant import SortType
 from .search import SearchRequest
@@ -39,7 +36,7 @@ from .suggest import get_area_suggestions_async
 from .suggest import get_keyword_suggestions_async
 
 TUI_UPDATE_EXCEPTIONS = (NoMatches, WorkerCancelled)
-TUI_ACTION_EXCEPTIONS = (OpenAIError, RuntimeError, ValueError)
+TUI_ACTION_EXCEPTIONS = (RuntimeError, ValueError)
 
 
 class AreaSuggestModal(ModalScreen[str]):
@@ -273,9 +270,7 @@ class SearchPanel(Container):
         yield Static("餐廳搜尋", classes="panel-title")
         with Horizontal(id="input-row"):
             yield Input(placeholder="地區 (例如: 東京, 按 F2 查看建議)", id="area-input")
-            yield Input(
-                placeholder="關鍵字 (例如: 寿司, 按 F3 選擇料理類別, 或輸入自然語言後按 F4 解析)", id="keyword-input"
-            )
+            yield Input(placeholder="關鍵字 (例如: 寿司, 按 F3 選擇料理類別)", id="keyword-input")
         with Horizontal(id="sort-row"):
             yield Static("排序:", classes="sort-label")
             with RadioSet(id="sort-radio"):
@@ -444,7 +439,6 @@ class TabelogApp(App):
         ("d", "focus_detail", "Detail"),
         ("f2", "show_area_suggest", "Area Suggest"),
         ("f3", "show_genre_suggest", "Genre Suggest"),
-        ("f4", "parse_natural_language", "AI Parse"),
     ]
 
     def __init__(self, **kwargs):
@@ -652,70 +646,6 @@ URL: {r.url}
                 detail_content.update("⏸️ 已取消選擇")
 
         await self.push_screen(AreaSuggestModal(suggestions), on_dismiss)
-
-    async def action_parse_natural_language(self) -> None:
-        """使用 AI 解析自然語言輸入"""
-        keyword_input = self.query_one("#keyword-input", Input)
-        user_input = keyword_input.value.strip()
-
-        if not user_input:
-            # 如果輸入框為空，提示用戶
-            detail_content = self.query_one("#detail-content", Static)
-            detail_content.update(
-                "💡 請先在關鍵字欄位輸入自然語言\n\n"
-                "例如：\n"
-                "• 我想吃三重的壽喜燒\n"
-                "• 東京的拉麵\n"
-                "• 大阪難波附近的居酒屋\n\n"
-                "然後按 F4 使用 AI 解析"
-            )
-            return
-
-        # 顯示載入訊息
-        detail_content = self.query_one("#detail-content", Static)
-        detail_content.update(f"🤖 正在使用 AI 解析「{user_input}」...\n\n請稍候...")
-
-        try:
-            loop = asyncio.get_running_loop()
-            result = await loop.run_in_executor(None, parse_user_input, user_input)
-
-            # 更新 area 和 keyword 欄位
-            area_input = self.query_one("#area-input", Input)
-            area_input.value = result.area
-            keyword_input.value = result.keyword
-
-            # 顯示解析結果
-            detail_content.update(
-                f"✅ AI 解析成功！\n\n"
-                f"原始輸入：{user_input}\n\n"
-                f"解析結果：\n"
-                f"• 地區：{result.area or '(無)'}\n"
-                f"• 關鍵字：{result.keyword or '(無)'}\n\n"
-                f"💡 可以手動調整後按搜尋，或直接按 Enter 開始搜尋"
-            )
-
-            # 如果地區有值，自動觸發地區建議
-            if result.area:
-                await self.action_show_area_suggest()
-            # 如果關鍵字有值，自動觸發料理類別建議
-            elif result.keyword:
-                await self.action_show_genre_suggest()
-            else:
-                # 自動聚焦到搜尋按鈕，方便使用者直接 Enter 搜尋
-                area_input.focus()
-
-        except TUI_ACTION_EXCEPTIONS as e:
-            # 處理錯誤（API 失敗、網路問題等）
-            error_msg = str(e)
-            detail_content.update(
-                f"❌ AI 解析失敗\n\n"
-                f"錯誤訊息：{error_msg}\n\n"
-                f"可能原因：\n"
-                f"• OpenAI API 金鑰未設定（請檢查 .env 檔案）\n"
-                f"• 網路連線問題\n"
-                f"• API 呼叫限制\n\n"
-                f"💡 建議改用手動輸入地區和關鍵字"
-            )
 
     async def action_show_genre_suggest(self) -> None:
         """顯示料理類別建議彈出視窗（智慧型）
