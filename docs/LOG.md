@@ -30,3 +30,4 @@
 2026-05-12 | docs(readme): document gurume-cli skill install via npx skills add (#local)
 2026-05-12 | docs(plans): add plan to remove OPENAI_API_KEY-based parsing (#local)
 2026-05-12 | feat(cli)!: remove OPENAI_API_KEY-based --query and F4 AI parsing (#local)
+2026-05-12 | docs(plans): archive completed remove-openai-api-key plan (#local)

@@ -37,17 +37,17 @@ The recently merged `gurume-cli` agent skill (PR #46) already instructs agents t
 
 ## Plan
 
-- [ ] Delete `src/gurume/llm.py`; verify with `rg -n "from .llm|from gurume.llm|import llm" src tests` returning no matches.
-- [ ] Remove `--query/-q` option, `_apply_query_parse`, `OpenAIError` import, and the related example line from `src/gurume/cli.py`; verify with `uv run gurume search --help` no longer listing `--query` and `uv run gurume search --area 東京 --keyword 寿司 --limit 1 --output json` returning JSON.
-- [ ] Remove the `F4` binding, `parse_user_input` import, `OpenAIError`/`TUI_ACTION_EXCEPTIONS` references, and `action_parse_natural_language` from `src/gurume/tui.py`; verify with `rg -n "parse_user_input|F4|action_parse_natural_language|OpenAIError" src/gurume/tui.py` returning no matches and `uv run python -c "from gurume.tui import GurumeApp"` importing cleanly.
-- [ ] Drop `openai>=2.32.0` and `python-dotenv` from `pyproject.toml` dependencies; verify with `uv lock` regenerating `uv.lock` and `rg -n "^name = \"(openai|python-dotenv)\"" uv.lock` returning no matches.
-- [ ] Update `README.md`: remove the `--query` example block (line ~65–66), the `--query, -q` bullet, the `OPENAI_API_KEY` note (~line 90), and the Notes-and-Limitations line about NL parsing requiring `OPENAI_API_KEY` (~line 396); verify with `rg -n "OPENAI_API_KEY|--query|natural-language" README.md` returning no matches.
-- [ ] Update `AGENTS.md` "Security & Configuration Tips" to drop the `OPENAI_API_KEY` sentence; verify with `rg -n "OPENAI_API_KEY|OpenAI" AGENTS.md` returning no matches.
-- [ ] Update `docs/TUI_USAGE.md` and `docs/site/usage/tui.md` to remove the `F4` row, the "Using AI natural language parsing" section, and related tips; verify with `rg -n "F4|AI Parse|natural language|自然語言" docs/TUI_USAGE.md docs/site/usage/tui.md` returning no matches.
-- [ ] Update `skills/gurume-cli/SKILL.md`: delete the "Fallback: natural-language `--query`" section (currently step 4) and renumber "Present results" to step 4; verify with `rg -n "OPENAI_API_KEY|--query" skills/gurume-cli/SKILL.md` returning no matches.
-- [ ] Run quality gates: `uv run ruff check .`, `uv run ty check .`, and `uv run pytest -v -s --cov=src tests`; verify each command exits 0.
-- [ ] Append one line to `docs/LOG.md` following the project format (e.g., `2026-05-12 | feat(cli)!: remove OPENAI_API_KEY-based --query and F4 AI parsing (#local)`); verify with `tail -1 docs/LOG.md` showing the new line.
-- [ ] Open a PR titled `feat(cli)!: remove OPENAI_API_KEY-based natural-language parsing` summarizing the removal and pointing at the `gurume-cli` skill as the recommended replacement; verify with `gh pr view` showing the PR URL.
+- [x] Delete `src/gurume/llm.py`; verified with `rg -n "from .llm|from gurume.llm|import llm" src tests` returning no matches.
+- [x] Remove `--query/-q` option, `_apply_query_parse`, `OpenAIError` import, and the related example line from `src/gurume/cli.py`; verified `gurume search --help` no longer lists `--query` and a JSON smoke search returned results.
+- [x] Remove the `F4` binding, `parse_user_input` import, `OpenAIError`/`TUI_ACTION_EXCEPTIONS` references, and `action_parse_natural_language` from `src/gurume/tui.py`; verified `rg -n "parse_user_input|F4|action_parse_natural_language|OpenAIError" src/gurume/tui.py` returns no matches and `from gurume.tui import TabelogApp` imports cleanly.
+- [x] Drop `openai>=2.32.0` from `pyproject.toml`; `uv lock` regenerated and removed `openai`, `distro`, `jiter`, `sniffio`, `tqdm`. Not applicable for `python-dotenv`: it was never declared in `pyproject.toml`; it remains in `uv.lock` as a transitive dep of `mcp[cli]` and `pydantic-settings`, so there is nothing to drop on our side. The original plan assumption was wrong here.
+- [x] Update `README.md`: removed the `--query` example block, the `--query, -q` bullet, and the `OPENAI_API_KEY` notes; replaced the Notes-and-Limitations line with a pointer to the `gurume-cli` skill. The remaining `natural-language` hit in `rg` is the new pointer line and is intentional.
+- [x] Update `AGENTS.md` "Security & Configuration Tips" to drop the `OPENAI_API_KEY` sentence; verified `rg -n "OPENAI_API_KEY|OpenAI" AGENTS.md` returns no matches.
+- [x] Update `docs/TUI_USAGE.md` and `docs/site/usage/tui.md` to remove the `F4` row, the AI parsing section, and related tips, replacing them with a pointer to the `gurume-cli` skill; verified `rg -n "F4|AI Parse|natural language|自然語言" docs/TUI_USAGE.md docs/site/usage/tui.md` returns no matches.
+- [x] Update `skills/gurume-cli/SKILL.md`: deleted the "Fallback: natural-language `--query`" section and renumbered "Present results" to step 4; verified `rg -n "OPENAI_API_KEY|--query" skills/gurume-cli/SKILL.md` returns no matches.
+- [x] Run quality gates: `uv run ruff check .` passed, `uv run ty check .` passed, and `uv run pytest --cov=src tests` reported 256 passed.
+- [x] Append one line to `docs/LOG.md`: `2026-05-12 | feat(cli)!: remove OPENAI_API_KEY-based --query and F4 AI parsing (#local)`.
+- [x] Open a PR titled `feat(cli)!: remove OPENAI_API_KEY-based natural-language parsing`: https://github.com/narumiruna/gurume/pull/48 (state OPEN, mergeable CLEAN).
 
 ## Risks
 
@@ -61,9 +61,9 @@ If a regression is reported after release, revert the single PR (`git revert <me
 
 ## Completion Checklist
 
-- [ ] `OPENAI_API_KEY` no longer appears in source, docs, or skills, verified by `rg -n "OPENAI_API_KEY" .` returning no matches outside `docs/LOG.md` history and `docs/plans/`.
-- [ ] `openai` and `python-dotenv` are absent from runtime dependencies, verified by `rg -n "^\\s*\"(openai|python-dotenv)" pyproject.toml` returning no matches and `uv.lock` regenerated.
-- [ ] `gurume search --help` output no longer lists `--query/-q`, verified by `uv run gurume search --help | rg -n "query"` returning no matches.
-- [ ] TUI no longer exposes `F4` AI Parse, verified by `rg -n "F4|action_parse_natural_language" src/gurume/tui.py` returning no matches.
-- [ ] `uv run ruff check .`, `uv run ty check .`, and `uv run pytest -v -s --cov=src tests` all pass, verified by their exit codes and the pytest summary line.
-- [ ] PR is opened against `main` with the breaking-change marker and merged, verified by `gh pr view` link and `git log --oneline -5` on updated `main`.
+- [x] `OPENAI_API_KEY` no longer appears in source, docs, or skills, verified by `rg -n OPENAI_API_KEY . -g '!docs/LOG.md' -g '!docs/plans/' -g '!uv.lock' -g '!.git'` returning no matches.
+- [x] `openai` is absent from runtime dependencies, verified by `rg -n '^\s*"(openai|python-dotenv)' pyproject.toml` returning no matches and `uv.lock` regenerated (`openai`, `distro`, `jiter`, `sniffio`, `tqdm` removed). Not applicable for `python-dotenv`: never declared on our side; remains as transitive dep of `mcp[cli]` and `pydantic-settings`.
+- [x] `gurume search --help` output no longer lists `--query/-q`, verified by `uv run gurume search --help | rg -n query` returning exit code 1.
+- [x] TUI no longer exposes `F4` AI Parse, verified by `rg -n "F4|action_parse_natural_language" src/gurume/tui.py` returning no matches.
+- [x] `uv run ruff check .`, `uv run ty check .`, and `uv run pytest --cov=src tests` all pass; pytest summary line: `256 passed in 7.11s`.
+- [x] PR is opened against `main` with the breaking-change marker and merged: PR #48 (https://github.com/narumiruna/gurume/pull/48) merged as commit `12a8b69`.
