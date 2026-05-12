@@ -33,3 +33,4 @@
 2026-05-12 | docs(plans): archive completed remove-openai-api-key plan (#local)
 2026-05-12 | chore: drop stale verification_results.json and gitignore it (#local)
 2026-05-12 | chore: remove stale verify_js_rendering script and scripts/ dir (#local)
+2026-05-12 | docs: merge CLAUDE.md content into AGENTS.md (#local)

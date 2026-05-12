@@ -1,7 +1,19 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`src/gurume/` contains the library, CLI, TUI, and MCP server. Core scraping and search logic lives in modules such as `restaurant.py`, `search.py`, `detail.py`, `suggest.py`, and `server.py`. Tests are in `tests/` and generally mirror module names, for example `tests/test_search.py` and `tests/test_server.py`. Runnable usage examples live in `examples/`.
+`src/gurume/` contains the library, CLI, TUI, and MCP server. Key modules:
+
+- `restaurant.py`: core scraping request/response logic.
+- `search.py`: higher-level search API with metadata and pagination.
+- `detail.py`: restaurant detail fetching and parsing.
+- `suggest.py`: area and keyword suggestion API integration.
+- `server.py`: FastMCP server tools.
+- `cli.py`: Typer CLI entrypoints.
+- `tui.py`: Textual terminal UI.
+- `cache.py`, `retry.py`: resilience helpers.
+- `area_mapping.py`, `genre_mapping.py`: mapping helpers for precise filtering.
+
+Tests are in `tests/` and generally mirror module names, for example `tests/test_search.py` and `tests/test_server.py`. Runnable usage examples live in `examples/`.
 
 ## Build, Test, and Development Commands
 Use `uv` for all local Python workflows.
@@ -12,9 +24,10 @@ Use `uv` for all local Python workflows.
 - `make test` or `uv run pytest -v -s --cov=src tests`: run the full test suite with coverage.
 - `uv run python examples/basic_search.py`: run a basic example locally.
 - `uv run gurume mcp`: start the MCP server for local integration testing.
+- `uv run gurume tui`: launch the Textual TUI for interactive search.
 
 ## Coding Style & Naming Conventions
-Target Python 3.12 and keep code type-annotated. Follow Ruff settings in `pyproject.toml`: 120-character line length, single-line imports where isort rewrites them, and standard `snake_case` for functions/modules, `PascalCase` for classes, and `UPPER_CASE` for constants and enums. Keep modules focused; split files before they become difficult to navigate. Avoid adding dependencies or abstractions unless the current code clearly needs them.
+Target Python 3.12 and keep code type-annotated, using built-in generic syntax such as `list[str]` and `X | None` rather than `typing` aliases. Follow Ruff settings in `pyproject.toml`: 120-character line length, single-line imports where isort rewrites them, and standard `snake_case` for functions/modules, `PascalCase` for classes, and `UPPER_CASE` for constants and enums. Keep modules focused; split files before they become difficult to navigate. Reuse existing request, parsing, cache, retry, and mapping helpers before introducing new ones, and avoid adding dependencies or abstractions unless the current code clearly needs them.
 
 ## Testing Guidelines
 Write tests under `tests/` with names like `test_<feature>.py` and test functions named `test_<behavior>`. Prefer focused unit tests with mocks for HTTP boundaries, and add integration coverage only where real workflow behavior matters. When changing search, parsing, CLI, TUI-adjacent logic, or MCP tools, add or update the corresponding test file before merging.
@@ -24,6 +37,26 @@ Recent history favors short imperative messages such as `fix lint errors`, `remo
 
 ## Security & Configuration Tips
 Do not commit secrets. Natural-language parsing has been removed from the CLI/TUI; route free-form user input through the `gurume-cli` agent skill instead. Treat scraped upstream HTML as unstable: prefer defensive parsing, clear exceptions, and tests that lock in expected behavior.
+
+## Project-Specific Gotchas
+
+### Scraping
+- Tabelog markup changes without warning. Write parsing logic defensively; CSS selectors and HTML structures are not stable contracts.
+- Skip malformed items gracefully when possible, but keep failures debuggable.
+
+### Area filtering
+- Do not assume `sa=<area>` query parameters produce correct area filtering. Accurate prefecture-level filtering depends on path-based area slugs such as `/tokyo/rstLst/`.
+- If an area cannot be mapped, current behavior may fall back to broader results.
+
+### Cuisine filtering
+- Cuisine searches should prefer genre-code-based URL paths over plain keyword matching.
+- Use `genre_mapping.py` to keep cuisine filtering precise before adding ad hoc matching logic.
+
+### Suggestions and details
+- Suggestion endpoints and detail pages are upstream-controlled and may change response shape. Preserve defensive parsing and actionable error messages when touching these flows.
+
+## MCP and CLI Consistency
+The MCP server (`src/gurume/server.py`, FastMCP), CLI, and TUI all sit on top of the same search APIs. Keep tool outputs structured and validation errors clear, and when you change parameters or output behavior in one interface, check whether the others should change too.
 
 ## MEMORY.md
 
