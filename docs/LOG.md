@@ -28,3 +28,4 @@
 2026-05-12 | docs(plans): archive completed mkdocs site plan (#local)
 2026-05-12 | feat(skills): add gurume-cli agent skill (#local)
 2026-05-12 | docs(readme): document gurume-cli skill install via npx skills add (#local)
+2026-05-12 | docs(plans): add plan to remove OPENAI_API_KEY-based parsing (#local)
