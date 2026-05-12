@@ -316,12 +316,31 @@ When `status="error"`, inspect `error.error_code`, `error.retryable`, and `error
 # Run the MCP test suite
 uv run pytest -q tests/test_server.py
 
-# Start the server locally
+# Start the server locally (stdio, default)
 uv run gurume mcp
 
 # Inspect tools and schemas interactively
 npx @modelcontextprotocol/inspector uv run gurume mcp
 ```
+
+### HTTP transport
+
+`gurume mcp` can also run as an HTTP server for clients that speak streamable
+HTTP (or SSE):
+
+```bash
+# Streamable HTTP (recommended; endpoint at http://127.0.0.1:8000/mcp)
+uv run gurume mcp --transport streamable-http
+
+# Custom bind address, port, and path
+uv run gurume mcp --transport streamable-http --host 0.0.0.0 --port 9001 --path /api/mcp
+
+# Server-Sent Events transport
+uv run gurume mcp --transport sse --port 8765 --path /events
+```
+
+Security note: the default bind is `127.0.0.1`. Use `--host 0.0.0.0` only on
+trusted networks; the MCP endpoint has no built-in authentication.
 
 ## TUI
 

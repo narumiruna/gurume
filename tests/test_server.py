@@ -1053,3 +1053,53 @@ async def test_mcp_call_area_suggestions_returns_structured_error_for_empty_quer
     assert content
     assert structured_data["status"] == "error"
     assert structured_data["error"]["error_code"] == "invalid_parameters"
+
+
+# ============================================================================
+# Test run() transport switching (issue #39)
+# ============================================================================
+
+
+class TestRunTransport:
+    """Test the entry point honors transport flags."""
+
+    def test_stdio_default_does_not_mutate_settings(self):
+        from gurume import server
+
+        original_host = server.mcp.settings.host
+        original_port = server.mcp.settings.port
+
+        with patch.object(server.mcp, "run") as mock_mcp_run:
+            server.run()
+            mock_mcp_run.assert_called_once_with(transport="stdio")
+
+        # stdio must NOT mutate HTTP settings
+        assert server.mcp.settings.host == original_host
+        assert server.mcp.settings.port == original_port
+
+    def test_streamable_http_mutates_settings_and_runs(self):
+        from gurume import server
+
+        with patch.object(server.mcp, "run") as mock_mcp_run:
+            server.run(
+                transport="streamable-http",
+                host="0.0.0.0",
+                port=9001,
+                path="/api/mcp",
+            )
+            mock_mcp_run.assert_called_once_with(transport="streamable-http")
+
+        assert server.mcp.settings.host == "0.0.0.0"
+        assert server.mcp.settings.port == 9001
+        assert server.mcp.settings.streamable_http_path == "/api/mcp"
+
+    def test_sse_sets_sse_path(self):
+        from gurume import server
+
+        with patch.object(server.mcp, "run") as mock_mcp_run:
+            server.run(transport="sse", host="127.0.0.1", port=8765, path="/events")
+            mock_mcp_run.assert_called_once_with(transport="sse")
+
+        assert server.mcp.settings.host == "127.0.0.1"
+        assert server.mcp.settings.port == 8765
+        assert server.mcp.settings.sse_path == "/events"

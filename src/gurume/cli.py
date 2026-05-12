@@ -239,12 +239,42 @@ def tui() -> None:
     tui_main()
 
 
+class McpTransport(StrEnum):
+    STDIO = "stdio"
+    SSE = "sse"
+    STREAMABLE_HTTP = "streamable-http"
+
+
 @app.command()
-def mcp() -> None:
+def mcp(
+    transport: Annotated[
+        McpTransport,
+        typer.Option(
+            "--transport",
+            "-t",
+            help="MCP transport. Use 'streamable-http' for HTTP clients.",
+        ),
+    ] = McpTransport.STDIO,
+    host: Annotated[
+        str,
+        typer.Option("--host", help="Bind host for HTTP transports."),
+    ] = "127.0.0.1",
+    port: Annotated[
+        int,
+        typer.Option("--port", "-p", help="Bind port for HTTP transports."),
+    ] = 8000,
+    path: Annotated[
+        str,
+        typer.Option(
+            "--path",
+            help="HTTP mount path (streamable-http or sse).",
+        ),
+    ] = "/mcp",
+) -> None:
     """啟動 MCP (Model Context Protocol) 伺服器"""
     from .server import run
 
-    run()
+    run(transport=transport.value, host=host, port=port, path=path)
 
 
 def main() -> None:
