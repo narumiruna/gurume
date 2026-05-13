@@ -1,5 +1,6 @@
 """Tests for area mapping (area name to URL slug conversion)"""
 
+from gurume.area_mapping import CITY_AREA_PATH_MAPPING
 from gurume.area_mapping import CITY_MAPPING
 from gurume.area_mapping import PREFECTURE_MAPPING
 from gurume.area_mapping import get_area_slug
@@ -64,6 +65,21 @@ def test_get_area_slug_kyoto_city():
 def test_get_area_slug_fukuoka_city():
     """Test Fukuoka without suffix"""
     assert get_area_slug("福岡") == "fukuoka"
+
+
+def test_get_area_slug_sapporo_city():
+    """Test Sapporo city path"""
+    assert get_area_slug("札幌") == "hokkaido/A0101"
+
+
+def test_get_area_slug_nagoya_city():
+    """Test Nagoya city path"""
+    assert get_area_slug("名古屋") == "aichi/A2301"
+
+
+def test_get_area_slug_kobe_city():
+    """Test Kobe city path"""
+    assert get_area_slug("神戸") == "hyogo/A2801"
 
 
 def test_get_area_slug_all_major_cities():
@@ -272,6 +288,11 @@ def test_city_mapping_count():
     assert len(CITY_MAPPING) == 5, "Should have 5 major cities"
 
 
+def test_city_area_path_mapping_count():
+    """Test that we have the expected number of city-specific area paths"""
+    assert len(CITY_AREA_PATH_MAPPING) == 3, "Should have 3 city-specific area paths"
+
+
 def test_all_slugs_lowercase():
     """Test that all slugs are lowercase"""
     for slug in PREFECTURE_MAPPING.values():
@@ -279,6 +300,10 @@ def test_all_slugs_lowercase():
 
     for slug in CITY_MAPPING.values():
         assert slug.islower(), f"Slug {slug} is not lowercase"
+
+    for path in CITY_AREA_PATH_MAPPING.values():
+        prefecture_slug = path.split("/", maxsplit=1)[0]
+        assert prefecture_slug.islower(), f"Prefecture slug in path {path} is not lowercase"
 
 
 def test_all_slugs_ascii():
@@ -288,6 +313,9 @@ def test_all_slugs_ascii():
 
     for slug in CITY_MAPPING.values():
         assert slug.isascii(), f"Slug {slug} is not ASCII"
+
+    for path in CITY_AREA_PATH_MAPPING.values():
+        assert path.isascii(), f"Path {path} is not ASCII"
 
 
 def test_no_duplicate_slugs():
@@ -303,6 +331,14 @@ def test_city_mapping_subset_of_prefecture():
 
     # All city slugs should also be prefecture slugs
     assert city_slugs.issubset(prefecture_slugs), "Some city slugs are not in prefecture mapping"
+
+
+def test_city_area_path_prefecture_subset():
+    """Test that all city-specific area paths start with a known prefecture slug"""
+    prefecture_slugs = set(PREFECTURE_MAPPING.values())
+    path_prefecture_slugs = {path.split("/", maxsplit=1)[0] for path in CITY_AREA_PATH_MAPPING.values()}
+
+    assert path_prefecture_slugs.issubset(prefecture_slugs), "Some city paths start with unknown prefecture slugs"
 
 
 # ============================================================================

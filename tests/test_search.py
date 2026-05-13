@@ -462,6 +462,26 @@ class TestBuildSearchUrlAndParams:
         assert "LstG" not in params
         assert "sa" not in params
 
+    def test_area_and_genre_supports_nested_city_path(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "名古屋"}, "aichi/A2301", "RC0701")
+        assert url == "https://tabelog.com/aichi/A2301/rstLst/unagi/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
+    def test_search_request_build_url_uses_city_cuisine_path(self):
+        from gurume.restaurant import SortType
+        from gurume.search import SearchRequest
+
+        request = SearchRequest(area="札幌", genre_code="RC1801", sort_type=SortType.RANKING)
+        rst_req = request._create_restaurant_request(page=1)
+        url, params = request._build_url_and_params(rst_req)
+
+        assert url == "https://tabelog.com/hokkaido/A0101/rstLst/curry/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
     def test_search_request_build_url_uses_cuisine_path(self):
         """SearchRequest._build_url_and_params must embed cuisine filters in the path."""
         from gurume.restaurant import SortType
