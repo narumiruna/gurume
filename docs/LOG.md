@@ -37,3 +37,5 @@
 2026-05-12 | docs(plans): add plan to fix cuisine filter regression (#local)
 2026-05-12 | fix(search): restore area+cuisine URL mapping for Tabelog filters (#local)
 2026-05-12 | docs(plans): archive completed fix cuisine filter plan (#local)
+2026-05-14 | test(cli): smoke test food search commands (#local)
+2026-05-14 | docs(plans): add CLI search accuracy improvement plan (#local)
