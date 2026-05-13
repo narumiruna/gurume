@@ -1,6 +1,7 @@
 """Test CLI functionality"""
 
 import asyncio
+import json
 from datetime import UTC
 from datetime import datetime
 from datetime import timedelta
@@ -363,6 +364,70 @@ class TestCLIArguments:
         assert args.max_pages == 2
         assert args.sort == "rt"
         assert args.price_range is None
+
+
+# ============================================================================
+# Test Typer search command
+# ============================================================================
+
+
+class TestSearchCommand:
+    """Test `gurume search` command behavior."""
+
+    def test_json_output_is_machine_parseable(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.SUCCESS,
+            restaurants=[Restaurant(name="すし店", url="https://tabelog.com/tokyo/A1301/A130101/1/")],
+        )
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json"])
+
+        assert result.exit_code == 0
+        assert json.loads(result.stdout) == [
+            {
+                "name": "すし店",
+                "rating": None,
+                "review_count": None,
+                "area": None,
+                "genres": [],
+                "url": "https://tabelog.com/tokyo/A1301/A130101/1/",
+                "lunch_price": None,
+                "dinner_price": None,
+            }
+        ]
+        assert "搜尋中" in result.stderr
+
+    def test_limit_must_be_positive(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["search", "--area", "東京", "--limit", "0"])
+
+        assert result.exit_code != 0
+        assert "--limit" in result.output
+
+    def test_unmapped_area_with_cuisine_warns_about_broad_results(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.SUCCESS,
+            restaurants=[Restaurant(name="すし店", url="https://tabelog.com/ishikawa/A1701/A170101/1/")],
+        )
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(app, ["search", "--area", "存在しない地域", "--cuisine", "寿司", "--limit", "1"])
+
+        assert result.exit_code == 0
+        assert "無法精準映射地區" in result.output
 
 
 # ============================================================================
