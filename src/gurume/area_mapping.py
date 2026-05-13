@@ -69,6 +69,13 @@ CITY_MAPPING = {
     "福岡": "fukuoka",
 }
 
+# 市區級 Tabelog path。這些城市若只使用都道府縣 slug，會回傳過寬的跨城市結果。
+CITY_AREA_PATH_MAPPING = {
+    "札幌": "hokkaido/A0101",
+    "名古屋": "aichi/A2301",
+    "神戸": "hyogo/A2801",
+}
+
 # 創建反向映射：從縣名（不含後綴）到 slug 的映射
 _PREFIX_TO_SLUG = {}
 for full_name, slug in PREFECTURE_MAPPING.items():
@@ -80,37 +87,36 @@ for full_name, slug in PREFECTURE_MAPPING.items():
             break
 
 
-def get_area_slug(area_name: str) -> str | None:
-    """
-    將地區名稱轉換為 Tabelog URL slug
-
-    Args:
-        area_name: 地區名稱（例如："東京都"、"東京"、"大阪府"、"三重"）
-
-    Returns:
-        URL slug（例如："tokyo"、"mie"）或 None（如果找不到映射）
-    """
-    # 先檢查完整名稱（例如："東京都"、"三重県"）
+def _lookup_area_path(area_name: str) -> str | None:
     if area_name in PREFECTURE_MAPPING:
         return PREFECTURE_MAPPING[area_name]
-
-    # 檢查城市名稱（例如："東京"、"大阪"）
     if area_name in CITY_MAPPING:
         return CITY_MAPPING[area_name]
-
-    # 檢查縣名前綴（例如："三重" -> "mie"）
+    if area_name in CITY_AREA_PATH_MAPPING:
+        return CITY_AREA_PATH_MAPPING[area_name]
     if area_name in _PREFIX_TO_SLUG:
         return _PREFIX_TO_SLUG[area_name]
+    return None
+
+
+def get_area_slug(area_name: str) -> str | None:
+    """
+    將地區名稱轉換為 Tabelog URL slug 或 path
+
+    Args:
+        area_name: 地區名稱（例如："東京都"、"東京"、"大阪府"、"三重"、"札幌"）
+
+    Returns:
+        URL slug/path（例如："tokyo"、"mie"、"hokkaido/A0101"）或 None（如果找不到映射）
+    """
+    # 先檢查完整名稱、城市名稱、市區級 path 與縣名前綴。
+    area_path = _lookup_area_path(area_name)
+    if area_path:
+        return area_path
 
     # 移除"都"、"府"、"県"、"市"等後綴再試一次
     for suffix in ["都", "府", "県", "市"]:
         if area_name.endswith(suffix):
-            base_name = area_name[: -len(suffix)]
-            if base_name in PREFECTURE_MAPPING:
-                return PREFECTURE_MAPPING[base_name]
-            if base_name in CITY_MAPPING:
-                return CITY_MAPPING[base_name]
-            if base_name in _PREFIX_TO_SLUG:
-                return _PREFIX_TO_SLUG[base_name]
+            return _lookup_area_path(area_name[: -len(suffix)])
 
     return None
