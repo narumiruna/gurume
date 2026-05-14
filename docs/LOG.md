@@ -46,3 +46,4 @@
 2026-05-14 | fix(mcp): make search validation errors more actionable (#local)
 2026-05-14 | research(mcp): identify live keyword, meta, and detail gaps (#local)
 2026-05-14 | docs(plans): split MCP live gaps into executable follow-up plans (#local)
+2026-05-14 | docs(plans): archive completed MCP HTTP transport plan (#local)
