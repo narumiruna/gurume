@@ -1970,16 +1970,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">651</span>
-<span class="normal">652</span>
-<span class="normal">653</span>
-<span class="normal">654</span>
-<span class="normal">655</span>
-<span class="normal">656</span>
-<span class="normal">657</span>
-<span class="normal">658</span>
-<span class="normal">659</span>
-<span class="normal">660</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">660</span>
 <span class="normal">661</span>
 <span class="normal">662</span>
 <span class="normal">663</span>
@@ -1994,7 +1985,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">672</span>
 <span class="normal">673</span>
 <span class="normal">674</span>
-<span class="normal">675</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span>
+<span class="normal">682</span>
+<span class="normal">683</span>
+<span class="normal">684</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
@@ -2055,16 +2055,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">523</span>
 <span class="normal">524</span>
 <span class="normal">525</span>
 <span class="normal">526</span>
@@ -2116,7 +2107,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">572</span>
 <span class="normal">573</span>
 <span class="normal">574</span>
-<span class="normal">575</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2214,16 +2214,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">578</span>
-<span class="normal">579</span>
-<span class="normal">580</span>
-<span class="normal">581</span>
-<span class="normal">582</span>
-<span class="normal">583</span>
-<span class="normal">584</span>
-<span class="normal">585</span>
-<span class="normal">586</span>
-<span class="normal">587</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
 <span class="normal">590</span>
@@ -2276,7 +2267,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">637</span>
 <span class="normal">638</span>
 <span class="normal">639</span>
-<span class="normal">640</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2404,16 +2404,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span>
-<span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">348</span>
 <span class="normal">349</span>
 <span class="normal">350</span>
 <span class="normal">351</span>
@@ -2506,7 +2497,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">438</span>
 <span class="normal">439</span>
 <span class="normal">440</span>
-<span class="normal">441</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2704,16 +2704,7 @@ Returns list of all supported cuisines:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">453</span>
 <span class="normal">454</span>
 <span class="normal">455</span>
 <span class="normal">456</span>
@@ -2771,7 +2762,16 @@ Returns list of all supported cuisines:
 <span class="normal">508</span>
 <span class="normal">509</span>
 <span class="normal">510</span>
-<span class="normal">511</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -3158,7 +3158,16 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 <span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
-<span class="normal">336</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -3253,7 +3262,16 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 <span class="sd">    and non-fatal warnings that help the caller refine follow-up tool calls.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">sort_type</span> <span class="o">=</span> <span class="n">_validate_search_params</span><span class="p">(</span><span class="n">sort</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">page</span><span class="p">,</span> <span class="n">reservation_date</span><span class="p">,</span> <span class="n">reservation_time</span><span class="p">,</span> <span class="n">party_size</span><span class="p">)</span>
+        <span class="n">sort_type</span> <span class="o">=</span> <span class="n">_validate_search_params</span><span class="p">(</span>
+            <span class="n">sort</span><span class="p">,</span>
+            <span class="n">limit</span><span class="p">,</span>
+            <span class="n">page</span><span class="p">,</span>
+            <span class="n">keyword</span><span class="p">,</span>
+            <span class="n">cuisine</span><span class="p">,</span>
+            <span class="n">reservation_date</span><span class="p">,</span>
+            <span class="n">reservation_time</span><span class="p">,</span>
+            <span class="n">party_size</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">genre_code</span> <span class="o">=</span> <span class="n">_resolve_genre_code</span><span class="p">(</span><span class="n">cuisine</span><span class="p">)</span>
 
         <span class="n">request</span> <span class="o">=</span> <span class="n">SearchRequest</span><span class="p">(</span>
