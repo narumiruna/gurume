@@ -53,3 +53,4 @@
 2026-05-14 | fix(detail): tolerate optional menu 404s and parse party courses (#local)
 2026-05-14 | docs(plans): archive completed MCP detail menu course plan (#local)
 2026-05-14 | fix(cli): route cuisine keywords through precise area paths (#local)
+2026-05-14 | docs(plans): add gurume search bugfix plan (#local)
