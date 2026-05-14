@@ -458,7 +458,7 @@ async def tabelog_get_restaurant_details(
     structured_output=True,
 )
 async def tabelog_list_cuisines() -> CuisineListOutput:
-    """Get complete list of all 45+ supported Japanese cuisine types with their Tabelog genre codes.
+    """Get the complete list of all 29 supported Japanese cuisine types with their Tabelog genre codes.
 
     **WHEN TO USE**:
     - Before calling `tabelog_search_restaurants` with `cuisine` parameter to verify available options
@@ -471,13 +471,14 @@ async def tabelog_list_cuisines() -> CuisineListOutput:
     - name: Cuisine name in Japanese (e.g., 'すき焼き', '焼肉', 'ラーメン')
     - code: Tabelog genre code (e.g., 'RC0107', 'RC0103') - used internally for filtering
 
-    **CUISINE CATEGORIES** (45+ types total):
-    - Japanese: すき焼き, 焼肉, 寿司, ラーメン, うなぎ, そば, うどん, 天ぷら, とんかつ, 焼き鳥, お好み焼き, たこ焼き
-    - Hotpot/Nabe: しゃぶしゃぶ, もつ鍋, 水炊き
-    - Izakaya: 居酒屋, 焼酎バー, 日本酒バー
-    - Western: イタリアン, フレンチ, スペイン料理, ハンバーガー, ステーキ
-    - Asian: 中華料理, 韓国料理, タイ料理, インド料理, ベトナム料理
-    - Other: カレー, カフェ, スイーツ, パン, ラーメン
+    **CUISINE CATEGORIES** (29 types total):
+    - Japanese: すき焼き, しゃぶしゃぶ, 寿司, 天ぷら, とんかつ, 焼き鳥, ラーメン, うどん, そば, うなぎ, 日本料理, 海鮮
+    - Hotpot/Nabe: 鍋, もつ鍋
+    - Izakaya: 居酒屋
+    - Western: フレンチ, イタリアン, ステーキ, ハンバーグ, ハンバーガー, 洋食
+    - Chinese: 中華料理, 餃子
+    - Yakiniku: 焼肉, ホルモン
+    - Other: カレー, カフェ, パン, スイーツ
 
     **WORKFLOW EXAMPLE**:
     1. User asks: 'Find sukiyaki restaurants in Tokyo'

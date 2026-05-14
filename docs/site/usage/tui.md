@@ -29,7 +29,7 @@ The TUI is divided into four main areas:
   - Supports automatic suggestions for prefectures, stations, and areas
 - **Keyword input**: Enter a search keyword (for example: `寿司`, `ラーメン`)
   - Tip: press `F3` to open intelligent keyword suggestions (`New!`)
-    - When the keyword is empty: shows the full list of 45+ cuisine categories
+    - When the keyword is empty: shows the full list of 29 cuisine categories
     - When the keyword has content: calls the API and shows dynamic suggestions such as cuisine types, restaurant names, and combined keywords
   - Automatically detects cuisine names and converts them into precise filters
 
@@ -128,7 +128,7 @@ The `F3` key supports two modes and switches automatically based on the keyword 
 1. Start the TUI with `uv run gurume tui`
 2. Make sure the Keyword input box is empty
 3. Press `F3` to open the cuisine category selector popup
-4. Use `↑` / `↓` to browse 45+ cuisine types
+4. Use `↑` / `↓` to browse 29 cuisine types
 5. Press `Enter` to confirm, or press `Esc` to cancel
 6. The selected cuisine name is filled into the Keyword input box automatically
 7. The system uses the cuisine category code for precise filtering
@@ -148,7 +148,7 @@ The `F3` key supports two modes and switches automatically based on the keyword 
 **Why use intelligent keyword suggestions?**
 
 - **Precise filtering**: only shows restaurants that match the selected cuisine type, such as dedicated `すき焼き` restaurants
-- **Discovery**: browse all 45+ cuisine types when the keyword box is empty
+- **Discovery**: browse all 29 cuisine types when the keyword box is empty
 - **Dynamic suggestions**: get real-time suggestions while typing, including cuisines, restaurants, and combinations
 - **Fewer typos**: choosing from a list keeps names accurate
 - **Automatic conversion**: the system converts cuisine names into Tabelog cuisine codes automatically, for example `すき焼き` -> `RC0107`
@@ -157,7 +157,7 @@ The `F3` key supports two modes and switches automatically based on the keyword 
 
 - Enter a cuisine name directly in the Keyword input box, for example `すき焼き`, `寿司`, or `ラーメン`
 - The system detects it automatically and converts it into a precise filter
-- Auto-detection supports all 45+ cuisine categories
+- Auto-detection supports all 29 cuisine categories
 
 ### Natural-language input
 
@@ -200,8 +200,10 @@ The TUI no longer parses free-form text on its own. To translate sentences like 
 
 - **Area filtering limitations**
   - Supported: all 47 prefectures
-  - Not supported: exact city-, town-, village-, or station-level filtering
-  - Recommendation: use area suggestions with `F2` and select a prefecture to ensure filtering works as expected
+  - Supported as city-level paths: `札幌`, `名古屋`, and `神戸`
+  - Not fully supported: arbitrary city-, town-, village-, or station-level filtering
+  - Recommendation: use area suggestions with `F2`; when exact local filtering matters, confirm the returned results
+    are in the intended area
 - Searches may take a few seconds, depending on network conditions
 - Make sure you have a working internet connection
 - Search results depend on Tabelog site availability
@@ -217,7 +219,7 @@ The TUI no longer parses free-form text on its own. To translate sentences like 
 - Four sort modes: rating ranking, review count, new openings, and standard
 - **Area suggestions (`F2`)**: intelligent area and station suggestions
 - **Intelligent keyword suggestions (`F3`)** (`New!`)
-  - Empty keyword -> full list of 45+ Japanese cuisine types
+  - Empty keyword -> full list of 29 Japanese cuisine types
   - Non-empty keyword -> dynamic API suggestions for cuisines, restaurant names, and combined keywords
 - **Automatic cuisine detection**: detect cuisine names and convert them into precise filters automatically
 - **Area filtering**: accurate filtering for all 47 prefectures
