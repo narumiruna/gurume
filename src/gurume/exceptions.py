@@ -1,23 +1,23 @@
-"""自定義例外類別"""
+"""Custom exception classes."""
 
 from __future__ import annotations
 
 
 class TabelogError(Exception):
-    """Tabelog 相關錯誤的基礎類別"""
+    """Base class for Tabelog-related errors."""
 
 
 class ParseError(TabelogError):
-    """HTML 解析錯誤"""
+    """HTML parsing error."""
 
 
 class InvalidParameterError(TabelogError):
-    """無效的參數錯誤"""
+    """Invalid parameter error."""
 
 
 class RateLimitError(TabelogError):
-    """超過速率限制錯誤"""
+    """Rate limit exceeded error."""
 
 
 class NetworkError(TabelogError):
-    """網路連線錯誤"""
+    """Network connection error."""

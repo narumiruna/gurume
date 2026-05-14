@@ -74,47 +74,47 @@ def build_search_url_and_params(
 
 
 class SortType(StrEnum):
-    """排序方式"""
+    """Search sort order."""
 
-    STANDARD = "trend"  # 標準【PR店舗優先順】
-    RANKING = "rt"  # ランキング
-    REVIEW_COUNT = "rvcn"  # 口コミが多い順
-    NEW_OPEN = "nod"  # ニューオープン
+    STANDARD = "trend"  # Standard order, with PR店舗 first.
+    RANKING = "rt"  # Ranking order.
+    REVIEW_COUNT = "rvcn"  # Sort by review count.
+    NEW_OPEN = "nod"  # New open.
 
 
 class PriceRange(StrEnum):
-    """價格範圍"""
+    """Budget range."""
 
-    LUNCH_UNDER_1000 = "B001"  # ランチ ～￥999
-    LUNCH_1000_2000 = "B002"  # ランチ ￥1,000～￥1,999
-    LUNCH_2000_3000 = "B003"  # ランチ ￥2,000～￥2,999
-    LUNCH_3000_4000 = "B004"  # ランチ ￥3,000～￥3,999
-    LUNCH_4000_5000 = "B005"  # ランチ ￥4,000～￥4,999
-    LUNCH_5000_6000 = "B006"  # ランチ ￥5,000～￥5,999
-    LUNCH_6000_8000 = "B007"  # ランチ ￥6,000～￥7,999
-    LUNCH_8000_10000 = "B008"  # ランチ ￥8,000～￥9,999
-    LUNCH_10000_15000 = "B009"  # ランチ ￥10,000～￥14,999
-    LUNCH_15000_20000 = "B010"  # ランチ ￥15,000～￥19,999
-    LUNCH_20000_30000 = "B011"  # ランチ ￥20,000～￥29,999
-    LUNCH_OVER_30000 = "B012"  # ランチ ￥30,000～
+    LUNCH_UNDER_1000 = "B001"  # Lunch: up to ￥999.
+    LUNCH_1000_2000 = "B002"  # Lunch: ￥1,000 to ￥1,999.
+    LUNCH_2000_3000 = "B003"  # Lunch: ￥2,000 to ￥2,999.
+    LUNCH_3000_4000 = "B004"  # Lunch: ￥3,000 to ￥3,999.
+    LUNCH_4000_5000 = "B005"  # Lunch: ￥4,000 to ￥4,999.
+    LUNCH_5000_6000 = "B006"  # Lunch: ￥5,000 to ￥5,999.
+    LUNCH_6000_8000 = "B007"  # Lunch: ￥6,000 to ￥7,999.
+    LUNCH_8000_10000 = "B008"  # Lunch: ￥8,000 to ￥9,999.
+    LUNCH_10000_15000 = "B009"  # Lunch: ￥10,000 to ￥14,999.
+    LUNCH_15000_20000 = "B010"  # Lunch: ￥15,000 to ￥19,999.
+    LUNCH_20000_30000 = "B011"  # Lunch: ￥20,000 to ￥29,999.
+    LUNCH_OVER_30000 = "B012"  # Lunch: ￥30,000 and up.
 
-    DINNER_UNDER_1000 = "C001"  # ディナー ～￥999
-    DINNER_1000_2000 = "C002"  # ディナー ￥1,000～￥1,999
-    DINNER_2000_3000 = "C003"  # ディナー ￥2,000～￥2,999
-    DINNER_3000_4000 = "C004"  # ディナー ￥3,000～￥3,999
-    DINNER_4000_5000 = "C005"  # ディナー ￥4,000～￥4,999
-    DINNER_5000_6000 = "C006"  # ディナー ￥5,000～￥5,999
-    DINNER_6000_8000 = "C007"  # ディナー ￥6,000～￥7,999
-    DINNER_8000_10000 = "C008"  # ディナー ￥8,000～￥9,999
-    DINNER_10000_15000 = "C009"  # ディナー ￥10,000～￥14,999
-    DINNER_15000_20000 = "C010"  # ディナー ￥15,000～￥19,999
-    DINNER_20000_30000 = "C011"  # ディナー ￥20,000～￥29,999
-    DINNER_OVER_30000 = "C012"  # ディナー ￥30,000～
+    DINNER_UNDER_1000 = "C001"  # Dinner: up to ￥999.
+    DINNER_1000_2000 = "C002"  # Dinner: ￥1,000 to ￥1,999.
+    DINNER_2000_3000 = "C003"  # Dinner: ￥2,000 to ￥2,999.
+    DINNER_3000_4000 = "C004"  # Dinner: ￥3,000 to ￥3,999.
+    DINNER_4000_5000 = "C005"  # Dinner: ￥4,000 to ￥4,999.
+    DINNER_5000_6000 = "C006"  # Dinner: ￥5,000 to ￥5,999.
+    DINNER_6000_8000 = "C007"  # Dinner: ￥6,000 to ￥7,999.
+    DINNER_8000_10000 = "C008"  # Dinner: ￥8,000 to ￥9,999.
+    DINNER_10000_15000 = "C009"  # Dinner: ￥10,000 to ￥14,999.
+    DINNER_15000_20000 = "C010"  # Dinner: ￥15,000 to ￥19,999.
+    DINNER_20000_30000 = "C011"  # Dinner: ￥20,000 to ￥29,999.
+    DINNER_OVER_30000 = "C012"  # Dinner: ￥30,000 and up.
 
 
 @dataclass
 class Restaurant:
-    """餐廳資訊"""
+    """Restaurant information."""
 
     name: str
     url: str
@@ -140,61 +140,61 @@ class Restaurant:
 
 @dataclass
 class RestaurantSearchRequest:
-    """餐廳搜尋請求"""
+    """Restaurant search request."""
 
-    # 基本搜尋參數
+    # Basic search parameters.
     area: str | None = None
     keyword: str | None = None
-    genre_code: str | None = None  # 料理類別代碼（例如：RC0107 for すき焼き）
+    genre_code: str | None = None  # Cuisine genre code, for example RC0107 for すき焼き.
 
-    # 預約相關
+    # Reservation filters.
     reservation_date: str | None = None  # YYYYMMDD
     reservation_time: str | None = None  # HHMM
     party_size: int | None = None
 
-    # 排序和分頁
+    # Sorting and pagination.
     sort_type: SortType = SortType.STANDARD
     page: int = 1
 
-    # 過濾條件
+    # Search filters.
     price_range: PriceRange | None = None
     online_booking_only: bool = False
     seat_only: bool = False
     new_open: bool = False
 
-    # 餐廳特色
+    # Restaurant features.
     has_private_room: bool = False
     has_parking: bool = False
     smoking_allowed: bool = False
     card_accepted: bool = False
 
     def __post_init__(self) -> None:
-        # 自動去除 area/keyword 前後空白
+        # Trim leading and trailing whitespace from area and keyword.
         if self.area is not None:
             self.area = self.area.strip()
         if self.keyword is not None:
             self.keyword = self.keyword.strip()
 
-        # 驗證日期格式 YYYYMMDD
+        # Validate YYYYMMDD date format.
         if self.reservation_date is not None and not re.fullmatch(r"\d{8}", self.reservation_date):
             raise InvalidParameterError(
                 f"reservation_date 必須是 YYYYMMDD 格式，例如：20250715。收到：{self.reservation_date}"
             )
 
-        # 驗證時間格式 HHMM
+        # Validate HHMM time format.
         if self.reservation_time is not None and not re.fullmatch(r"\d{4}", self.reservation_time):
             raise InvalidParameterError(f"reservation_time 必須是 HHMM 格式，例如：1900。收到：{self.reservation_time}")
 
-        # 驗證人數範圍
+        # Validate party size bounds.
         if self.party_size is not None and not (1 <= self.party_size <= 100):
             raise InvalidParameterError(f"party_size 必須在 1 到 100 之間。收到：{self.party_size}")
 
-        # 驗證頁數
+        # Validate page number.
         if self.page < 1:
             raise InvalidParameterError(f"page 必須 >= 1。收到：{self.page}")
 
     def _build_params(self) -> dict[str, Any]:
-        """構建搜尋參數"""
+        """Build search parameters."""
         params: dict[str, str] = {
             "SrtT": self.sort_type.value,
             "PG": str(self.page),
@@ -240,20 +240,20 @@ class RestaurantSearchRequest:
             params["ChkCard"] = "1"
 
     def _parse_restaurants(self, html: str) -> list[Restaurant]:
-        """解析餐廳資訊"""
+        """Parse restaurant information."""
         soup = BeautifulSoup(html, "lxml")
         restaurants = []
 
-        # 檢查是否有地區找不到的錯誤訊息
+        # Check for the upstream "area not found" error message.
         error_elem = soup.find("div", class_="rstlist-notfound")
         if error_elem or "該当のエリア・駅が見つかりませんでした" in html:
-            # 地區無效，返回空列表而不是全國排名
+            # Invalid areas otherwise fall back to national ranking; return no results instead.
             return []
 
-        # 查找餐廳列表項目 (嘗試不同的選擇器)
+        # Find restaurant list items using current and fallback selectors.
         restaurant_items = soup.find_all("div", class_="list-rst")
         if not restaurant_items:
-            # 備用選擇器
+            # Fallback selector.
             restaurant_items = soup.find_all("li", class_="list-rst")
 
         for item in restaurant_items:
@@ -262,7 +262,7 @@ class RestaurantSearchRequest:
                 if restaurant is not None:
                     restaurants.append(restaurant)
             except ITEM_PARSE_EXCEPTIONS:
-                # 跳過解析錯誤的項目
+                # Skip malformed items.
                 continue
 
         return restaurants
@@ -412,14 +412,14 @@ class RestaurantSearchRequest:
         return text.split("]")[-1].strip() if "]" in text else text
 
     def search_sync(self, use_cache: bool = True, use_retry: bool = True) -> list[Restaurant]:
-        """同步執行搜尋
+        """Run the search synchronously.
 
         Args:
-            use_cache: 是否使用快取（預設：True）
-            use_retry: 是否使用重試機制（預設：True）
+            use_cache: Whether to use the cache. Defaults to True.
+            use_retry: Whether to use retry handling. Defaults to True.
 
         Returns:
-            餐廳列表
+            List of restaurants.
         """
         params = self._build_params()
         headers = {"User-Agent": USER_AGENT}
@@ -427,13 +427,13 @@ class RestaurantSearchRequest:
         area_slug = get_area_slug(self.area) if self.area else None
         url, params = build_search_url_and_params(params, area_slug, self.genre_code)
 
-        # 檢查快取
+        # Check cache.
         if use_cache:
             cached_html = cached_get(url, params)
             if cached_html is not None:
                 return self._parse_restaurants(cached_html)
 
-        # 執行請求（使用或不使用重試）
+        # Execute the request with or without retry handling.
         if use_retry:
             resp = fetch_with_retry(url=url, params=params, headers=headers, timeout=30.0)
         else:
@@ -446,21 +446,21 @@ class RestaurantSearchRequest:
             )
             resp.raise_for_status()
 
-        # 儲存到快取
+        # Store in cache.
         if use_cache:
             cache_set(url, params, resp.text, ttl=1800.0)  # 30 minutes TTL
 
         return self._parse_restaurants(resp.text)
 
     async def search(self, use_cache: bool = True, use_retry: bool = True) -> list[Restaurant]:
-        """異步執行搜尋
+        """Run the search asynchronously.
 
         Args:
-            use_cache: 是否使用快取（預設：True）
-            use_retry: 是否使用重試機制（預設：True）
+            use_cache: Whether to use the cache. Defaults to True.
+            use_retry: Whether to use retry handling. Defaults to True.
 
         Returns:
-            餐廳列表
+            List of restaurants.
         """
         params = self._build_params()
         headers = {"User-Agent": USER_AGENT}
@@ -468,13 +468,13 @@ class RestaurantSearchRequest:
         area_slug = get_area_slug(self.area) if self.area else None
         url, params = build_search_url_and_params(params, area_slug, self.genre_code)
 
-        # 檢查快取
+        # Check cache.
         if use_cache:
             cached_html = cached_get(url, params)
             if cached_html is not None:
                 return self._parse_restaurants(cached_html)
 
-        # 執行請求（使用或不使用重試）
+        # Execute the request with or without retry handling.
         if use_retry:
             resp = await fetch_with_retry_async(url=url, params=params, headers=headers, request_timeout=30.0)
         else:
@@ -486,18 +486,18 @@ class RestaurantSearchRequest:
                 )
                 resp.raise_for_status()
 
-        # 儲存到快取
+        # Store in cache.
         if use_cache:
             cache_set(url, params, resp.text, ttl=1800.0)  # 30 minutes TTL
 
         return self._parse_restaurants(resp.text)
 
     def do_sync(self) -> list[Restaurant]:
-        """同步執行搜尋（已棄用，請使用 search_sync()）"""
+        """Run the search synchronously. Deprecated; use search_sync()."""
         return self.search_sync()
 
     async def do(self) -> list[Restaurant]:
-        """異步執行搜尋（已棄用，請使用 search()）"""
+        """Run the search asynchronously. Deprecated; use search()."""
         return await self.search()
 
 
@@ -519,7 +519,7 @@ def query_restaurants(
     smoking_allowed: bool = False,
     card_accepted: bool = False,
 ) -> list[Restaurant]:
-    """快速查詢餐廳"""
+    """Quick restaurant lookup."""
     return RestaurantSearchRequest(
         area=area,
         keyword=keyword,

@@ -27,7 +27,7 @@ BUDGET_PATTERN = re.compile(r"￥[^\s]+")
 
 @dataclass
 class Review:
-    """評論資訊"""
+    """Review information."""
 
     reviewer: str
     content: str
@@ -39,7 +39,7 @@ class Review:
 
 @dataclass
 class MenuItem:
-    """菜單項目"""
+    """Menu item."""
 
     name: str
     price: str | None = None
@@ -49,7 +49,7 @@ class MenuItem:
 
 @dataclass
 class Course:
-    """套餐資訊"""
+    """Course information."""
 
     name: str
     price: str | None = None
@@ -59,7 +59,7 @@ class Course:
 
 @dataclass
 class RestaurantDetail:
-    """餐廳詳細資訊"""
+    """Restaurant detail information."""
 
     restaurant: Restaurant
     reviews: list[Review] = field(default_factory=list)
@@ -69,7 +69,7 @@ class RestaurantDetail:
 
 @dataclass
 class RestaurantDetailRequest:
-    """餐廳詳細資訊請求"""
+    """Restaurant detail request."""
 
     restaurant_url: str
     fetch_reviews: bool = True
@@ -88,14 +88,14 @@ class RestaurantDetailRequest:
             raise InvalidParameterError(f"max_review_pages 必須 >= 1。收到：{self.max_review_pages}")
 
     def _get_base_url(self) -> str:
-        """取得餐廳基礎 URL (移除尾部斜線和查詢參數)"""
+        """Get the restaurant base URL without trailing slashes or query parameters."""
         url = self.restaurant_url
         if "?" in url:
             url = url.split("?")[0]
         return url.rstrip("/")
 
     def _parse_reviews(self, html: str) -> list[Review]:
-        """解析評論資訊"""
+        """Parse review information."""
         soup = BeautifulSoup(html, "lxml")
         reviews = []
 
@@ -112,11 +112,11 @@ class RestaurantDetailRequest:
         return reviews
 
     def _parse_menu_items(self, html: str) -> list[MenuItem]:
-        """解析菜單項目"""
+        """Parse menu items."""
         soup = BeautifulSoup(html, "lxml")
         menu_items = []
 
-        # 查找所有菜單分類
+        # Find all menu categories.
         menu_sections = soup.find_all("div", class_="c-offerlist-item")
 
         for section in menu_sections:
@@ -130,7 +130,7 @@ class RestaurantDetailRequest:
         return menu_items
 
     def _parse_courses(self, html: str) -> list[Course]:
-        """解析套餐資訊"""
+        """Parse course information."""
         soup = BeautifulSoup(html, "lxml")
         courses = []
 
@@ -507,7 +507,7 @@ class RestaurantDetailRequest:
         return resp.text
 
     def fetch_sync(self) -> RestaurantDetail:
-        """同步抓取餐廳詳細資訊"""
+        """Fetch restaurant details synchronously."""
         headers = {"User-Agent": USER_AGENT}
 
         base_url = self._get_base_url()
@@ -520,7 +520,7 @@ class RestaurantDetailRequest:
         menu_items = []
         courses = []
 
-        # 抓取評論
+        # Fetch reviews.
         if self.fetch_reviews:
             for page in range(1, self.max_review_pages + 1):
                 review_url = f"{base_url}/dtlrvwlst/"
@@ -531,13 +531,13 @@ class RestaurantDetailRequest:
                 resp.raise_for_status()
                 reviews.extend(self._parse_reviews(resp.text))
 
-        # 抓取菜單
+        # Fetch menu items.
         if self.fetch_menu:
             menu_url = f"{base_url}/dtlmenu/"
             if menu_html := self._fetch_optional_sync(menu_url, headers):
                 menu_items = self._parse_menu_items(menu_html)
 
-        # 抓取套餐
+        # Fetch courses.
         if self.fetch_courses:
             course_url = f"{base_url}/party/"
             if course_html := self._fetch_optional_sync(course_url, headers):
@@ -551,7 +551,7 @@ class RestaurantDetailRequest:
         )
 
     async def fetch(self) -> RestaurantDetail:
-        """異步抓取餐廳詳細資訊"""
+        """Fetch restaurant details asynchronously."""
         headers = {"User-Agent": USER_AGENT}
 
         base_url = self._get_base_url()
@@ -565,7 +565,7 @@ class RestaurantDetailRequest:
             main_resp.raise_for_status()
             restaurant = self._parse_restaurant(main_resp.text, base_url)
 
-            # 抓取評論
+            # Fetch reviews.
             if self.fetch_reviews:
                 for page in range(1, self.max_review_pages + 1):
                     review_url = f"{base_url}/dtlrvwlst/"
@@ -576,13 +576,13 @@ class RestaurantDetailRequest:
                     resp.raise_for_status()
                     reviews.extend(self._parse_reviews(resp.text))
 
-            # 抓取菜單
+            # Fetch menu items.
             if self.fetch_menu:
                 menu_url = f"{base_url}/dtlmenu/"
                 if menu_html := await self._fetch_optional_async(client, menu_url, headers):
                     menu_items = self._parse_menu_items(menu_html)
 
-            # 抓取套餐
+            # Fetch courses.
             if self.fetch_courses:
                 course_url = f"{base_url}/party/"
                 if course_html := await self._fetch_optional_async(client, course_url, headers):
