@@ -5,12 +5,17 @@ description     = "Python library, CLI, TUI, and MCP server for discovering Japa
 readme          = "README.md"
 requires-python = ">=3.12"
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
+license         = { file = "LICENSE" }
 keywords        = [
   "cli",
+  "fastmcp",
   "food",
   "japan",
+  "japanese-restaurants",
   "mcp",
+  "python",
   "restaurant",
+  "restaurant-discovery",
   "scraping",
   "search",
   "tabelog",
@@ -18,12 +23,17 @@ keywords        = [
 ]
 classifiers     = [
   "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Framework :: AsyncIO",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.12",
   "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
   "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Terminals",
+  "Typing :: Typed",
 ]
 dependencies    = [
   "beautifulsoup4>=4.14.3",
@@ -38,6 +48,12 @@ dependencies    = [
 
 [project.scripts]
 gurume = "gurume.cli:main"
+
+[project.urls]
+Documentation = "https://narumiruna.github.io/gurume/"
+Homepage      = "https://github.com/narumiruna/gurume"
+Issues        = "https://github.com/narumiruna/gurume/issues"
+Repository    = "https://github.com/narumiruna/gurume"
 
 [dependency-groups]
 dev  = [
