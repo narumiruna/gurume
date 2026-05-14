@@ -141,7 +141,7 @@ dmypy.json
 .playwright-mcp/
 
 # Codex CLI
-.codex
+.codex/hooks.json
 
 # MkDocs build output
 /site/

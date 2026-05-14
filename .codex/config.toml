@@ -1,0 +1,5 @@
+[mcp_servers.gurume]
+command = "uv"
+args    = ["run", "gurume", "mcp"]
+cwd     = "."
+enabled = true
