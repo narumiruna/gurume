@@ -1157,7 +1157,7 @@
 
 
 
-        <p>搜尋元資料</p>
+        <p>Search metadata.</p>
 
 
 
@@ -1220,7 +1220,7 @@
 
 
 
-        <p>通用搜尋請求 - 擴展 RestaurantSearchRequest</p>
+        <p>Generic search request that extends RestaurantSearchRequest.</p>
 
 
 
@@ -1260,7 +1260,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>異步執行搜尋（已棄用，請使用 search()）</p>
+        <p>Run the search asynchronously. Deprecated; use search().</p>
 
 
             <details class="mkdocstrings-source">
@@ -1268,7 +1268,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">417</span>
 <span class="normal">418</span>
 <span class="normal">419</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;異步執行搜尋（已棄用，請使用 search()）&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously. Deprecated; use search().&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1289,7 +1289,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>同步執行搜尋（已棄用，請使用 search_sync()）</p>
+        <p>Run the search synchronously. Deprecated; use search_sync().</p>
 
 
             <details class="mkdocstrings-source">
@@ -1297,7 +1297,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">413</span>
 <span class="normal">414</span>
 <span class="normal">415</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">do_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;同步執行搜尋（已棄用，請使用 search_sync()）&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously. Deprecated; use search_sync().&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_sync</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1322,7 +1322,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>異步執行搜尋</p>
+        <p>Run the search asynchronously.</p>
 
 
             <details class="mkdocstrings-source">
@@ -1361,7 +1361,7 @@
 <span class="normal">409</span>
 <span class="normal">410</span>
 <span class="normal">411</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;異步執行搜尋&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously.&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">all_restaurants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1378,7 +1378,7 @@
                 <span class="k">if</span> <span class="n">meta</span> <span class="ow">and</span> <span class="n">meta</span><span class="o">.</span><span class="n">total_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">break</span>
 
-                <span class="c1"># 如果這一頁沒有結果，停止搜尋</span>
+                <span class="c1"># Stop when the current page has no results.</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">restaurants</span><span class="p">:</span>
                     <span class="k">break</span>
 
@@ -1413,7 +1413,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>同步執行搜尋</p>
+        <p>Run the search synchronously.</p>
 
 
             <details class="mkdocstrings-source">
@@ -1451,7 +1451,7 @@
 <span class="normal">374</span>
 <span class="normal">375</span>
 <span class="normal">376</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">search_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;同步執行搜尋&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously.&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">all_restaurants</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">meta</span> <span class="o">=</span> <span class="kc">None</span>
@@ -1467,7 +1467,7 @@
             <span class="k">if</span> <span class="n">meta</span> <span class="ow">and</span> <span class="n">meta</span><span class="o">.</span><span class="n">total_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">break</span>
 
-            <span class="c1"># 如果這一頁沒有結果，停止搜尋</span>
+            <span class="c1"># Stop when the current page has no results.</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">restaurants</span><span class="p">:</span>
                 <span class="k">break</span>
 
@@ -1522,7 +1522,7 @@
 
 
 
-        <p>搜尋回應</p>
+        <p>Search response.</p>
 
 
 
@@ -1562,7 +1562,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>過濾餐廳</p>
+        <p>Filter restaurants.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1590,7 +1590,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>自定義過濾條件函數</p>
+                <p>Custom filter predicate.</p>
               </div>
             </td>
             <td>
@@ -1606,7 +1606,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>最低評分</p>
+                <p>Minimum rating.</p>
               </div>
             </td>
             <td>
@@ -1622,7 +1622,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>最低評論數</p>
+                <p>Minimum review count.</p>
               </div>
             </td>
             <td>
@@ -1653,7 +1653,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>包含過濾後餐廳的新 SearchResponse</p>
+                <p>New SearchResponse containing the filtered restaurants.</p>
               </div>
             </td>
           </tr>
@@ -1701,15 +1701,15 @@
     <span class="n">min_rating</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">min_review_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;過濾餐廳</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filter restaurants.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        condition: 自定義過濾條件函數</span>
-<span class="sd">        min_rating: 最低評分</span>
-<span class="sd">        min_review_count: 最低評論數</span>
+<span class="sd">        condition: Custom filter predicate.</span>
+<span class="sd">        min_rating: Minimum rating.</span>
+<span class="sd">        min_review_count: Minimum review count.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        包含過濾後餐廳的新 SearchResponse</span>
+<span class="sd">        New SearchResponse containing the filtered restaurants.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">filtered</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">restaurants</span>
 
@@ -1747,7 +1747,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>依指定欄位排序</p>
+        <p>Sort by the specified field.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1770,7 +1770,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>排序欄位（rating, review_count, save_count, name）</p>
+                <p>Sort field: rating, review_count, save_count, or name.</p>
               </div>
             </td>
             <td>
@@ -1786,7 +1786,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>是否反向排序（預設 False）</p>
+                <p>Whether to sort in reverse order. Defaults to False.</p>
               </div>
             </td>
             <td>
@@ -1817,7 +1817,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>包含排序後餐廳的新 SearchResponse</p>
+                <p>New SearchResponse containing the sorted restaurants.</p>
               </div>
             </td>
           </tr>
@@ -1849,14 +1849,14 @@
 <span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">sort_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">reverse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;依指定欄位排序</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sort by the specified field.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        key: 排序欄位（rating, review_count, save_count, name）</span>
-<span class="sd">        reverse: 是否反向排序（預設 False）</span>
+<span class="sd">        key: Sort field: rating, review_count, save_count, or name.</span>
+<span class="sd">        reverse: Whether to sort in reverse order. Defaults to False.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        包含排序後餐廳的新 SearchResponse</span>
+<span class="sd">        New SearchResponse containing the sorted restaurants.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sorted_restaurants</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">restaurants</span><span class="p">,</span>
@@ -1889,7 +1889,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>轉換為字典</p>
+        <p>Convert to a dictionary.</p>
 
 
     <p><span class="doc-section-title">Returns:</span></p>
@@ -1907,7 +1907,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>包含所有資料的字典</p>
+                <p>Dictionary containing all response data.</p>
               </div>
             </td>
           </tr>
@@ -1929,10 +1929,10 @@
 <span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;轉換為字典</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert to a dictionary.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        包含所有資料的字典</span>
+<span class="sd">        Dictionary containing all response data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -1959,7 +1959,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>匯出為 JSON 字串</p>
+        <p>Export as a JSON string.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1982,7 +1982,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>JSON 縮排空格數</p>
+                <p>Number of spaces for JSON indentation.</p>
               </div>
             </td>
             <td>
@@ -2008,7 +2008,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>JSON 字串</p>
+                <p>JSON string.</p>
               </div>
             </td>
           </tr>
@@ -2034,13 +2034,13 @@
 <span class="normal">152</span>
 <span class="normal">153</span>
 <span class="normal">154</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;匯出為 JSON 字串</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Export as a JSON string.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        indent: JSON 縮排空格數</span>
+<span class="sd">        indent: Number of spaces for JSON indentation.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        JSON 字串</span>
+<span class="sd">        JSON string.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -2068,7 +2068,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>取前 N 筆餐廳</p>
+        <p>Take the first N restaurants.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -2091,7 +2091,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>要取的數量</p>
+                <p>Number of restaurants to take.</p>
               </div>
             </td>
             <td>
@@ -2122,7 +2122,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>包含前 N 筆餐廳的新 SearchResponse</p>
+                <p>New SearchResponse containing the first N restaurants.</p>
               </div>
             </td>
           </tr>
@@ -2147,13 +2147,13 @@
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">top</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SearchResponse</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;取前 N 筆餐廳</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Take the first N restaurants.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        n: 要取的數量</span>
+<span class="sd">        n: Number of restaurants to take.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        包含前 N 筆餐廳的新 SearchResponse</span>
+<span class="sd">        New SearchResponse containing the first N restaurants.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">SearchResponse</span><span class="p">(</span>
         <span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="p">,</span>
@@ -2192,7 +2192,7 @@
 
 
 
-        <p>搜尋狀態</p>
+        <p>Search status.</p>
 
 
 

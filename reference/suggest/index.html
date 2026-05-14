@@ -954,7 +954,7 @@
 
     <div class="doc doc-contents first">
 
-        <p>地區建議功能</p>
+        <p>Area and keyword suggestion helpers.</p>
 
 
 
@@ -1001,7 +1001,7 @@
 
 
 
-        <p>地區建議</p>
+        <p>Area suggestion.</p>
 
 
 
@@ -1058,7 +1058,7 @@
 
 
 
-        <p>關鍵字建議</p>
+        <p>Keyword suggestion.</p>
 
 
 
@@ -1153,7 +1153,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>取得地區建議</p>
+        <p>Get area suggestions.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1176,7 +1176,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>搜尋關鍵字</p>
+                <p>Search keyword.</p>
               </div>
             </td>
             <td>
@@ -1192,7 +1192,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>請求超時時間（秒）</p>
+                <p>Request timeout in seconds.</p>
               </div>
             </td>
             <td>
@@ -1223,7 +1223,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>地區建議列表</p>
+                <p>List of area suggestions.</p>
               </div>
             </td>
           </tr>
@@ -1268,14 +1268,14 @@
 <span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_area_suggestions</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AreaSuggestion</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;取得地區建議</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get area suggestions.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        query: 搜尋關鍵字</span>
-<span class="sd">        timeout: 請求超時時間（秒）</span>
+<span class="sd">        query: Search keyword.</span>
+<span class="sd">        timeout: Request timeout in seconds.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        地區建議列表</span>
+<span class="sd">        List of area suggestions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -1327,7 +1327,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>取得地區建議（異步版本）</p>
+        <p>Get area suggestions asynchronously.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1350,7 +1350,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>搜尋關鍵字</p>
+                <p>Search keyword.</p>
               </div>
             </td>
             <td>
@@ -1366,7 +1366,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>請求超時時間（秒）</p>
+                <p>Request timeout in seconds.</p>
               </div>
             </td>
             <td>
@@ -1397,7 +1397,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>地區建議列表</p>
+                <p>List of area suggestions.</p>
               </div>
             </td>
           </tr>
@@ -1437,14 +1437,14 @@
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_area_suggestions_async</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AreaSuggestion</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;取得地區建議（異步版本）</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get area suggestions asynchronously.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        query: 搜尋關鍵字</span>
-<span class="sd">        request_timeout: 請求超時時間（秒）</span>
+<span class="sd">        query: Search keyword.</span>
+<span class="sd">        request_timeout: Request timeout in seconds.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        地區建議列表</span>
+<span class="sd">        List of area suggestions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -1487,7 +1487,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>取得關鍵字建議</p>
+        <p>Get keyword suggestions.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1510,7 +1510,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>搜尋關鍵字</p>
+                <p>Search keyword.</p>
               </div>
             </td>
             <td>
@@ -1526,7 +1526,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>請求超時時間（秒）</p>
+                <p>Request timeout in seconds.</p>
               </div>
             </td>
             <td>
@@ -1557,7 +1557,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>關鍵字建議列表</p>
+                <p>List of keyword suggestions.</p>
               </div>
             </td>
           </tr>
@@ -1602,14 +1602,14 @@
 <span class="normal">192</span>
 <span class="normal">193</span>
 <span class="normal">194</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_keyword_suggestions</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeywordSuggestion</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;取得關鍵字建議</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get keyword suggestions.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        query: 搜尋關鍵字</span>
-<span class="sd">        timeout: 請求超時時間（秒）</span>
+<span class="sd">        query: Search keyword.</span>
+<span class="sd">        timeout: Request timeout in seconds.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        關鍵字建議列表</span>
+<span class="sd">        List of keyword suggestions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -1661,7 +1661,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>取得關鍵字建議（異步版本）</p>
+        <p>Get keyword suggestions asynchronously.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1684,7 +1684,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>搜尋關鍵字</p>
+                <p>Search keyword.</p>
               </div>
             </td>
             <td>
@@ -1700,7 +1700,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>請求超時時間（秒）</p>
+                <p>Request timeout in seconds.</p>
               </div>
             </td>
             <td>
@@ -1731,7 +1731,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>關鍵字建議列表</p>
+                <p>List of keyword suggestions.</p>
               </div>
             </td>
           </tr>
@@ -1771,14 +1771,14 @@
 <span class="normal">224</span>
 <span class="normal">225</span>
 <span class="normal">226</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_keyword_suggestions_async</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">request_timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">KeywordSuggestion</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;取得關鍵字建議（異步版本）</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get keyword suggestions asynchronously.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        query: 搜尋關鍵字</span>
-<span class="sd">        request_timeout: 請求超時時間（秒）</span>
+<span class="sd">        query: Search keyword.</span>
+<span class="sd">        request_timeout: Request timeout in seconds.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        關鍵字建議列表</span>
+<span class="sd">        List of keyword suggestions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">query</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
         <span class="k">return</span> <span class="p">[]</span>

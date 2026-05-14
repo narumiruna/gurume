@@ -1068,7 +1068,7 @@
 
 
 
-        <p>價格範圍</p>
+        <p>Budget range.</p>
 
 
 
@@ -1140,7 +1140,7 @@
 
 
 
-        <p>餐廳資訊</p>
+        <p>Restaurant information.</p>
 
 
 
@@ -1208,7 +1208,7 @@
 
 
 
-        <p>餐廳搜尋請求</p>
+        <p>Restaurant search request.</p>
 
 
 
@@ -1248,7 +1248,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>異步執行搜尋（已棄用，請使用 search()）</p>
+        <p>Run the search asynchronously. Deprecated; use search().</p>
 
 
             <details class="mkdocstrings-source">
@@ -1256,7 +1256,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">499</span>
 <span class="normal">500</span>
 <span class="normal">501</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;異步執行搜尋（已棄用，請使用 search()）&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously. Deprecated; use search().&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1277,7 +1277,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>同步執行搜尋（已棄用，請使用 search_sync()）</p>
+        <p>Run the search synchronously. Deprecated; use search_sync().</p>
 
 
             <details class="mkdocstrings-source">
@@ -1285,7 +1285,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">495</span>
 <span class="normal">496</span>
 <span class="normal">497</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">do_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;同步執行搜尋（已棄用，請使用 search_sync()）&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously. Deprecated; use search_sync().&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_sync</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1312,7 +1312,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>異步執行搜尋</p>
+        <p>Run the search asynchronously.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1335,7 +1335,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>是否使用快取（預設：True）</p>
+                <p>Whether to use the cache. Defaults to True.</p>
               </div>
             </td>
             <td>
@@ -1351,7 +1351,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>是否使用重試機制（預設：True）</p>
+                <p>Whether to use retry handling. Defaults to True.</p>
               </div>
             </td>
             <td>
@@ -1382,7 +1382,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>餐廳列表</p>
+                <p>List of restaurants.</p>
               </div>
             </td>
           </tr>
@@ -1431,14 +1431,14 @@
 <span class="normal">491</span>
 <span class="normal">492</span>
 <span class="normal">493</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_retry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;異步執行搜尋</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        use_cache: 是否使用快取（預設：True）</span>
-<span class="sd">        use_retry: 是否使用重試機制（預設：True）</span>
+<span class="sd">        use_cache: Whether to use the cache. Defaults to True.</span>
+<span class="sd">        use_retry: Whether to use retry handling. Defaults to True.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        餐廳列表</span>
+<span class="sd">        List of restaurants.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_params</span><span class="p">()</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="n">USER_AGENT</span><span class="p">}</span>
@@ -1446,13 +1446,13 @@
     <span class="n">area_slug</span> <span class="o">=</span> <span class="n">get_area_slug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">url</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">build_search_url_and_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">area_slug</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genre_code</span><span class="p">)</span>
 
-    <span class="c1"># 檢查快取</span>
+    <span class="c1"># Check cache.</span>
     <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
         <span class="n">cached_html</span> <span class="o">=</span> <span class="n">cached_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cached_html</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_restaurants</span><span class="p">(</span><span class="n">cached_html</span><span class="p">)</span>
 
-    <span class="c1"># 執行請求（使用或不使用重試）</span>
+    <span class="c1"># Execute the request with or without retry handling.</span>
     <span class="k">if</span> <span class="n">use_retry</span><span class="p">:</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="k">await</span> <span class="n">fetch_with_retry_async</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">request_timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1464,7 +1464,7 @@
             <span class="p">)</span>
             <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
-    <span class="c1"># 儲存到快取</span>
+    <span class="c1"># Store in cache.</span>
     <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
         <span class="n">cache_set</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mf">1800.0</span><span class="p">)</span>  <span class="c1"># 30 minutes TTL</span>
 
@@ -1490,7 +1490,7 @@
 
     <div class="doc doc-contents ">
 
-        <p>同步執行搜尋</p>
+        <p>Run the search synchronously.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -1513,7 +1513,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>是否使用快取（預設：True）</p>
+                <p>Whether to use the cache. Defaults to True.</p>
               </div>
             </td>
             <td>
@@ -1529,7 +1529,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>是否使用重試機制（預設：True）</p>
+                <p>Whether to use retry handling. Defaults to True.</p>
               </div>
             </td>
             <td>
@@ -1560,7 +1560,7 @@
             </td>
             <td>
               <div class="doc-md-description">
-                <p>餐廳列表</p>
+                <p>List of restaurants.</p>
               </div>
             </td>
           </tr>
@@ -1610,14 +1610,14 @@
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">search_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_retry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;同步執行搜尋</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        use_cache: 是否使用快取（預設：True）</span>
-<span class="sd">        use_retry: 是否使用重試機制（預設：True）</span>
+<span class="sd">        use_cache: Whether to use the cache. Defaults to True.</span>
+<span class="sd">        use_retry: Whether to use retry handling. Defaults to True.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        餐廳列表</span>
+<span class="sd">        List of restaurants.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_params</span><span class="p">()</span>
     <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;User-Agent&quot;</span><span class="p">:</span> <span class="n">USER_AGENT</span><span class="p">}</span>
@@ -1625,13 +1625,13 @@
     <span class="n">area_slug</span> <span class="o">=</span> <span class="n">get_area_slug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="k">else</span> <span class="kc">None</span>
     <span class="n">url</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">build_search_url_and_params</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">area_slug</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genre_code</span><span class="p">)</span>
 
-    <span class="c1"># 檢查快取</span>
+    <span class="c1"># Check cache.</span>
     <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
         <span class="n">cached_html</span> <span class="o">=</span> <span class="n">cached_get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cached_html</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_restaurants</span><span class="p">(</span><span class="n">cached_html</span><span class="p">)</span>
 
-    <span class="c1"># 執行請求（使用或不使用重試）</span>
+    <span class="c1"># Execute the request with or without retry handling.</span>
     <span class="k">if</span> <span class="n">use_retry</span><span class="p">:</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="n">fetch_with_retry</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1644,7 +1644,7 @@
         <span class="p">)</span>
         <span class="n">resp</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
 
-    <span class="c1"># 儲存到快取</span>
+    <span class="c1"># Store in cache.</span>
     <span class="k">if</span> <span class="n">use_cache</span><span class="p">:</span>
         <span class="n">cache_set</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">ttl</span><span class="o">=</span><span class="mf">1800.0</span><span class="p">)</span>  <span class="c1"># 30 minutes TTL</span>
 
@@ -1680,7 +1680,7 @@
 
 
 
-        <p>排序方式</p>
+        <p>Search sort order.</p>
 
 
 
@@ -1942,7 +1942,7 @@ current Tabelog prefecture pages.</p>
 
     <div class="doc doc-contents ">
 
-        <p>快速查詢餐廳</p>
+        <p>Quick restaurant lookup.</p>
 
 
             <details class="mkdocstrings-source">
@@ -2000,7 +2000,7 @@ current Tabelog prefecture pages.</p>
     <span class="n">smoking_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">card_accepted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;快速查詢餐廳&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quick restaurant lookup.&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">RestaurantSearchRequest</span><span class="p">(</span>
         <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
         <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
