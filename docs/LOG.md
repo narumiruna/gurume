@@ -40,3 +40,4 @@
 2026-05-14 | test(cli): smoke test food search commands (#local)
 2026-05-14 | docs(plans): add CLI search accuracy improvement plan (#local)
 2026-05-14 | fix(search): add nested city area paths for CLI cuisine searches (#local)
+2026-05-14 | fix(cli): validate limits and keep JSON output parseable (#local)

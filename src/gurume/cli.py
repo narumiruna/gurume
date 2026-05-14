@@ -11,6 +11,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from .area_mapping import get_area_slug
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
 from .restaurant import SortType
@@ -23,6 +24,7 @@ app = typer.Typer(
 )
 
 console = Console()
+err_console = Console(stderr=True)
 
 
 class OutputFormat(StrEnum):
@@ -50,21 +52,25 @@ SORT_TYPE_MAP = {
 }
 
 
-def _resolve_genre_code(cuisine: str | None, keyword: str | None) -> tuple[str | None, str | None]:
+def _resolve_genre_code(
+    cuisine: str | None,
+    keyword: str | None,
+    status_console: Console = console,
+) -> tuple[str | None, str | None]:
     genre_code = None
     if cuisine:
         genre_code = get_genre_code(cuisine)
         if genre_code:
-            console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
+            status_console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
             return genre_code, keyword
 
-        console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
+        status_console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
         return None, cuisine
 
     if keyword:
         detected_genre_code = get_genre_code(keyword)
         if detected_genre_code:
-            console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
+            status_console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
             return detected_genre_code, keyword
 
     return None, keyword
@@ -92,7 +98,7 @@ def search(
     keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="關鍵字（例如：寿司、ラーメン）")] = None,
     cuisine: Annotated[str | None, typer.Option("--cuisine", "-c", help="料理類別（例如：すき焼き、寿司）")] = None,
     sort: Annotated[SortOption, typer.Option("--sort", "-s", help="排序方式")] = SortOption.RANKING,
-    limit: Annotated[int, typer.Option("--limit", "-n", help="顯示結果數量")] = 20,
+    limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="顯示結果數量")] = 20,
     output: Annotated[OutputFormat, typer.Option("--output", "-o", help="輸出格式")] = OutputFormat.TABLE,
 ) -> None:
     """搜尋餐廳
@@ -102,15 +108,19 @@ def search(
       gurume search -a 三重 -c すき焼き --sort ranking
       gurume search --area 大阪 --cuisine ラーメン -o json
     """
+    status_console = err_console if output == OutputFormat.JSON else console
+
     if not area and not keyword and not cuisine:
-        console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")
+        status_console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")
         raise typer.Exit(1)
 
-    genre_code, keyword = _resolve_genre_code(cuisine, keyword)
+    genre_code, keyword = _resolve_genre_code(cuisine, keyword, status_console)
+    if area and genre_code and get_area_slug(area) is None:
+        status_console.print(f"[yellow]警告：無法精準映射地區「{area}」，搜尋結果可能包含其他地區[/yellow]")
     sort_type = SORT_TYPE_MAP[sort]
 
     # 執行搜尋
-    console.print("[green]搜尋中...[/green]")
+    status_console.print("[green]搜尋中...[/green]")
     request = SearchRequest(
         area=area,
         keyword=keyword,
@@ -122,11 +132,11 @@ def search(
     response = request.search_sync()
 
     if response.status.value == "error":
-        console.print(f"[red]搜尋錯誤：{response.error_message}[/red]")
+        status_console.print(f"[red]搜尋錯誤：{response.error_message}[/red]")
         raise typer.Exit(1)
 
     if not response.restaurants:
-        console.print("[yellow]沒有找到餐廳[/yellow]")
+        status_console.print("[yellow]沒有找到餐廳[/yellow]")
         raise typer.Exit(0)
 
     # 限制結果數量
@@ -141,7 +151,7 @@ def search(
         _output_table(restaurants)
 
     # 顯示統計
-    console.print(f"\n[cyan]共找到 {len(response.restaurants)} 家餐廳，顯示前 {len(restaurants)} 家[/cyan]")
+    status_console.print(f"\n[cyan]共找到 {len(response.restaurants)} 家餐廳，顯示前 {len(restaurants)} 家[/cyan]")
 
 
 def _output_table(restaurants: list) -> None:
