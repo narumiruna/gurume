@@ -1272,7 +1272,7 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>Supports automatic suggestions for prefectures, stations, and areas</li>
 <li><strong>Keyword input</strong>: Enter a search keyword (for example: <code>寿司</code>, <code>ラーメン</code>)</li>
 <li>Tip: press <code>F3</code> to open intelligent keyword suggestions (<code>New!</code>)<ul>
-<li>When the keyword is empty: shows the full list of 45+ cuisine categories</li>
+<li>When the keyword is empty: shows the full list of 29 cuisine categories</li>
 <li>When the keyword has content: calls the API and shows dynamic suggestions such as cuisine types, restaurant names, and combined keywords</li>
 </ul>
 </li>
@@ -1405,7 +1405,7 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>Start the TUI with <code>uv run gurume tui</code></li>
 <li>Make sure the Keyword input box is empty</li>
 <li>Press <code>F3</code> to open the cuisine category selector popup</li>
-<li>Use <code>↑</code> / <code>↓</code> to browse 45+ cuisine types</li>
+<li>Use <code>↑</code> / <code>↓</code> to browse 29 cuisine types</li>
 <li>Press <code>Enter</code> to confirm, or press <code>Esc</code> to cancel</li>
 <li>The selected cuisine name is filled into the Keyword input box automatically</li>
 <li>The system uses the cuisine category code for precise filtering</li>
@@ -1425,7 +1425,7 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <p><strong>Why use intelligent keyword suggestions?</strong></p>
 <ul>
 <li><strong>Precise filtering</strong>: only shows restaurants that match the selected cuisine type, such as dedicated <code>すき焼き</code> restaurants</li>
-<li><strong>Discovery</strong>: browse all 45+ cuisine types when the keyword box is empty</li>
+<li><strong>Discovery</strong>: browse all 29 cuisine types when the keyword box is empty</li>
 <li><strong>Dynamic suggestions</strong>: get real-time suggestions while typing, including cuisines, restaurants, and combinations</li>
 <li><strong>Fewer typos</strong>: choosing from a list keeps names accurate</li>
 <li><strong>Automatic conversion</strong>: the system converts cuisine names into Tabelog cuisine codes automatically, for example <code>すき焼き</code> -&gt; <code>RC0107</code></li>
@@ -1434,7 +1434,7 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <ul>
 <li>Enter a cuisine name directly in the Keyword input box, for example <code>すき焼き</code>, <code>寿司</code>, or <code>ラーメン</code></li>
 <li>The system detects it automatically and converts it into a precise filter</li>
-<li>Auto-detection supports all 45+ cuisine categories</li>
+<li>Auto-detection supports all 29 cuisine categories</li>
 </ul>
 <h3 id="natural-language-input">Natural-language input<a class="headerlink" href="#natural-language-input" title="Permanent link">&para;</a></h3>
 <p>The TUI no longer parses free-form text on its own. To translate sentences like <code>我想吃三重的壽喜燒</code> into the Area and Keyword fields, use an AI assistant with the <a href="https://github.com/narumiruna/gurume/tree/main/skills/gurume-cli"><code>gurume-cli</code> agent skill</a> installed and let it tell you which values to type.</p>
@@ -1474,8 +1474,10 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <ul>
 <li><strong>Area filtering limitations</strong></li>
 <li>Supported: all 47 prefectures</li>
-<li>Not supported: exact city-, town-, village-, or station-level filtering</li>
-<li>Recommendation: use area suggestions with <code>F2</code> and select a prefecture to ensure filtering works as expected</li>
+<li>Supported as city-level paths: <code>札幌</code>, <code>名古屋</code>, and <code>神戸</code></li>
+<li>Not fully supported: arbitrary city-, town-, village-, or station-level filtering</li>
+<li>Recommendation: use area suggestions with <code>F2</code>; when exact local filtering matters, confirm the returned results
+    are in the intended area</li>
 <li>Searches may take a few seconds, depending on network conditions</li>
 <li>Make sure you have a working internet connection</li>
 <li>Search results depend on Tabelog site availability</li>
@@ -1490,7 +1492,7 @@ python<span class="w"> </span>-m<span class="w"> </span>gurume.tui
 <li>Four sort modes: rating ranking, review count, new openings, and standard</li>
 <li><strong>Area suggestions (<code>F2</code>)</strong>: intelligent area and station suggestions</li>
 <li><strong>Intelligent keyword suggestions (<code>F3</code>)</strong> (<code>New!</code>)</li>
-<li>Empty keyword -&gt; full list of 45+ Japanese cuisine types</li>
+<li>Empty keyword -&gt; full list of 29 Japanese cuisine types</li>
 <li>Non-empty keyword -&gt; dynamic API suggestions for cuisines, restaurant names, and combined keywords</li>
 <li><strong>Automatic cuisine detection</strong>: detect cuisine names and convert them into precise filters automatically</li>
 <li><strong>Area filtering</strong>: accurate filtering for all 47 prefectures</li>

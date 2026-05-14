@@ -1970,8 +1970,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">660</span>
-<span class="normal">661</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">661</span>
 <span class="normal">662</span>
 <span class="normal">663</span>
 <span class="normal">664</span>
@@ -1994,7 +1993,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">681</span>
 <span class="normal">682</span>
 <span class="normal">683</span>
-<span class="normal">684</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+<span class="normal">684</span>
+<span class="normal">685</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
@@ -2055,8 +2055,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">523</span>
-<span class="normal">524</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">524</span>
 <span class="normal">525</span>
 <span class="normal">526</span>
 <span class="normal">527</span>
@@ -2116,7 +2115,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">581</span>
 <span class="normal">582</span>
 <span class="normal">583</span>
-<span class="normal">584</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">584</span>
+<span class="normal">585</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2214,8 +2214,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">587</span>
-<span class="normal">588</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">588</span>
 <span class="normal">589</span>
 <span class="normal">590</span>
 <span class="normal">591</span>
@@ -2276,7 +2275,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">646</span>
 <span class="normal">647</span>
 <span class="normal">648</span>
-<span class="normal">649</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">649</span>
+<span class="normal">650</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2632,7 +2632,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Get complete list of all 45+ supported Japanese cuisine types with their Tabelog genre codes.</p>
+        <p>Get the complete list of all 29 supported Japanese cuisine types with their Tabelog genre codes.</p>
 <p><strong>WHEN TO USE</strong>:
 - Before calling <code>tabelog_search_restaurants</code> with <code>cuisine</code> parameter to verify available options
 - Providing cuisine type suggestions/autocomplete to users
@@ -2642,13 +2642,14 @@ delegating response schemas and helper logic to focused modules.</p>
 Returns list of all supported cuisines:
 - name: Cuisine name in Japanese (e.g., 'すき焼き', '焼肉', 'ラーメン')
 - code: Tabelog genre code (e.g., 'RC0107', 'RC0103') - used internally for filtering</p>
-<p><strong>CUISINE CATEGORIES</strong> (45+ types total):
-- Japanese: すき焼き, 焼肉, 寿司, ラーメン, うなぎ, そば, うどん, 天ぷら, とんかつ, 焼き鳥, お好み焼き, たこ焼き
-- Hotpot/Nabe: しゃぶしゃぶ, もつ鍋, 水炊き
-- Izakaya: 居酒屋, 焼酎バー, 日本酒バー
-- Western: イタリアン, フレンチ, スペイン料理, ハンバーガー, ステーキ
-- Asian: 中華料理, 韓国料理, タイ料理, インド料理, ベトナム料理
-- Other: カレー, カフェ, スイーツ, パン, ラーメン</p>
+<p><strong>CUISINE CATEGORIES</strong> (29 types total):
+- Japanese: すき焼き, しゃぶしゃぶ, 寿司, 天ぷら, とんかつ, 焼き鳥, ラーメン, うどん, そば, うなぎ, 日本料理, 海鮮
+- Hotpot/Nabe: 鍋, もつ鍋
+- Izakaya: 居酒屋
+- Western: フレンチ, イタリアン, ステーキ, ハンバーグ, ハンバーガー, 洋食
+- Chinese: 中華料理, 餃子
+- Yakiniku: 焼肉, ホルモン
+- Other: カレー, カフェ, パン, スイーツ</p>
 <p><strong>WORKFLOW EXAMPLE</strong>:
 1. User asks: 'Find sukiyaki restaurants in Tokyo'
 2. Call <code>tabelog_list_cuisines</code> to verify 'すき焼き' is supported → Returns {name: 'すき焼き', code: 'RC0107'}
@@ -2771,7 +2772,8 @@ Returns list of all supported cuisines:
 <span class="normal">517</span>
 <span class="normal">518</span>
 <span class="normal">519</span>
-<span class="normal">520</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">520</span>
+<span class="normal">521</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2779,7 +2781,7 @@ Returns list of all supported cuisines:
     <span class="n">structured_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tabelog_list_cuisines</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CuisineListOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get complete list of all 45+ supported Japanese cuisine types with their Tabelog genre codes.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the complete list of all 29 supported Japanese cuisine types with their Tabelog genre codes.</span>
 
 <span class="sd">    **WHEN TO USE**:</span>
 <span class="sd">    - Before calling `tabelog_search_restaurants` with `cuisine` parameter to verify available options</span>
@@ -2792,13 +2794,14 @@ Returns list of all supported cuisines:
 <span class="sd">    - name: Cuisine name in Japanese (e.g., &#39;すき焼き&#39;, &#39;焼肉&#39;, &#39;ラーメン&#39;)</span>
 <span class="sd">    - code: Tabelog genre code (e.g., &#39;RC0107&#39;, &#39;RC0103&#39;) - used internally for filtering</span>
 
-<span class="sd">    **CUISINE CATEGORIES** (45+ types total):</span>
-<span class="sd">    - Japanese: すき焼き, 焼肉, 寿司, ラーメン, うなぎ, そば, うどん, 天ぷら, とんかつ, 焼き鳥, お好み焼き, たこ焼き</span>
-<span class="sd">    - Hotpot/Nabe: しゃぶしゃぶ, もつ鍋, 水炊き</span>
-<span class="sd">    - Izakaya: 居酒屋, 焼酎バー, 日本酒バー</span>
-<span class="sd">    - Western: イタリアン, フレンチ, スペイン料理, ハンバーガー, ステーキ</span>
-<span class="sd">    - Asian: 中華料理, 韓国料理, タイ料理, インド料理, ベトナム料理</span>
-<span class="sd">    - Other: カレー, カフェ, スイーツ, パン, ラーメン</span>
+<span class="sd">    **CUISINE CATEGORIES** (29 types total):</span>
+<span class="sd">    - Japanese: すき焼き, しゃぶしゃぶ, 寿司, 天ぷら, とんかつ, 焼き鳥, ラーメン, うどん, そば, うなぎ, 日本料理, 海鮮</span>
+<span class="sd">    - Hotpot/Nabe: 鍋, もつ鍋</span>
+<span class="sd">    - Izakaya: 居酒屋</span>
+<span class="sd">    - Western: フレンチ, イタリアン, ステーキ, ハンバーグ, ハンバーガー, 洋食</span>
+<span class="sd">    - Chinese: 中華料理, 餃子</span>
+<span class="sd">    - Yakiniku: 焼肉, ホルモン</span>
+<span class="sd">    - Other: カレー, カフェ, パン, スイーツ</span>
 
 <span class="sd">    **WORKFLOW EXAMPLE**:</span>
 <span class="sd">    1. User asks: &#39;Find sukiyaki restaurants in Tokyo&#39;</span>
