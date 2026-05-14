@@ -1,4 +1,4 @@
-"""命令列介面"""
+"""Command-line interface."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ err_console = Console(stderr=True)
 
 
 class OutputFormat(StrEnum):
-    """輸出格式"""
+    """Output format."""
 
     TABLE = "table"
     JSON = "json"
@@ -36,7 +36,7 @@ class OutputFormat(StrEnum):
 
 
 class SortOption(StrEnum):
-    """排序選項"""
+    """Sort option."""
 
     RANKING = "ranking"
     REVIEW_COUNT = "review-count"
@@ -101,9 +101,9 @@ def search(
     limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="顯示結果數量")] = 20,
     output: Annotated[OutputFormat, typer.Option("--output", "-o", help="輸出格式")] = OutputFormat.TABLE,
 ) -> None:
-    """搜尋餐廳
+    """Search restaurants.
 
-    範例：
+    Examples:
       gurume search --area 東京 --keyword 寿司
       gurume search -a 三重 -c すき焼き --sort ranking
       gurume search --area 大阪 --cuisine ラーメン -o json
@@ -119,7 +119,7 @@ def search(
         status_console.print(f"[yellow]警告：無法精準映射地區「{area}」，搜尋結果可能包含其他地區[/yellow]")
     sort_type = SORT_TYPE_MAP[sort]
 
-    # 執行搜尋
+    # Execute search.
     status_console.print("[green]搜尋中...[/green]")
     request = SearchRequest(
         area=area,
@@ -139,10 +139,10 @@ def search(
         status_console.print("[yellow]沒有找到餐廳[/yellow]")
         raise typer.Exit(0)
 
-    # 限制結果數量
+    # Limit result count.
     restaurants = response.restaurants[:limit]
 
-    # 輸出結果
+    # Output results.
     if output == OutputFormat.JSON:
         _output_json(restaurants)
     elif output == OutputFormat.SIMPLE:
@@ -150,12 +150,12 @@ def search(
     else:
         _output_table(restaurants)
 
-    # 顯示統計
+    # Show summary stats.
     status_console.print(f"\n[cyan]共找到 {len(response.restaurants)} 家餐廳，顯示前 {len(restaurants)} 家[/cyan]")
 
 
 def _output_table(restaurants: list) -> None:
-    """以表格格式輸出"""
+    """Output restaurants as a table."""
     table = Table(title="搜尋結果")
     table.add_column("餐廳名稱", style="cyan", no_wrap=False)
     table.add_column("評分", justify="right", style="yellow")
@@ -176,12 +176,12 @@ def _output_table(restaurants: list) -> None:
 
 
 def _output_json(restaurants: list) -> None:
-    """以 JSON 格式輸出"""
+    """Output restaurants as JSON."""
     console.print(json.dumps(_build_json_data(restaurants), ensure_ascii=False, indent=2))
 
 
 def _output_simple(restaurants: list) -> None:
-    """以簡單格式輸出"""
+    """Output restaurants in a simple text format."""
     for i, r in enumerate(restaurants, 1):
         rating_str = f"{r.rating:.2f}" if r.rating else "N/A"
         review_str = str(r.review_count) if r.review_count else "N/A"
@@ -196,7 +196,7 @@ def _output_simple(restaurants: list) -> None:
 
 @app.command()
 def list_cuisines() -> None:
-    """列出所有支援的料理類別"""
+    """List all supported cuisines."""
     cuisines = get_all_genres()
 
     table = Table(title=f"支援的料理類別（共 {len(cuisines)} 種）")
@@ -212,7 +212,7 @@ def list_cuisines() -> None:
 
 @app.command()
 def tui() -> None:
-    """啟動互動式 TUI 介面"""
+    """Launch the interactive TUI."""
     from .tui import main as tui_main
 
     tui_main()
@@ -250,14 +250,14 @@ def mcp(
         ),
     ] = "/mcp",
 ) -> None:
-    """啟動 MCP (Model Context Protocol) 伺服器"""
+    """Start the MCP (Model Context Protocol) server."""
     from .server import run
 
     run(transport=transport.value, host=host, port=port, path=path)
 
 
 def main() -> None:
-    """主程式進入點"""
+    """Main entry point."""
     app()
 
 

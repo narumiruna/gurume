@@ -40,7 +40,7 @@ TUI_ACTION_EXCEPTIONS = (RuntimeError, ValueError)
 
 
 class AreaSuggestModal(ModalScreen[str]):
-    """地區建議彈出視窗"""
+    """Area suggestion modal."""
 
     CSS = """
     AreaSuggestModal {
@@ -89,12 +89,12 @@ class AreaSuggestModal(ModalScreen[str]):
         self.suggestions = suggestions
 
     def compose(self) -> ComposeResult:
-        """建立彈出視窗的元件"""
+        """Compose modal widgets."""
         with Vertical(id="suggest-dialog"):
             yield Label(f"🗺️  地區建議（共 {len(self.suggestions)} 個）", id="suggest-title")
             option_list = OptionList(id="suggest-list")
             for suggestion in self.suggestions:
-                # 顯示格式：圖標 名稱 (類型)
+                # Display format: icon, name, and type.
                 type_label = "🚉 駅" if suggestion.datatype == "RailroadStation" else "📍 地區"
                 option_list.add_option(f"{type_label}  {suggestion.name}")
             yield option_list
@@ -102,19 +102,19 @@ class AreaSuggestModal(ModalScreen[str]):
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
-        """處理選項選擇事件"""
+        """Handle option selection events."""
         if event.option_index < len(self.suggestions):
             selected = self.suggestions[event.option_index]
             self.dismiss(selected.name)
 
     def on_key(self, event) -> None:
-        """處理鍵盤事件"""
+        """Handle key events."""
         if event.key == "escape":
             self.dismiss(None)
 
 
 class GenreSuggestModal(ModalScreen[str]):
-    """料理類別建議彈出視窗"""
+    """Cuisine suggestion modal."""
 
     CSS = """
     GenreSuggestModal {
@@ -163,31 +163,31 @@ class GenreSuggestModal(ModalScreen[str]):
         self.genres = get_all_genres()
 
     def compose(self) -> ComposeResult:
-        """建立彈出視窗的元件"""
+        """Compose modal widgets."""
         with Vertical(id="genre-dialog"):
             yield Label(f"🍽️  料理類別（共 {len(self.genres)} 個）", id="genre-title")
             option_list = OptionList(id="genre-list")
             for genre in self.genres:
-                # 使用不同的圖標來區分料理類別
+                # Use a cuisine icon for genre entries.
                 option_list.add_option(f"🍜  {genre}")
             yield option_list
             yield Static("💡 提示：使用 ↑↓ 方向鍵選擇，Enter 確認，Esc 取消", id="genre-hint")
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
-        """處理選項選擇事件"""
+        """Handle option selection events."""
         if event.option_index < len(self.genres):
             selected = self.genres[event.option_index]
             self.dismiss(selected)
 
     def on_key(self, event) -> None:
-        """處理鍵盤事件"""
+        """Handle key events."""
         if event.key == "escape":
             self.dismiss(None)
 
 
 class KeywordSuggestModal(ModalScreen[str]):
-    """關鍵字建議彈出視窗（動態 API）"""
+    """Keyword suggestion modal backed by the dynamic API."""
 
     CSS = """
     KeywordSuggestModal {
@@ -236,12 +236,12 @@ class KeywordSuggestModal(ModalScreen[str]):
         self.suggestions = suggestions
 
     def compose(self) -> ComposeResult:
-        """建立彈出視窗的元件"""
+        """Compose modal widgets."""
         with Vertical(id="keyword-dialog"):
             yield Label(f"🔍  關鍵字建議（共 {len(self.suggestions)} 個）", id="keyword-title")
             option_list = OptionList(id="keyword-list")
             for suggestion in self.suggestions:
-                # 根據 datatype 使用不同圖標
+                # Choose icons by datatype.
                 icon = (
                     "🍜" if suggestion.datatype == "Genre2" else "🏪" if suggestion.datatype == "Restaurant" else "🔖"
                 )
@@ -251,22 +251,22 @@ class KeywordSuggestModal(ModalScreen[str]):
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
-        """處理選項選擇事件"""
+        """Handle option selection events."""
         if event.option_index < len(self.suggestions):
             selected = self.suggestions[event.option_index].name
             self.dismiss(selected)
 
     def on_key(self, event) -> None:
-        """處理鍵盤事件"""
+        """Handle key events."""
         if event.key == "escape":
             self.dismiss(None)
 
 
 class SearchPanel(Container):
-    """搜尋輸入面板"""
+    """Search input panel."""
 
     def compose(self) -> ComposeResult:
-        """建立搜尋面板的元件"""
+        """Compose search panel widgets."""
         yield Static("餐廳搜尋", classes="panel-title")
         with Horizontal(id="input-row"):
             yield Input(placeholder="地區 (例如: 東京, 按 F2 查看建議)", id="area-input")
@@ -282,28 +282,28 @@ class SearchPanel(Container):
 
 
 class ResultsTable(DataTable):
-    """餐廳結果列表"""
+    """Restaurant results table."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.cursor_type = "row"
 
     def on_mount(self) -> None:
-        """初始化表格欄位"""
+        """Initialize table columns."""
         self.add_columns("餐廳名稱", "評分", "評論數", "地區", "類型")
 
 
 class DetailPanel(Container):
-    """餐廳詳細資訊面板"""
+    """Restaurant detail panel."""
 
     def compose(self) -> ComposeResult:
-        """建立詳細資訊面板的元件"""
+        """Compose detail panel widgets."""
         yield Static("詳細資訊", classes="panel-title")
         yield Static("請選擇餐廳查看詳細資訊", id="detail-content")
 
 
 class TabelogApp(App):
-    """Tabelog 餐廳搜尋 TUI 應用程式"""
+    """Tabelog restaurant search TUI application."""
 
     CSS = """
     Screen {
@@ -446,10 +446,10 @@ class TabelogApp(App):
         self.restaurants: list[Restaurant] = []
         self.selected_restaurant: Restaurant | None = None
         self.search_worker = None
-        self.current_genre_code: str | None = None  # 當前選擇的料理類別代碼
+        self.current_genre_code: str | None = None  # Currently selected cuisine genre code.
 
     def compose(self) -> ComposeResult:
-        """建立應用程式的元件"""
+        """Compose application widgets."""
         yield Header()
         yield SearchPanel()
         with Horizontal(id="content-row"):
@@ -458,26 +458,26 @@ class TabelogApp(App):
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """處理按鈕點擊事件"""
+        """Handle button press events."""
         if event.button.id == "search-button":
             self.start_search()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        """處理 Input Enter 鍵事件"""
+        """Handle Enter key submissions from inputs."""
         if event.input.id in ("area-input", "keyword-input"):
             self.start_search()
 
     def start_search(self) -> None:
-        """啟動搜尋（取消之前的搜尋）"""
-        # 取消之前的搜尋 worker
+        """Start a search and cancel any previous search."""
+        # Cancel the previous search worker.
         if self.search_worker and not self.search_worker.is_finished:
             self.search_worker.cancel()
 
-        # 啟動新的搜尋 worker
+        # Start a new search worker.
         self.search_worker = self.run_worker(self.perform_search())
 
     async def perform_search(self) -> None:
-        """執行餐廳搜尋"""
+        """Run a restaurant search."""
         try:
             area, keyword = self._get_search_inputs()
             if not area and not keyword:
@@ -499,7 +499,7 @@ class TabelogApp(App):
             self._update_search_error(e)
 
     def update_results_table(self) -> None:
-        """更新結果表格"""
+        """Update the results table."""
         try:
             table = self.query_one("#results-table", ResultsTable)
             table.clear()
@@ -566,13 +566,13 @@ class TabelogApp(App):
             self.query_one("#detail-content", Static).update(message)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        """處理表格行選擇事件"""
+        """Handle table row selection events."""
         if event.cursor_row < len(self.restaurants):
             self.selected_restaurant = self.restaurants[event.cursor_row]
             self.update_detail_panel()
 
     def update_detail_panel(self) -> None:
-        """更新詳細資訊面板"""
+        """Update the detail panel."""
         if not self.selected_restaurant:
             return
 
@@ -595,36 +595,36 @@ URL: {r.url}
         detail_content.update(detail_text)
 
     def action_focus_search(self) -> None:
-        """聚焦到搜尋輸入框"""
+        """Focus the search input."""
         area_input = self.query_one("#area-input", Input)
         area_input.focus()
 
     def action_focus_results(self) -> None:
-        """聚焦到結果表格"""
+        """Focus the results table."""
         table = self.query_one("#results-table", ResultsTable)
         table.focus()
 
     def action_focus_detail(self) -> None:
-        """聚焦到詳細資訊面板"""
+        """Focus the detail panel."""
         detail_panel = self.query_one(DetailPanel)
         detail_panel.focus()
 
     async def action_show_area_suggest(self) -> None:
-        """顯示地區建議彈出視窗"""
+        """Show the area suggestion modal."""
         area_input = self.query_one("#area-input", Input)
         query = area_input.value.strip()
 
         if not query:
-            # 如果輸入框為空，提示用戶
+            # Prompt the user when the input is empty.
             detail_content = self.query_one("#detail-content", Static)
             detail_content.update("💡 請先輸入地區關鍵字\n\n例如：東京、大阪、伊勢\n\n然後按 F2 查看建議")
             return
 
-        # 顯示載入訊息（帶動畫效果）
+        # Show a loading message.
         detail_content = self.query_one("#detail-content", Static)
         detail_content.update(f"🔍 正在搜尋「{query}」的地區建議...\n\n請稍候...")
 
-        # 取得建議
+        # Fetch suggestions.
         try:
             suggestions = await get_area_suggestions_async(query)
         except TabelogSuggestUnavailableError as e:
@@ -637,7 +637,7 @@ URL: {r.url}
             )
             return
 
-        # 顯示彈出視窗
+        # Show modal.
         def on_dismiss(selected_area: str | None) -> None:
             if selected_area:
                 area_input.value = selected_area
@@ -648,16 +648,16 @@ URL: {r.url}
         await self.push_screen(AreaSuggestModal(suggestions), on_dismiss)
 
     async def action_show_genre_suggest(self) -> None:
-        """顯示料理類別建議彈出視窗（智慧型）
+        """Show the cuisine suggestion modal.
 
-        - keyword 空字串 → 顯示固定料理類別列表
-        - keyword 有內容 → 使用 API 顯示動態關鍵字建議
+        - Empty keyword: show the fixed cuisine list.
+        - Non-empty keyword: show dynamic keyword suggestions from the API.
         """
         keyword_input = self.query_one("#keyword-input", Input)
         keyword_value = keyword_input.value.strip()
         detail_content = self.query_one("#detail-content", Static)
 
-        # 情況1：keyword 為空，顯示固定料理類別列表
+        # Case 1: empty keyword; show the fixed cuisine list.
         if not keyword_value:
             detail_content.update("🍽️ 正在載入料理類別選項...")
 
@@ -675,12 +675,12 @@ URL: {r.url}
 
             await self.push_screen(GenreSuggestModal(), on_dismiss_genre)
 
-        # 情況2：keyword 有內容，使用 API 顯示動態建議
+        # Case 2: non-empty keyword; show dynamic API suggestions.
         else:
             detail_content.update(f"🔍 正在搜尋「{keyword_value}」的關鍵字建議...")
 
             try:
-                # 呼叫 API 取得關鍵字建議
+                # Fetch keyword suggestions from the API.
                 suggestions = await get_keyword_suggestions_async(keyword_value)
 
                 if not suggestions:
@@ -697,7 +697,7 @@ URL: {r.url}
                 def on_dismiss_keyword(selected_keyword: str | None) -> None:
                     if selected_keyword:
                         keyword_input.value = selected_keyword
-                        # 嘗試取得 genre_code
+                        # Try to resolve a genre_code.
                         self.current_genre_code = get_genre_code(selected_keyword)
                         if self.current_genre_code:
                             detail_content.update(
@@ -721,7 +721,7 @@ URL: {r.url}
 
 
 def main():
-    """啟動 TUI 應用程式"""
+    """Launch the TUI application."""
     app = TabelogApp()
     app.run()
 

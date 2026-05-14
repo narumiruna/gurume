@@ -34,7 +34,7 @@ def _reraise_if_fatal(error: BaseException) -> None:
 
 
 class SearchStatus(StrEnum):
-    """搜尋狀態"""
+    """Search status."""
 
     SUCCESS = "success"
     NO_RESULTS = "no_results"
@@ -43,7 +43,7 @@ class SearchStatus(StrEnum):
 
 @dataclass
 class SearchMeta:
-    """搜尋元資料"""
+    """Search metadata."""
 
     total_count: int | None
     current_page: int
@@ -56,7 +56,7 @@ class SearchMeta:
 
 @dataclass
 class SearchResponse:
-    """搜尋回應"""
+    """Search response."""
 
     status: SearchStatus
     restaurants: list[Restaurant] = field(default_factory=list)
@@ -69,15 +69,15 @@ class SearchResponse:
         min_rating: float | None = None,
         min_review_count: int | None = None,
     ) -> SearchResponse:
-        """過濾餐廳
+        """Filter restaurants.
 
         Args:
-            condition: 自定義過濾條件函數
-            min_rating: 最低評分
-            min_review_count: 最低評論數
+            condition: Custom filter predicate.
+            min_rating: Minimum rating.
+            min_review_count: Minimum review count.
 
         Returns:
-            包含過濾後餐廳的新 SearchResponse
+            New SearchResponse containing the filtered restaurants.
         """
         filtered = self.restaurants
 
@@ -98,14 +98,14 @@ class SearchResponse:
         )
 
     def sort_by(self, key: str, reverse: bool = False) -> SearchResponse:
-        """依指定欄位排序
+        """Sort by the specified field.
 
         Args:
-            key: 排序欄位（rating, review_count, save_count, name）
-            reverse: 是否反向排序（預設 False）
+            key: Sort field: rating, review_count, save_count, or name.
+            reverse: Whether to sort in reverse order. Defaults to False.
 
         Returns:
-            包含排序後餐廳的新 SearchResponse
+            New SearchResponse containing the sorted restaurants.
         """
         sorted_restaurants = sorted(
             self.restaurants,
@@ -121,13 +121,13 @@ class SearchResponse:
         )
 
     def top(self, n: int) -> SearchResponse:
-        """取前 N 筆餐廳
+        """Take the first N restaurants.
 
         Args:
-            n: 要取的數量
+            n: Number of restaurants to take.
 
         Returns:
-            包含前 N 筆餐廳的新 SearchResponse
+            New SearchResponse containing the first N restaurants.
         """
         return SearchResponse(
             status=self.status,
@@ -137,13 +137,13 @@ class SearchResponse:
         )
 
     def to_json(self, indent: int = 2) -> str:
-        """匯出為 JSON 字串
+        """Export as a JSON string.
 
         Args:
-            indent: JSON 縮排空格數
+            indent: Number of spaces for JSON indentation.
 
         Returns:
-            JSON 字串
+            JSON string.
         """
         data = {
             "status": self.status.value,
@@ -154,10 +154,10 @@ class SearchResponse:
         return json.dumps(data, ensure_ascii=False, indent=indent, default=str)
 
     def to_dict(self) -> dict:
-        """轉換為字典
+        """Convert to a dictionary.
 
         Returns:
-            包含所有資料的字典
+            Dictionary containing all response data.
         """
         return {
             "status": self.status.value,
@@ -169,9 +169,9 @@ class SearchResponse:
 
 @dataclass
 class SearchRequest:
-    """通用搜尋請求 - 擴展 RestaurantSearchRequest"""
+    """Generic search request that extends RestaurantSearchRequest."""
 
-    # 繼承所有餐廳搜尋參數
+    # Inherited restaurant search parameters.
     area: str | None = None
     keyword: str | None = None
     genre_code: str | None = None
@@ -181,16 +181,16 @@ class SearchRequest:
     sort_type: SortType = SortType.STANDARD
     page: int = 1
 
-    # 額外的搜尋配置
+    # Additional search configuration.
     max_pages: int = 1
     include_meta: bool = True
     timeout: float = 30.0
 
     def _parse_meta(self, html: str, current_page: int) -> SearchMeta:
-        """解析搜尋元資料"""
+        """Parse search metadata."""
         soup = BeautifulSoup(html, "lxml")
 
-        # 每頁結果數 (通常是20)
+        # Results per page, usually 20.
         results_per_page = 20
         restaurant_items = soup.find_all("div", class_="list-rst")
         if not restaurant_items:
@@ -198,13 +198,13 @@ class SearchRequest:
         if restaurant_items:
             results_per_page = len(restaurant_items)
 
-        # 總結果數
+        # Total result count.
         total_count = self._parse_total_count(soup, len(restaurant_items))
 
-        # 計算總頁數
+        # Total page count.
         total_pages = self._parse_total_pages(soup, total_count, results_per_page, current_page)
 
-        # 判斷是否有前後頁
+        # Previous/next page flags.
         has_next_page = self._has_next_page(soup, total_pages, current_page)
         has_prev_page = current_page > 1
 
@@ -276,7 +276,7 @@ class SearchRequest:
         return None
 
     def _create_restaurant_request(self, page: int = 1) -> RestaurantSearchRequest:
-        """創建餐廳搜尋請求"""
+        """Create a restaurant search request."""
         return RestaurantSearchRequest(
             area=self.area,
             keyword=self.keyword,
@@ -342,7 +342,7 @@ class SearchRequest:
             return resp.text, request._parse_restaurants(resp.text)
 
     def search_sync(self) -> SearchResponse:
-        """同步執行搜尋"""
+        """Run the search synchronously."""
         try:
             all_restaurants: list[Restaurant] = []
             meta = None
@@ -358,7 +358,7 @@ class SearchRequest:
                 if meta and meta.total_count == 0:
                     break
 
-                # 如果這一頁沒有結果，停止搜尋
+                # Stop when the current page has no results.
                 if not restaurants:
                     break
 
@@ -376,7 +376,7 @@ class SearchRequest:
             )
 
     async def search(self) -> SearchResponse:
-        """異步執行搜尋"""
+        """Run the search asynchronously."""
         try:
             all_restaurants: list[Restaurant] = []
             meta = None
@@ -393,7 +393,7 @@ class SearchRequest:
                     if meta and meta.total_count == 0:
                         break
 
-                    # 如果這一頁沒有結果，停止搜尋
+                    # Stop when the current page has no results.
                     if not restaurants:
                         break
 
@@ -411,9 +411,9 @@ class SearchRequest:
             )
 
     def do_sync(self) -> SearchResponse:
-        """同步執行搜尋（已棄用，請使用 search_sync()）"""
+        """Run the search synchronously. Deprecated; use search_sync()."""
         return self.search_sync()
 
     async def do(self) -> SearchResponse:
-        """異步執行搜尋（已棄用，請使用 search()）"""
+        """Run the search asynchronously. Deprecated; use search()."""
         return await self.search()

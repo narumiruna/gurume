@@ -1,11 +1,11 @@
-"""料理類別代碼與搜尋路徑映射"""
+"""Map cuisine names to genre codes and search path segments."""
 
 from __future__ import annotations
 
-# Tabelog 料理類別代碼（RC = Restaurant Category）
-# 格式：料理名稱 -> URL 代碼
+# Tabelog cuisine genre codes (RC = Restaurant Category).
+# Format: cuisine name -> URL code.
 GENRE_CODE_MAPPING = {
-    # 和食
+    # Japanese cuisine.
     "すき焼き": "RC0107",
     "しゃぶしゃぶ": "RC0106",
     "寿司": "RC0201",
@@ -18,34 +18,34 @@ GENRE_CODE_MAPPING = {
     "うなぎ": "RC0701",
     "日本料理": "RC0801",
     "海鮮": "RC0901",
-    # 洋食
+    # Western-style cuisine.
     "フレンチ": "RC1001",
     "イタリアン": "RC1101",
     "ステーキ": "RC1201",
     "ハンバーグ": "RC1202",
     "ハンバーガー": "RC1203",
     "洋食": "RC1301",
-    # 中華
+    # Chinese cuisine.
     "中華料理": "RC1401",
     "餃子": "RC1402",
-    # 焼肉
+    # Yakiniku.
     "焼肉": "RC1501",
     "ホルモン": "RC1502",
-    # 鍋
+    # Hot pot.
     "鍋": "RC1601",
     "もつ鍋": "RC1602",
-    # 居酒屋
+    # Izakaya.
     "居酒屋": "RC1701",
-    # カレー
+    # Curry.
     "カレー": "RC1801",
-    # その他
+    # Other.
     "カフェ": "RC1901",
     "パン": "RC2001",
     "スイーツ": "RC2101",
 }
 
-# Tabelog 搜尋頁目前會把料理過濾編碼在 URL path segment，而不是舊的 LstG query。
-# 大多數料理使用 SEO slug，但部分料理在實際搜尋頁仍使用分類代碼 path segment。
+# Current Tabelog search pages encode cuisine filters in URL path segments instead of the legacy LstG query.
+# Most cuisines use SEO slugs, but some live search pages still use category-code path segments.
 CUISINE_SLUG_MAPPING = {
     "すき焼き": "RC0107",
     "しゃぶしゃぶ": "syabusyabu",
@@ -81,26 +81,26 @@ CUISINE_SLUG_MAPPING = {
 
 def get_genre_code(genre_name: str) -> str | None:
     """
-    料理名稱轉換為 Tabelog URL 代碼
+    Convert a cuisine name to a Tabelog URL code.
 
     Args:
-        genre_name: 料理名稱（例如：「すき焼き」、「寿司」）
+        genre_name: Cuisine name, for example "すき焼き" or "寿司".
 
     Returns:
-        URL 代碼（例如：「RC0107」）或 None（如果找不到映射）
+        URL code, for example "RC0107"; otherwise None.
     """
     return GENRE_CODE_MAPPING.get(genre_name)
 
 
 def get_genre_name_by_code(genre_code: str) -> str | None:
     """
-    從代碼反查料理名稱
+    Look up a cuisine name by code.
 
     Args:
-        genre_code: URL 代碼（例如：「RC0107」）
+        genre_code: URL code, for example "RC0107".
 
     Returns:
-        料理名稱或 None
+        Cuisine name, or None.
     """
     for name, code in GENRE_CODE_MAPPING.items():
         if code == genre_code:
@@ -109,12 +109,12 @@ def get_genre_name_by_code(genre_code: str) -> str | None:
 
 
 def get_cuisine_slug(genre_name: str) -> str | None:
-    """取得 area + cuisine 搜尋用的 Tabelog path segment。"""
+    """Get the Tabelog path segment for area + cuisine searches."""
     return CUISINE_SLUG_MAPPING.get(genre_name)
 
 
 def get_cuisine_slug_by_code(genre_code: str) -> str | None:
-    """從舊版 genre code 反查目前可用的 cuisine path segment。"""
+    """Look up the current cuisine path segment from a legacy genre code."""
     genre_name = get_genre_name_by_code(genre_code)
     if not genre_name:
         return None
@@ -123,10 +123,10 @@ def get_cuisine_slug_by_code(genre_code: str) -> str | None:
 
 def get_all_genres() -> list[str]:
     """
-    取得所有支援的料理類別名稱
+    Get all supported cuisine names.
 
     Returns:
-        料理類別名稱清單
+        List of cuisine names.
     """
-    # 去除重複項目
+    # Remove duplicates.
     return sorted(set(GENRE_CODE_MAPPING.keys()))

@@ -1,10 +1,10 @@
-"""型別別名定義"""
+"""Type alias definitions."""
 
 from __future__ import annotations
 
-# 日期時間型別
-type ReservationDate = str  # YYYYMMDD 格式，例如：20250715
-type ReservationTime = str  # HHMM 格式，例如：1900
+# Date and time types.
+type ReservationDate = str  # YYYYMMDD format, for example 20250715.
+type ReservationTime = str  # HHMM format, for example 1900.
 
-# URL 型別
-type RestaurantURL = str  # 餐廳頁面 URL
+# URL types.
+type RestaurantURL = str  # Restaurant page URL.

@@ -1,4 +1,4 @@
-"""地區建議功能"""
+"""Area and keyword suggestion helpers."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ class TabelogSuggestUnavailableError(RuntimeError):
 
 @dataclass
 class AreaSuggestion:
-    """地區建議"""
+    """Area suggestion."""
 
     name: str
     datatype: str  # AddressMaster, RailroadStation, Prefecture, Town
@@ -39,7 +39,7 @@ class AreaSuggestion:
 
 @dataclass
 class KeywordSuggestion:
-    """關鍵字建議"""
+    """Keyword suggestion."""
 
     name: str
     datatype: str  # Genre2, Restaurant, Genre2 DetailCondition
@@ -89,14 +89,14 @@ def _parse_keyword_suggestions(data: list[dict[str, Any]]) -> list[KeywordSugges
 
 
 def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggestion]:
-    """取得地區建議
+    """Get area suggestions.
 
     Args:
-        query: 搜尋關鍵字
-        timeout: 請求超時時間（秒）
+        query: Search keyword.
+        timeout: Request timeout in seconds.
 
     Returns:
-        地區建議列表
+        List of area suggestions.
     """
     if not query or not query.strip():
         return []
@@ -126,14 +126,14 @@ def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggesti
 
 
 async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) -> list[AreaSuggestion]:
-    """取得地區建議（異步版本）
+    """Get area suggestions asynchronously.
 
     Args:
-        query: 搜尋關鍵字
-        request_timeout: 請求超時時間（秒）
+        query: Search keyword.
+        request_timeout: Request timeout in seconds.
 
     Returns:
-        地區建議列表
+        List of area suggestions.
     """
     if not query or not query.strip():
         return []
@@ -158,14 +158,14 @@ async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) 
 
 
 def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSuggestion]:
-    """取得關鍵字建議
+    """Get keyword suggestions.
 
     Args:
-        query: 搜尋關鍵字
-        timeout: 請求超時時間（秒）
+        query: Search keyword.
+        timeout: Request timeout in seconds.
 
     Returns:
-        關鍵字建議列表
+        List of keyword suggestions.
     """
     if not query or not query.strip():
         return []
@@ -195,14 +195,14 @@ def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSu
 
 
 async def get_keyword_suggestions_async(query: str, request_timeout: float = 10.0) -> list[KeywordSuggestion]:
-    """取得關鍵字建議（異步版本）
+    """Get keyword suggestions asynchronously.
 
     Args:
-        query: 搜尋關鍵字
-        request_timeout: 請求超時時間（秒）
+        query: Search keyword.
+        request_timeout: Request timeout in seconds.
 
     Returns:
-        關鍵字建議列表
+        List of keyword suggestions.
     """
     if not query or not query.strip():
         return []
