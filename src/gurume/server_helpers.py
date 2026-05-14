@@ -60,6 +60,35 @@ def _build_tool_error(
     )
 
 
+def _search_validation_suggested_action(
+    *,
+    detail: str,
+    error_code: Literal["invalid_parameters", "unsupported_cuisine"],
+) -> str:
+    if error_code == "unsupported_cuisine":
+        return (
+            "Call `tabelog_get_keyword_suggestions` with the cuisine text and use a `Genre2` result as `cuisine`, "
+            "or call `tabelog_list_cuisines` to choose a supported cuisine name."
+        )
+
+    if detail.startswith("reservation_") or "reservation_" in detail:
+        return (
+            "Provide `reservation_date` as YYYYMMDD and `reservation_time` as HHMM together; include "
+            "`party_size` only with both reservation fields."
+        )
+
+    if detail.startswith(("limit ", "page ")):
+        return "Adjust `limit` to 1-60 and `page` to 1 or greater, then retry the search."
+
+    if detail.startswith("Invalid sort type"):
+        return "Use one of the supported sort values: ranking, review-count, new-open, or standard."
+
+    return (
+        "Check the input fields against the tool schema; validate ambiguous areas with "
+        "`tabelog_get_area_suggestions` and cuisine names with `tabelog_get_keyword_suggestions` before retrying."
+    )
+
+
 def _validate_search_params(
     sort: SortOption,
     limit: int,
