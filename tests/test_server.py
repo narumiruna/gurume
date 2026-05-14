@@ -334,6 +334,7 @@ async def test_search_restaurants_invalid_sort():
     assert result.error is not None
     assert result.error.error_code == "invalid_parameters"
     assert "Invalid sort type" in result.error.detail
+    assert "ranking, review-count, new-open, or standard" in result.error.suggested_action
 
 
 @pytest.mark.asyncio
@@ -367,6 +368,9 @@ async def test_search_restaurants_requires_reservation_time_with_date():
     assert result.error is not None
     assert result.error.error_code == "invalid_parameters"
     assert "reservation_time is required" in result.error.detail
+    assert "Provide `reservation_date` as YYYYMMDD and `reservation_time` as HHMM together" in (
+        result.error.suggested_action
+    )
 
 
 @pytest.mark.asyncio
@@ -400,6 +404,8 @@ async def test_search_restaurants_unknown_cuisine():
     assert result.error is not None
     assert result.error.error_code == "unsupported_cuisine"
     assert "Unknown cuisine type" in result.error.detail
+    assert "`tabelog_get_keyword_suggestions`" in result.error.suggested_action
+    assert "`tabelog_list_cuisines`" in result.error.suggested_action
 
 
 @pytest.mark.asyncio
