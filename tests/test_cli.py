@@ -403,6 +403,8 @@ class TestSearchCommand:
         assert "搜尋中" in result.stderr
 
     def test_limit_must_be_positive(self):
+        import re
+
         from typer.testing import CliRunner
 
         from gurume.cli import app
@@ -411,7 +413,8 @@ class TestSearchCommand:
         result = runner.invoke(app, ["search", "--area", "東京", "--limit", "0"])
 
         assert result.exit_code != 0
-        assert "--limit" in result.output
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+        assert "--limit" in plain
 
     def test_unmapped_area_with_cuisine_warns_about_broad_results(self):
         from typer.testing import CliRunner
