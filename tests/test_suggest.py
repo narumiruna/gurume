@@ -524,3 +524,24 @@ def test_get_area_suggestions_parses_prefecture_datatype():
         assert len(results) == 1
         assert results[0].name == "東京都"
         assert results[0].datatype == "Prefecture"
+
+
+def test_get_area_suggestions_parses_town_datatype():
+    """Town datatype responses must parse without error."""
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {
+            "name": "三重町",
+            "datatype": "Town",
+            "id_in_datatype": 12345,
+            "lat": 33.0,
+            "lng": 131.5,
+        }
+    ]
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response):
+        results = get_area_suggestions(query="三重")
+        assert len(results) == 1
+        assert results[0].name == "三重町"
+        assert results[0].datatype == "Town"

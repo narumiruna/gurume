@@ -692,6 +692,31 @@ async def test_get_area_suggestions_success(sample_area_suggestions):
 
 
 @pytest.mark.asyncio
+async def test_get_area_suggestions_accepts_town_datatype():
+    """Test area suggestions can return upstream Town datatypes."""
+    with patch(
+        "gurume.server.get_area_suggestions_async",
+        new_callable=AsyncMock,
+    ) as mock_get_suggestions:
+        mock_get_suggestions.return_value = [
+            AreaSuggestion(
+                name="三重町",
+                datatype="Town",
+                id_in_datatype=12345,
+                lat=33.0,
+                lng=131.5,
+            )
+        ]
+
+        results = await tabelog_get_area_suggestions(query="三重")
+
+    assert results.status == "success"
+    assert len(results.items) == 1
+    assert results.items[0].name == "三重町"
+    assert results.items[0].datatype == "Town"
+
+
+@pytest.mark.asyncio
 async def test_get_area_suggestions_strips_whitespace(sample_area_suggestions):
     """Test that query whitespace is stripped"""
     with patch(
