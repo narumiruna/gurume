@@ -17,6 +17,7 @@ SuggestionDatatype = Literal[
     "Restaurant",
     "Genre2 DetailCondition",
     "Prefecture",
+    "Town",
 ]
 
 

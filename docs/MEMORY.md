@@ -11,6 +11,7 @@
 - Tabelog prefecture cuisine pages no longer honor the legacy `LstG` query alone; build area+cuisine searches from mapped `/AREA/rstLst/<segment>/` paths, where `<segment>` may be a slug like `yakiniku` or a category token like `RC0107` / `MC0101`.
 - Major city searches may need nested Tabelog area paths instead of prefecture slugs, for example `札幌 -> hokkaido/A0101`, `名古屋 -> aichi/A2301`, and `神戸 -> hyogo/A2801`.
 - Suggestion endpoints and detail pages are upstream-controlled and may change response shape; preserve defensive parsing and actionable error messages when touching these flows.
+- Tabelog area suggestions may return `datatype="Town"`; keep MCP `SuggestionDatatype` aligned with upstream values or FastMCP structured output validation will fail before returning an envelope.
 - Live Tabelog integration tests can return empty results under the default sandbox network; rerun `GURUME_RUN_INTEGRATION=1 uv run pytest -v -s tests/integration/test_cuisine_filter.py` with network access before treating empty live results as a regression.
 
 ## TASTE

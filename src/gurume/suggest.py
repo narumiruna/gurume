@@ -31,7 +31,7 @@ class AreaSuggestion:
     """地區建議"""
 
     name: str
-    datatype: str  # AddressMaster, RailroadStation
+    datatype: str  # AddressMaster, RailroadStation, Prefecture, Town
     id_in_datatype: int
     lat: float | None = None
     lng: float | None = None
