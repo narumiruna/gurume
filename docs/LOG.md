@@ -50,3 +50,5 @@
 2026-05-14 | fix(search): parse Tabelog search totals from current count markup (#local)
 2026-05-14 | fix(mcp): preserve keyword filtering and reject unsupported keyword cuisine combinations (#local)
 2026-05-14 | docs(plans): archive completed MCP search metadata and keyword filter plans (#local)
+2026-05-14 | fix(detail): tolerate optional menu 404s and parse party courses (#local)
+2026-05-14 | docs(plans): archive completed MCP detail menu course plan (#local)
