@@ -13,6 +13,7 @@
 - Suggestion endpoints and detail pages are upstream-controlled and may change response shape; preserve defensive parsing and actionable error messages when touching these flows.
 - Tabelog area suggestions may return `datatype="Town"`; keep MCP `SuggestionDatatype` aligned with upstream values or FastMCP structured output validation will fail before returning an envelope.
 - Live Tabelog integration tests can return empty results under the default sandbox network; rerun `GURUME_RUN_INTEGRATION=1 uv run pytest -v -s tests/integration/test_cuisine_filter.py` with network access before treating empty live results as a regression.
+- MCP live checks can pass cuisine filtering while still hiding regressions: keyword search on mapped area paths may be ignored upstream, search meta can disagree with parsed results, and detail `fetch_menu` / course parsing can fail or return empty after Tabelog markup or URL changes.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.
