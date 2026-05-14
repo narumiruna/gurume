@@ -43,3 +43,5 @@
 2026-05-14 | fix(cli): validate limits and keep JSON output parseable (#local)
 2026-05-14 | test(mcp): run full MCP validation and live cuisine checks (#local)
 2026-05-14 | fix(mcp): accept Town area suggestion datatype (#local)
+2026-05-14 | research(mcp): identify live keyword, meta, and detail gaps (#local)
+2026-05-14 | docs(plans): split MCP live gaps into executable follow-up plans (#local)
