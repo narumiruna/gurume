@@ -20,13 +20,6 @@ the current repository state.
     one place.
   - Done when: A changelog exists with the current released history and clearly notes notable MCP-related changes.
 
-- **Sync documentation with current behavior**
-  - What: Review README and examples for consistency with current CLI, TUI, suggestions, and MCP tools.
-  - Why now: The repo already ships keyword suggestions, TUI support, and MCP tests; documentation should reflect that
-    stable baseline without stale caveats.
-  - Done when: Public docs describe current features accurately and no longer imply that existing functionality is
-    future work.
-
 ### Medium
 
 - **Improve MCP error messages**

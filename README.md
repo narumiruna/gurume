@@ -14,12 +14,12 @@ Search by area, cuisine, date, and party size; parse structured detail pages; an
 ## ✨ Features
 
 - 🔍 Search restaurants by area, keyword, cuisine, date, time, and party size
-- 🍣 Filter by 45+ supported Japanese cuisine categories with stable Tabelog genre codes
+- 🍣 Filter by 29 supported Japanese cuisine categories with stable Tabelog genre codes
 - 📄 Parse restaurant detail pages into structured review, menu, and course data
 - ⚡ Use synchronous and asynchronous Python APIs
-- 🖥️ Run an interactive TUI with area suggestions, keyword suggestions, and AI-assisted query parsing
+- 🖥️ Run an interactive TUI with area suggestions, keyword suggestions, and cuisine auto-detection
 - 🤖 Start an MCP server with schema-first inputs and structured outputs for AI assistant integrations
-- 🔒 Keep responses typed with Pydantic models and Python type hints
+- 🔒 Keep MCP responses typed with Pydantic models and Python APIs type-annotated
 
 ## 📦 Installation
 

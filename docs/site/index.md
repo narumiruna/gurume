@@ -26,11 +26,11 @@ pip install gurume
 ## Features
 
 - 🔍 Search restaurants by area, keyword, cuisine, date, time, and party size
-- 🍣 Filter by 45+ supported Japanese cuisine categories with stable Tabelog genre codes
+- 🍣 Filter by 29 supported Japanese cuisine categories with stable Tabelog genre codes
 - 📄 Parse restaurant detail pages into structured review, menu, and course data
 - ⚡ Synchronous and asynchronous Python APIs
-- 🖥️ Interactive TUI with area suggestions, keyword suggestions, and AI-assisted query parsing
+- 🖥️ Interactive TUI with area suggestions, keyword suggestions, and cuisine auto-detection
 - 🤖 MCP server with schema-first inputs and structured outputs for AI assistant integrations
-- 🔒 Typed responses backed by Pydantic models
+- 🔒 MCP responses backed by Pydantic models and Python APIs type-annotated
 
 See the full [README on GitHub](https://github.com/narumiruna/gurume#readme) for examples.
