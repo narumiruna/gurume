@@ -11,6 +11,7 @@ from unittest.mock import patch
 import pytest
 
 from gurume.restaurant import Restaurant
+from gurume.restaurant import SortType
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 
@@ -431,6 +432,30 @@ class TestSearchCommand:
 
         assert result.exit_code == 0
         assert "無法精準映射地區" in result.output
+
+    def test_keyword_matching_cuisine_uses_cuisine_filter_without_keyword(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.SUCCESS,
+            restaurants=[Restaurant(name="カフェ", url="https://tabelog.com/hyogo/A2801/A280101/1/")],
+        )
+        runner = CliRunner()
+        with patch("gurume.cli.SearchRequest") as mock_request_class:
+            mock_request = mock_request_class.return_value
+            mock_request.search_sync.return_value = response
+            result = runner.invoke(app, ["search", "--area", "神戸", "--keyword", "カフェ", "--limit", "1"])
+
+        assert result.exit_code == 0
+        mock_request_class.assert_called_once_with(
+            area="神戸",
+            keyword=None,
+            genre_code="RC1901",
+            sort_type=SortType.RANKING,
+            max_pages=1,
+        )
 
 
 # ============================================================================

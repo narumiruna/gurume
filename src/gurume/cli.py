@@ -71,7 +71,7 @@ def _resolve_genre_code(
         detected_genre_code = get_genre_code(keyword)
         if detected_genre_code:
             status_console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
-            return detected_genre_code, keyword
+            return detected_genre_code, None
 
     return None, keyword
 
