@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
+import httpx
 import pytest
 
 from gurume import Course
@@ -219,6 +220,35 @@ class TestRestaurantDetailRequest:
         assert courses[0].description == "最高級的食材"
         assert len(courses[0].items) == 3
 
+    def test_parse_party_courses(self):
+        html = """
+        <html>
+            <body>
+                <div class="rstdtl-course-list js-rstdtl-course-list">
+                    <p class="rstdtl-course-list__course-title">
+                        <span class="rstdtl-course-list__course-title-text">
+                            ディナー／すき焼コース：特撰・松阪牛
+                        </span>
+                        <span class="c-label c-label--s rstdtl-course-list__label">6品</span>
+                    </p>
+                    <span class="rstdtl-course-list__price-num">
+                        <em>26,000</em>円 <span class="rstdtl-course-list__price-num-tax">(税込)</span>
+                    </span>
+                    <p class="rstdtl-course-list__course-comment">季節の前菜付き</p>
+                </div>
+            </body>
+        </html>
+        """
+
+        request = RestaurantDetailRequest(restaurant_url="https://tabelog.com/tokyo/A1302/A130204/13003043/")
+        courses = request._parse_courses(html)
+
+        assert len(courses) == 1
+        assert courses[0].name == "ディナー／すき焼コース：特撰・松阪牛"
+        assert courses[0].price == "26,000 円 (税込)"
+        assert courses[0].description == "季節の前菜付き"
+        assert courses[0].items == ["6品"]
+
     def test_parse_restaurant_basic_info(self):
         html = """
         <html>
@@ -304,6 +334,48 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.phone == "03-1111-2222"
         assert mock_get.call_count == 4
 
+    @patch("httpx.get")
+    def test_fetch_sync_ignores_optional_menu_404_and_parses_party_courses(self, mock_get):
+        main_response = Mock()
+        main_response.text = "<html><body><table><tr><th>営業時間</th><td>17:00 - 22:00</td></tr></table></body></html>"
+        main_response.raise_for_status = Mock()
+
+        menu_response = Mock()
+        menu_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "404 Not Found",
+            request=Mock(),
+            response=Mock(status_code=404),
+        )
+
+        course_response = Mock()
+        course_response.text = """
+        <html><body>
+            <div class="rstdtl-course-list">
+                <span class="rstdtl-course-list__course-title-text">すき焼コース</span>
+                <span class="rstdtl-course-list__label">6品</span>
+                <span class="rstdtl-course-list__price-num"><em>15,000</em>円</span>
+            </div>
+        </body></html>
+        """
+        course_response.raise_for_status = Mock()
+
+        mock_get.side_effect = [main_response, menu_response, course_response]
+
+        request = RestaurantDetailRequest(
+            restaurant_url="https://tabelog.com/tokyo/A1302/A130204/13003043/",
+            fetch_reviews=False,
+            fetch_menu=True,
+            fetch_courses=True,
+        )
+
+        detail = request.fetch_sync()
+
+        assert detail.restaurant.business_hours == "17:00 - 22:00"
+        assert detail.menu_items == []
+        assert len(detail.courses) == 1
+        assert detail.courses[0].name == "すき焼コース"
+        assert detail.courses[0].items == ["6品"]
+
     @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_fetch_async(self, mock_client):
@@ -340,6 +412,38 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.url == "https://tabelog.com/tokyo/A1307/A130704/13053564"
         assert detail.restaurant.business_hours == "17:00 - 23:00"
         assert mock_client_instance.get.call_count == 4
+
+    @pytest.mark.asyncio
+    @patch("httpx.AsyncClient")
+    async def test_fetch_async_ignores_optional_course_404(self, mock_client):
+        main_response = Mock()
+        main_response.text = "<html><body></body></html>"
+        main_response.raise_for_status = Mock()
+
+        course_response = Mock()
+        course_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+            "404 Not Found",
+            request=Mock(),
+            response=Mock(status_code=404),
+        )
+
+        mock_client_instance = AsyncMock()
+        mock_client_instance.get = AsyncMock(side_effect=[main_response, course_response])
+        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_client_instance.__aexit__ = AsyncMock()
+        mock_client.return_value = mock_client_instance
+
+        request = RestaurantDetailRequest(
+            restaurant_url="https://tabelog.com/tokyo/A1307/A130704/13053564/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=True,
+        )
+
+        detail = await request.fetch()
+
+        assert isinstance(detail, RestaurantDetail)
+        assert detail.courses == []
 
     @patch("httpx.get")
     def test_fetch_sync_only_reviews(self, mock_get):

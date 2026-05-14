@@ -16,6 +16,7 @@
 - MCP live checks can pass cuisine filtering while still hiding regressions: keyword search on mapped area paths may be ignored upstream, search meta can disagree with parsed results, and detail `fetch_menu` / course parsing can fail or return empty after Tabelog markup or URL changes.
 - Tabelog search count markup may expose visible range numbers before the real total, for example `.c-page-count__num` values `1`, `20`, then the total after `全`; parse the final number in `.c-page-count` and use `a[rel="next"]` for pagination.
 - Tabelog path-based result pages such as `/tokyo/rstLst/` and cuisine pages may ignore `sk=<keyword>`; keyword searches should use the search endpoint with `sa`, `sk`, and `sw`, and MCP should reject `keyword + cuisine` unless live evidence proves both filters are honored.
+- Detail menu pages are optional: some restaurants return 404 for `/dtlmenu/` while `/party/` has current course data in `.rstdtl-course-list`; treat optional menu/course 404s as empty sections and parse `/party/` courses from current selectors.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

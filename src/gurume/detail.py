@@ -134,8 +134,9 @@ class RestaurantDetailRequest:
         soup = BeautifulSoup(html, "lxml")
         courses = []
 
-        # 查找所有套餐
-        course_items = soup.find_all("div", class_="c-offerlist-item")
+        course_items = soup.find_all("div", class_="rstdtl-course-list")
+        if not course_items:
+            course_items = soup.find_all("div", class_="c-offerlist-item")
 
         for item in course_items:
             with contextlib.suppress(*DETAIL_PARSE_EXCEPTIONS):
@@ -166,6 +167,9 @@ class RestaurantDetailRequest:
         )
 
     def _parse_course(self, item: Any) -> Course | None:
+        if "rstdtl-course-list" in item.get("class", []):
+            return self._parse_party_course(item)
+
         name = self._get_required_text(item.find("h4"))
         items = []
         items_elem = item.find("ul")
@@ -179,8 +183,21 @@ class RestaurantDetailRequest:
             items=items,
         )
 
-    def _get_text(self, element: Any) -> str | None:
-        return element.get_text(strip=True) if element else None
+    def _parse_party_course(self, item: Any) -> Course | None:
+        name = self._get_required_text(item.find(class_="rstdtl-course-list__course-title-text"))
+        items = []
+        if item_count := self._get_text(item.find(class_="rstdtl-course-list__label")):
+            items.append(item_count)
+
+        return Course(
+            name=name,
+            price=self._get_text(item.find(class_="rstdtl-course-list__price-num"), separator=" "),
+            description=self._get_text(item.find(class_="rstdtl-course-list__course-comment"), separator=" "),
+            items=items,
+        )
+
+    def _get_text(self, element: Any, *, separator: str = "") -> str | None:
+        return element.get_text(separator, strip=True) if element else None
 
     def _get_required_text(self, element: Any) -> str:
         text = self._get_text(element)
@@ -466,6 +483,29 @@ class RestaurantDetailRequest:
             return [item for item in image if isinstance(item, str) and item]
         return []
 
+    def _is_not_found_error(self, error: httpx.HTTPStatusError) -> bool:
+        return error.response.status_code == 404
+
+    def _fetch_optional_sync(self, url: str, headers: dict[str, str]) -> str | None:
+        resp = httpx.get(url, headers=headers, timeout=30.0, follow_redirects=True)
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if self._is_not_found_error(e):
+                return None
+            raise
+        return resp.text
+
+    async def _fetch_optional_async(self, client: httpx.AsyncClient, url: str, headers: dict[str, str]) -> str | None:
+        resp = await client.get(url, headers=headers)
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if self._is_not_found_error(e):
+                return None
+            raise
+        return resp.text
+
     def fetch_sync(self) -> RestaurantDetail:
         """同步抓取餐廳詳細資訊"""
         headers = {"User-Agent": USER_AGENT}
@@ -494,16 +534,14 @@ class RestaurantDetailRequest:
         # 抓取菜單
         if self.fetch_menu:
             menu_url = f"{base_url}/dtlmenu/"
-            resp = httpx.get(menu_url, headers=headers, timeout=30.0, follow_redirects=True)
-            resp.raise_for_status()
-            menu_items = self._parse_menu_items(resp.text)
+            if menu_html := self._fetch_optional_sync(menu_url, headers):
+                menu_items = self._parse_menu_items(menu_html)
 
         # 抓取套餐
         if self.fetch_courses:
             course_url = f"{base_url}/party/"
-            resp = httpx.get(course_url, headers=headers, timeout=30.0, follow_redirects=True)
-            resp.raise_for_status()
-            courses = self._parse_courses(resp.text)
+            if course_html := self._fetch_optional_sync(course_url, headers):
+                courses = self._parse_courses(course_html)
 
         return RestaurantDetail(
             restaurant=restaurant,
@@ -541,16 +579,14 @@ class RestaurantDetailRequest:
             # 抓取菜單
             if self.fetch_menu:
                 menu_url = f"{base_url}/dtlmenu/"
-                resp = await client.get(menu_url, headers=headers)
-                resp.raise_for_status()
-                menu_items = self._parse_menu_items(resp.text)
+                if menu_html := await self._fetch_optional_async(client, menu_url, headers):
+                    menu_items = self._parse_menu_items(menu_html)
 
             # 抓取套餐
             if self.fetch_courses:
                 course_url = f"{base_url}/party/"
-                resp = await client.get(course_url, headers=headers)
-                resp.raise_for_status()
-                courses = self._parse_courses(resp.text)
+                if course_html := await self._fetch_optional_async(client, course_url, headers):
+                    courses = self._parse_courses(course_html)
 
         return RestaurantDetail(
             restaurant=restaurant,
