@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 from collections.abc import Callable
 from dataclasses import asdict
 from dataclasses import dataclass
@@ -44,10 +45,10 @@ class SearchStatus(StrEnum):
 class SearchMeta:
     """搜尋元資料"""
 
-    total_count: int
+    total_count: int | None
     current_page: int
     results_per_page: int
-    total_pages: int
+    total_pages: int | None
     has_next_page: bool
     has_prev_page: bool
     search_time: datetime = field(default_factory=_now)
@@ -189,24 +190,22 @@ class SearchRequest:
         """解析搜尋元資料"""
         soup = BeautifulSoup(html, "lxml")
 
-        # 總結果數
-        total_count = 0
-        count_elem = soup.find("span", class_="c-page-count__num")
-        if count_elem:
-            with contextlib.suppress(ValueError):
-                total_count = int(count_elem.get_text(strip=True))
-
         # 每頁結果數 (通常是20)
         results_per_page = 20
         restaurant_items = soup.find_all("div", class_="list-rst")
+        if not restaurant_items:
+            restaurant_items = soup.find_all("li", class_="list-rst")
         if restaurant_items:
             results_per_page = len(restaurant_items)
 
+        # 總結果數
+        total_count = self._parse_total_count(soup, len(restaurant_items))
+
         # 計算總頁數
-        total_pages = (total_count + results_per_page - 1) // results_per_page if total_count > 0 else 1
+        total_pages = self._parse_total_pages(soup, total_count, results_per_page, current_page)
 
         # 判斷是否有前後頁
-        has_next_page = current_page < total_pages
+        has_next_page = self._has_next_page(soup, total_pages, current_page)
         has_prev_page = current_page > 1
 
         return SearchMeta(
@@ -217,6 +216,64 @@ class SearchRequest:
             has_next_page=has_next_page,
             has_prev_page=has_prev_page,
         )
+
+    def _parse_total_count(self, soup: BeautifulSoup, parsed_item_count: int) -> int | None:
+        count_block = soup.find(class_="c-page-count")
+        count_elems = count_block.find_all("span", class_="c-page-count__num") if count_block else []
+        if not count_elems:
+            count_elem = soup.find("span", class_="c-page-count__num")
+            count_elems = [count_elem] if count_elem else []
+
+        total_count = None
+        for count_elem in reversed(count_elems):
+            total_count = self._parse_count_text(count_elem.get_text(" ", strip=True))
+            if total_count is not None:
+                break
+
+        if total_count is None:
+            return 0 if parsed_item_count == 0 else None
+
+        if 0 < total_count < parsed_item_count:
+            return None
+
+        return total_count
+
+    def _parse_total_pages(
+        self,
+        soup: BeautifulSoup,
+        total_count: int | None,
+        results_per_page: int,
+        current_page: int,
+    ) -> int | None:
+        if total_count is not None:
+            return (total_count + results_per_page - 1) // results_per_page if total_count > 0 else 1
+
+        page_numbers = [
+            page_number
+            for page_elem in soup.select(".c-pagination__num")
+            if (page_number := self._parse_count_text(page_elem.get_text(" ", strip=True))) is not None
+        ]
+        if page_numbers:
+            return max(current_page, *page_numbers)
+
+        return None if self._has_next_link(soup) else current_page
+
+    def _has_next_page(self, soup: BeautifulSoup, total_pages: int | None, current_page: int) -> bool:
+        if self._has_next_link(soup):
+            return True
+        return total_pages is not None and current_page < total_pages
+
+    def _has_next_link(self, soup: BeautifulSoup) -> bool:
+        return soup.select_one('a[rel="next"], a.c-pagination__arrow--next') is not None
+
+    def _parse_count_text(self, text: str) -> int | None:
+        match = re.search(r"\d[\d,]*", text)
+        if match is None:
+            return None
+
+        with contextlib.suppress(ValueError):
+            return int(match.group(0).replace(",", ""))
+        return None
 
     def _create_restaurant_request(self, page: int = 1) -> RestaurantSearchRequest:
         """創建餐廳搜尋請求"""
@@ -244,6 +301,9 @@ class SearchRequest:
             return meta
 
         meta = self._parse_meta(html, page)
+        if meta.total_pages is None:
+            return meta
+
         remaining_pages = max(meta.total_pages - self.page + 1, 0)
         if self.max_pages > remaining_pages:
             self.max_pages = remaining_pages

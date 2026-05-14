@@ -135,6 +135,86 @@ class TestSearchRequest:
         assert meta.has_next_page is False
         assert meta.has_prev_page is False
 
+    def test_parse_meta_uses_total_count_from_count_block(self):
+        """Test current Tabelog count blocks use the final number as total count."""
+        request = SearchRequest()
+        html = """
+        <html>
+        <body>
+            <div class="c-page-count">
+                <span class="c-page-count__num"><strong>1</strong></span>～
+                <span class="c-page-count__num"><strong>20</strong></span> 件を表示
+                <span class="c-page-count__line">／</span>
+                全 <span class="c-page-count__num"><strong>138,635</strong></span> 件
+            </div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="c-pagination">
+                <a href="/tokyo/rstLst/2/" rel="next" class="c-pagination__arrow c-pagination__arrow--next">
+                    次の20件
+                </a>
+            </div>
+        </body>
+        </html>
+        """
+
+        meta = request._parse_meta(html, current_page=1)
+
+        assert meta.total_count == 138635
+        assert meta.results_per_page == 5
+        assert meta.total_pages == 27727
+        assert meta.has_next_page is True
+
+    def test_parse_meta_ignores_impossible_count_lower_than_results(self):
+        """Test metadata does not report totals lower than parsed restaurant count."""
+        request = SearchRequest()
+        html = """
+        <html>
+        <body>
+            <span class="c-page-count__num">1</span>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+        </body>
+        </html>
+        """
+
+        meta = request._parse_meta(html, current_page=1)
+
+        assert meta.total_count is None
+        assert meta.total_pages == 1
+        assert meta.has_next_page is False
+
+    def test_parse_meta_uses_next_link_when_total_count_is_missing(self):
+        """Test pagination remains useful when Tabelog omits a total count."""
+        request = SearchRequest()
+        html = """
+        <html>
+        <body>
+            <div class="list-rst"></div>
+            <div class="list-rst"></div>
+            <div class="c-pagination">
+                <strong class="c-pagination__num is-current">1</strong>
+                <a href="/tokyo/rstLst/2/" class="c-pagination__num">2</a>
+                <a href="/tokyo/rstLst/2/" rel="next" class="c-pagination__arrow c-pagination__arrow--next">
+                    次の20件
+                </a>
+            </div>
+        </body>
+        </html>
+        """
+
+        meta = request._parse_meta(html, current_page=1)
+
+        assert meta.total_count is None
+        assert meta.total_pages == 2
+        assert meta.has_next_page is True
+
     def test_create_restaurant_request(self):
         """Test creating restaurant request"""
         search_request = SearchRequest(
