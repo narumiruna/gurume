@@ -239,6 +239,19 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
 
 
 @pytest.mark.asyncio
+async def test_search_restaurants_rejects_keyword_with_cuisine():
+    """Test MCP search rejects a combination Tabelog does not reliably honor"""
+    result = await tabelog_search_restaurants(area="東京", keyword="今半", cuisine="すき焼き")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "invalid_parameters"
+    assert "keyword and cuisine cannot be used together" in result.error.detail
+    assert "`keyword` only" in result.error.suggested_action
+    assert "`cuisine` without `keyword`" in result.error.suggested_action
+
+
+@pytest.mark.asyncio
 async def test_search_restaurants_with_reservation_filters(sample_restaurants):
     """Test restaurant search forwards reservation filters to SearchRequest"""
     mock_response = SearchResponse(

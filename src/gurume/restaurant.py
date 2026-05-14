@@ -53,6 +53,12 @@ def build_search_url_and_params(
     """
     url = "https://tabelog.com/rst/rstsearch"
     cuisine_slug = get_cuisine_slug_by_code(genre_code) if genre_code else None
+    keyword = params.get("sk")
+    if keyword:
+        params.setdefault("sw", keyword)
+        if genre_code:
+            params["LstG"] = genre_code
+        return url, params
 
     if area_slug and cuisine_slug:
         params.pop("sa", None)

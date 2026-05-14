@@ -509,6 +509,16 @@ class TestBuildSearchUrlAndParams:
         assert "sa" not in params, "area param must move into URL path"
         assert "LstG" not in params
 
+    def test_area_and_keyword_preserves_search_endpoint(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "東京都", "sk": "今半"}, "tokyo", None)
+        assert url == "https://tabelog.com/rst/rstsearch"
+        assert params["sa"] == "東京都"
+        assert params["sk"] == "今半"
+        assert params["sw"] == "今半"
+        assert "LstG" not in params
+
     def test_genre_only_uses_query_param(self):
         from gurume.restaurant import build_search_url_and_params
 
@@ -562,8 +572,8 @@ class TestBuildSearchUrlAndParams:
         assert "LstG" not in params
         assert "sa" not in params
 
-    def test_search_request_build_url_uses_cuisine_path(self):
-        """SearchRequest._build_url_and_params must embed cuisine filters in the path."""
+    def test_search_request_build_url_preserves_keyword_filters(self):
+        """SearchRequest._build_url_and_params must not use mapped paths for keyword searches."""
         from gurume.restaurant import SortType
         from gurume.search import SearchRequest
 
@@ -576,5 +586,8 @@ class TestBuildSearchUrlAndParams:
         rst_req = request._create_restaurant_request(page=1)
         url, params = request._build_url_and_params(rst_req)
 
-        assert url == "https://tabelog.com/tokyo/rstLst/sushi/"
-        assert "LstG" not in params
+        assert url == "https://tabelog.com/rst/rstsearch"
+        assert params["sa"] == "東京"
+        assert params["sk"] == "寿司"
+        assert params["sw"] == "寿司"
+        assert params["LstG"] == "RC0201"

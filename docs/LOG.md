@@ -48,3 +48,5 @@
 2026-05-14 | docs(plans): split MCP live gaps into executable follow-up plans (#local)
 2026-05-14 | docs(plans): archive completed MCP HTTP transport plan (#local)
 2026-05-14 | fix(search): parse Tabelog search totals from current count markup (#local)
+2026-05-14 | fix(mcp): preserve keyword filtering and reject unsupported keyword cuisine combinations (#local)
+2026-05-14 | docs(plans): archive completed MCP search metadata and keyword filter plans (#local)
