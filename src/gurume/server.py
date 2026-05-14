@@ -217,7 +217,16 @@ async def tabelog_search_restaurants(
     and non-fatal warnings that help the caller refine follow-up tool calls.
     """
     try:
-        sort_type = _validate_search_params(sort, limit, page, reservation_date, reservation_time, party_size)
+        sort_type = _validate_search_params(
+            sort,
+            limit,
+            page,
+            keyword,
+            cuisine,
+            reservation_date,
+            reservation_time,
+            party_size,
+        )
         genre_code = _resolve_genre_code(cuisine)
 
         request = SearchRequest(

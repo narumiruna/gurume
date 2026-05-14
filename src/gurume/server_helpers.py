@@ -83,6 +83,13 @@ def _search_validation_suggested_action(
     if detail.startswith("Invalid sort type"):
         return "Use one of the supported sort values: ranking, review-count, new-open, or standard."
 
+    if detail.startswith("keyword and cuisine cannot be used together"):
+        return (
+            "For restaurant-name matching, call `tabelog_search_restaurants` with `keyword` only. "
+            "For genre filtering, call `tabelog_get_keyword_suggestions` first and pass the `Genre2` result as "
+            "`cuisine` without `keyword`."
+        )
+
     return (
         "Check the input fields against the tool schema; validate ambiguous areas with "
         "`tabelog_get_area_suggestions` and cuisine names with `tabelog_get_keyword_suggestions` before retrying."
@@ -93,11 +100,14 @@ def _validate_search_params(
     sort: SortOption,
     limit: int,
     page: int,
+    keyword: str | None,
+    cuisine: str | None,
     reservation_date: str | None,
     reservation_time: str | None,
     party_size: int | None,
 ) -> SortType:
     _validate_pagination_params(limit, page, sort)
+    _validate_keyword_params(keyword, cuisine)
     _validate_reservation_params(reservation_date, reservation_time, party_size)
     return SORT_MAP[sort]
 
@@ -111,6 +121,14 @@ def _validate_pagination_params(limit: int, page: int, sort: SortOption) -> None
 
     if sort not in SORT_MAP:
         raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(SORT_MAP)}")
+
+
+def _validate_keyword_params(keyword: str | None, cuisine: str | None) -> None:
+    if keyword is not None and cuisine is not None:
+        raise ValueError(
+            "keyword and cuisine cannot be used together because Tabelog may ignore one filter; "
+            "use keyword-only search for restaurant names or cuisine-only search for genre filtering"
+        )
 
 
 def _validate_reservation_params(
@@ -216,11 +234,6 @@ def _build_search_warnings(
         warnings.append(
             "If the keyword is actually a cuisine type, call `tabelog_get_keyword_suggestions` and pass the "
             "Genre2 result as `cuisine` for more precise matches."
-        )
-
-    if cuisine is not None and keyword is not None:
-        warnings.append(
-            "Using both `cuisine` and `keyword` narrows results. Remove `keyword` if you want broader cuisine matches."
         )
 
     if reservation_date is not None:
