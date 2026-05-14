@@ -27,6 +27,7 @@ from .server_helpers import _build_suggestion_list_error_output
 from .server_helpers import _build_suggestion_list_output
 from .server_helpers import _build_tool_error
 from .server_helpers import _resolve_genre_code
+from .server_helpers import _search_validation_suggested_action
 from .server_helpers import _to_detail_output
 from .server_helpers import _to_restaurant_outputs
 from .server_helpers import _to_suggestion_outputs
@@ -232,7 +233,8 @@ async def tabelog_search_restaurants(
         )
         response = await request.search()
     except ValueError as e:
-        error_code = "unsupported_cuisine" if cuisine and "Unknown cuisine type" in str(e) else "invalid_parameters"
+        detail = str(e)
+        error_code = "unsupported_cuisine" if cuisine and "Unknown cuisine type" in detail else "invalid_parameters"
         return _build_search_error_output(
             limit=limit,
             area=area,
@@ -247,12 +249,8 @@ async def tabelog_search_restaurants(
                 error_code=error_code,
                 message=f"Invalid search parameters: {e}",
                 retryable=False,
-                suggested_action=(
-                    "Call `tabelog_list_cuisines` or `tabelog_get_keyword_suggestions` to validate the cuisine first."
-                    if error_code == "unsupported_cuisine"
-                    else "Check the input fields and retry with values that satisfy the tool schema."
-                ),
-                detail=str(e),
+                suggested_action=_search_validation_suggested_action(detail=detail, error_code=error_code),
+                detail=detail,
             ),
         )
     except RuntimeError as e:

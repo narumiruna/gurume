@@ -43,3 +43,4 @@
 2026-05-14 | fix(cli): validate limits and keep JSON output parseable (#local)
 2026-05-14 | test(mcp): run full MCP validation and live cuisine checks (#local)
 2026-05-14 | fix(mcp): accept Town area suggestion datatype (#local)
+2026-05-14 | fix(mcp): make search validation errors more actionable (#local)
