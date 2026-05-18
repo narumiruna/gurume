@@ -58,6 +58,4 @@
 2026-05-14 | chore(pyproject): add richer PEP 621 metadata links and discoverability tags (#local)
 2026-05-14 | docs(project): refresh stale README, TUI, MCP, and test docs (#local)
 2026-05-18 | fix(mcp): preserve upstream suggestion datatypes for CLI/MCP consistency (#local)
-2026-05-18 | chore(skills): add canonical-to-runtime sync script (#local)
-2026-05-18 | chore(skills): move Codex skill mirror under .codex (#local)
-2026-05-18 | fix(skills): address sync hook PR review comments (#71)
+2026-05-18 | chore(skills): add canonical-to-runtime sync script, move Codex skill mirror under .codex, and address sync hook PR review comments (#71)
