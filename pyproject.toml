@@ -4,8 +4,9 @@ version         = "0.0.9"
 description     = "Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on Tabelog"
 readme          = "README.md"
 requires-python = ">=3.12"
+license         = "MIT"
+license-files   = ["LICENSE"]
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
-license         = { file = "LICENSE" }
 keywords        = [
   "cli",
   "fastmcp",
@@ -46,14 +47,14 @@ dependencies    = [
   "typer>=0.24.1",
 ]
 
-[project.scripts]
-gurume = "gurume.cli:main"
-
 [project.urls]
 Documentation = "https://narumiruna.github.io/gurume/"
 Homepage      = "https://github.com/narumiruna/gurume"
 Issues        = "https://github.com/narumiruna/gurume/issues"
 Repository    = "https://github.com/narumiruna/gurume"
+
+[project.scripts]
+gurume = "gurume.cli:main"
 
 [dependency-groups]
 dev  = [
