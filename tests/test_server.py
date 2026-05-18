@@ -207,6 +207,7 @@ async def test_search_restaurants_success(sample_restaurants):
         assert results.has_more is False
         assert results.meta is not None
         assert results.meta.current_page == 1
+        assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
 
         # Verify SearchRequest was called correctly
         mock_search.assert_called_once()
@@ -237,6 +238,7 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
         assert results.applied_filters.page == 1
         assert any("tabelog_list_cuisines" in warning for warning in results.warnings)
         assert any("Area + keyword searches are best-effort" in warning for warning in results.warnings)
+        assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
         mock_search.assert_called_once()
 
 
@@ -310,6 +312,7 @@ async def test_search_restaurants_limit_applied(sample_restaurants):
         # Should only return 3 results, not all 6
         assert len(results.items) == 3
         assert results.returned_count == 3
+        assert any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
 
 
 @pytest.mark.asyncio
