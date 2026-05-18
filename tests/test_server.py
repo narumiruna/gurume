@@ -312,7 +312,48 @@ async def test_search_restaurants_limit_applied(sample_restaurants):
         # Should only return 3 results, not all 6
         assert len(results.items) == 3
         assert results.returned_count == 3
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_with_ambiguous_area_has_warning(sample_restaurants):
+    """Ambiguous area-only searches should emit suggestion reminder."""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=None,
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+
+        results = await tabelog_search_restaurants(
+            area="東",
+            limit=10,
+        )
+
+        assert results.status == "success"
         assert any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_with_mapped_area_only_has_no_ambiguous_warning(sample_restaurants):
+    """Mapped area-only searches should not emit suggestion-reminder warning noise."""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=None,
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+
+        results = await tabelog_search_restaurants(
+            area="東京都",
+            limit=10,
+        )
+
+        assert results.status == "success"
+        assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
 
 
 @pytest.mark.asyncio
