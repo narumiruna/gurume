@@ -12,6 +12,7 @@ import pytest
 
 from gurume.restaurant import Restaurant
 from gurume.restaurant import SortType
+from gurume.search import SearchMeta
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 
@@ -375,7 +376,7 @@ class TestCLIArguments:
 class TestSearchCommand:
     """Test `gurume search` command behavior."""
 
-    def test_json_output_is_machine_parseable(self):
+    def test_json_list_output_is_machine_parseable(self):
         from typer.testing import CliRunner
 
         from gurume.cli import app
@@ -386,7 +387,7 @@ class TestSearchCommand:
         )
         runner = CliRunner()
         with patch("gurume.search.SearchRequest.search_sync", return_value=response):
-            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json"])
+            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json-list"])
 
         assert result.exit_code == 0
         assert json.loads(result.stdout) == [
@@ -402,6 +403,157 @@ class TestSearchCommand:
             }
         ]
         assert "搜尋中" in result.stderr
+
+    @pytest.mark.parametrize("output_format", ["json", "json-envelope"])
+    def test_json_envelope_output_contains_search_metadata(self, output_format: str):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.SUCCESS,
+            restaurants=[
+                Restaurant(
+                    name="すし店",
+                    url="https://tabelog.com/tokyo/A1301/A130101/1/",
+                    rating=4.2,
+                    review_count=50,
+                    area="銀座",
+                    genres=["寿司"],
+                )
+            ],
+            meta=SearchMeta(
+                total_count=42,
+                current_page=1,
+                results_per_page=20,
+                total_pages=3,
+                has_next_page=True,
+                has_prev_page=False,
+            ),
+        )
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(
+                app,
+                ["search", "--area", "東京", "--cuisine", "寿司", "--limit", "1", "--output", output_format],
+            )
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 0
+        assert payload["status"] == "success"
+        assert payload["items"] == [
+            {
+                "name": "すし店",
+                "rating": 4.2,
+                "review_count": 50,
+                "area": "銀座",
+                "genres": ["寿司"],
+                "url": "https://tabelog.com/tokyo/A1301/A130101/1/",
+                "lunch_price": None,
+                "dinner_price": None,
+            }
+        ]
+        assert payload["returned_count"] == 1
+        assert payload["limit"] == 1
+        assert payload["has_more"] is True
+        assert payload["meta"]["total_count"] == 42
+        assert payload["applied_filters"]["area"] == "東京"
+        assert payload["applied_filters"]["cuisine"] == "寿司"
+        assert payload["applied_filters"]["genre_code"] == "RC0201"
+        assert payload["applied_filters"]["sort"] == "ranking"
+        assert payload["warnings"] == []
+        assert payload["error"] is None
+        assert "搜尋中" in result.stderr
+        assert "共找到" in result.stderr
+
+    def test_json_envelope_no_results_is_parseable(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.NO_RESULTS,
+            restaurants=[],
+            meta=SearchMeta(
+                total_count=0,
+                current_page=1,
+                results_per_page=20,
+                total_pages=1,
+                has_next_page=False,
+                has_prev_page=False,
+            ),
+        )
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(app, ["search", "--area", "東京", "--output", "json-envelope"])
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 0
+        assert payload["status"] == "no_results"
+        assert payload["items"] == []
+        assert payload["returned_count"] == 0
+        assert payload["limit"] == 20
+        assert payload["meta"]["total_count"] == 0
+        assert payload["error"] is None
+        assert "沒有找到餐廳" in result.stderr
+
+    def test_json_envelope_validation_error_is_parseable(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["search", "--output", "json-envelope"])
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 1
+        assert payload["status"] == "error"
+        assert payload["items"] == []
+        assert payload["returned_count"] == 0
+        assert payload["applied_filters"]["area"] is None
+        assert payload["applied_filters"]["keyword"] is None
+        assert payload["applied_filters"]["cuisine"] is None
+        assert payload["error"]["error_code"] == "invalid_parameters"
+        assert payload["error"]["retryable"] is False
+        assert "area, keyword, or cuisine" in payload["error"]["detail"]
+        assert "--area" in payload["error"]["suggested_action"]
+        assert "錯誤" in result.stderr
+
+    def test_json_envelope_search_error_is_parseable(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP 500")
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json-envelope"])
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 1
+        assert payload["status"] == "error"
+        assert payload["error"]["error_code"] == "upstream_unavailable"
+        assert payload["error"]["retryable"] is True
+        assert payload["error"]["detail"] == "HTTP 500"
+        assert payload["applied_filters"]["area"] == "東京"
+        assert payload["applied_filters"]["cuisine"] == "寿司"
+        assert payload["applied_filters"]["genre_code"] == "RC0201"
+        assert "搜尋錯誤" in result.stderr
+
+    def test_search_help_lists_json_envelope_outputs(self):
+        import re
+
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        result = runner.invoke(app, ["search", "--help"])
+
+        assert result.exit_code == 0
+        plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+        assert "json-envelope" in plain
+        assert "json-list" in plain
 
     def test_limit_must_be_positive(self):
         import re

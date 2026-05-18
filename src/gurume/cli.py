@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated
+from typing import Literal
 
 import typer
 from rich.console import Console
@@ -16,6 +18,15 @@ from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
 from .restaurant import SortType
 from .search import SearchRequest
+from .search import SearchResponse
+from .search import SearchStatus
+from .server_helpers import _build_search_error_output
+from .server_helpers import _build_search_output
+from .server_helpers import _build_tool_error
+from .server_helpers import _to_restaurant_outputs
+from .server_models import RestaurantSearchOutput
+from .server_models import SortOption as ServerSortOption
+from .server_models import ToolErrorOutput
 
 app = typer.Typer(
     name="gurume",
@@ -32,6 +43,8 @@ class OutputFormat(StrEnum):
 
     TABLE = "table"
     JSON = "json"
+    JSON_ENVELOPE = "json-envelope"
+    JSON_LIST = "json-list"
     SIMPLE = "simple"
 
 
@@ -52,28 +65,36 @@ SORT_TYPE_MAP = {
 }
 
 
-def _resolve_genre_code(
+@dataclass(frozen=True)
+class ResolvedSearchFilters:
+    """Normalized CLI search filters after cuisine detection."""
+
+    keyword: str | None
+    cuisine: str | None
+    genre_code: str | None
+
+
+def _resolve_search_filters(
     cuisine: str | None,
     keyword: str | None,
     status_console: Console = console,
-) -> tuple[str | None, str | None]:
-    genre_code = None
+) -> ResolvedSearchFilters:
     if cuisine:
         genre_code = get_genre_code(cuisine)
         if genre_code:
             status_console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
-            return genre_code, keyword
+            return ResolvedSearchFilters(keyword=keyword, cuisine=cuisine, genre_code=genre_code)
 
         status_console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
-        return None, cuisine
+        return ResolvedSearchFilters(keyword=cuisine, cuisine=None, genre_code=None)
 
     if keyword:
         detected_genre_code = get_genre_code(keyword)
         if detected_genre_code:
             status_console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
-            return detected_genre_code, None
+            return ResolvedSearchFilters(keyword=None, cuisine=keyword, genre_code=detected_genre_code)
 
-    return None, keyword
+    return ResolvedSearchFilters(keyword=keyword, cuisine=None, genre_code=None)
 
 
 def _build_json_data(restaurants: Sequence) -> list[dict[str, object]]:
@@ -92,6 +113,144 @@ def _build_json_data(restaurants: Sequence) -> list[dict[str, object]]:
     ]
 
 
+def _server_sort_option(sort: SortOption) -> ServerSortOption:
+    return sort.value
+
+
+def _unmapped_area_warning(area: str | None, genre_code: str | None) -> str | None:
+    if area and genre_code and get_area_slug(area) is None:
+        return "Area could not be mapped precisely; results may include restaurants from other areas."
+    return None
+
+
+def _append_warnings(output: RestaurantSearchOutput, warnings: Sequence[str | None]) -> RestaurantSearchOutput:
+    for warning in warnings:
+        if warning and warning not in output.warnings:
+            output.warnings.append(warning)
+    return output
+
+
+def _build_search_json_envelope(
+    response: SearchResponse,
+    *,
+    area: str | None,
+    filters: ResolvedSearchFilters,
+    sort: SortOption,
+    limit: int,
+) -> RestaurantSearchOutput:
+    status: Literal["success", "no_results"] = "success"
+    if response.status == SearchStatus.NO_RESULTS:
+        status = "no_results"
+
+    output = _build_search_output(
+        items=_to_restaurant_outputs(response.restaurants, limit),
+        limit=limit,
+        meta=response.meta,
+        area=area,
+        keyword=filters.keyword,
+        cuisine=filters.cuisine,
+        genre_code=filters.genre_code,
+        sort=_server_sort_option(sort),
+        page=1,
+        reservation_date=None,
+        reservation_time=None,
+        party_size=None,
+        status=status,
+    )
+    return _append_warnings(output, [_unmapped_area_warning(area, filters.genre_code)])
+
+
+def _build_error_json_envelope(
+    *,
+    area: str | None,
+    filters: ResolvedSearchFilters,
+    sort: SortOption,
+    limit: int,
+    error: ToolErrorOutput,
+) -> RestaurantSearchOutput:
+    output = _build_search_error_output(
+        limit=limit,
+        area=area,
+        keyword=filters.keyword,
+        cuisine=filters.cuisine,
+        sort=_server_sort_option(sort),
+        page=1,
+        reservation_date=None,
+        reservation_time=None,
+        party_size=None,
+        error=error,
+    )
+    return _append_warnings(output, [_unmapped_area_warning(area, filters.genre_code)])
+
+
+def _invalid_search_error(detail: str) -> ToolErrorOutput:
+    return _build_tool_error(
+        error_code="invalid_parameters",
+        message=f"Invalid search parameters: {detail}",
+        retryable=False,
+        suggested_action="Provide at least one of `--area`, `--keyword`, or `--cuisine`, then retry the search.",
+        detail=detail,
+    )
+
+
+def _upstream_search_error(detail: str | None) -> ToolErrorOutput:
+    return _build_tool_error(
+        error_code="upstream_unavailable",
+        message="Restaurant search failed because Tabelog returned an error response.",
+        retryable=True,
+        suggested_action="Validate the area or cuisine first, then retry the search.",
+        detail=detail,
+    )
+
+
+def _output_error_envelope_if_requested(
+    output: OutputFormat,
+    *,
+    area: str | None,
+    filters: ResolvedSearchFilters,
+    sort: SortOption,
+    limit: int,
+    error: ToolErrorOutput,
+) -> None:
+    if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+        _output_json_envelope(
+            _build_error_json_envelope(area=area, filters=filters, sort=sort, limit=limit, error=error)
+        )
+
+
+def _output_no_results_envelope_if_requested(
+    output: OutputFormat,
+    response: SearchResponse,
+    *,
+    area: str | None,
+    filters: ResolvedSearchFilters,
+    sort: SortOption,
+    limit: int,
+) -> None:
+    if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+        _output_json_envelope(_build_search_json_envelope(response, area=area, filters=filters, sort=sort, limit=limit))
+
+
+def _output_search_results(
+    output: OutputFormat,
+    response: SearchResponse,
+    restaurants: list,
+    *,
+    area: str | None,
+    filters: ResolvedSearchFilters,
+    sort: SortOption,
+    limit: int,
+) -> None:
+    if output == OutputFormat.JSON_LIST:
+        _output_json(restaurants)
+    elif output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+        _output_json_envelope(_build_search_json_envelope(response, area=area, filters=filters, sort=sort, limit=limit))
+    elif output == OutputFormat.SIMPLE:
+        _output_simple(restaurants)
+    else:
+        _output_table(restaurants)
+
+
 @app.command()
 def search(
     area: Annotated[str | None, typer.Option("--area", "-a", help="搜尋地區（例如：東京、大阪）")] = None,
@@ -107,15 +266,26 @@ def search(
       gurume search --area 東京 --keyword 寿司
       gurume search -a 三重 -c すき焼き --sort ranking
       gurume search --area 大阪 --cuisine ラーメン -o json
+      gurume search --area 大阪 --cuisine ラーメン -o json-list
     """
-    status_console = err_console if output == OutputFormat.JSON else console
+    status_console = (
+        err_console if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE, OutputFormat.JSON_LIST) else console
+    )
 
     if not area and not keyword and not cuisine:
         status_console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")
+        _output_error_envelope_if_requested(
+            output,
+            area=area,
+            filters=ResolvedSearchFilters(keyword=keyword, cuisine=cuisine, genre_code=None),
+            sort=sort,
+            limit=limit,
+            error=_invalid_search_error("at least one of area, keyword, or cuisine is required"),
+        )
         raise typer.Exit(1)
 
-    genre_code, keyword = _resolve_genre_code(cuisine, keyword, status_console)
-    if area and genre_code and get_area_slug(area) is None:
+    filters = _resolve_search_filters(cuisine, keyword, status_console)
+    if _unmapped_area_warning(area, filters.genre_code):
         status_console.print(f"[yellow]警告：無法精準映射地區「{area}」，搜尋結果可能包含其他地區[/yellow]")
     sort_type = SORT_TYPE_MAP[sort]
 
@@ -123,8 +293,8 @@ def search(
     status_console.print("[green]搜尋中...[/green]")
     request = SearchRequest(
         area=area,
-        keyword=keyword,
-        genre_code=genre_code,
+        keyword=filters.keyword,
+        genre_code=filters.genre_code,
         sort_type=sort_type,
         max_pages=1,
     )
@@ -133,22 +303,33 @@ def search(
 
     if response.status.value == "error":
         status_console.print(f"[red]搜尋錯誤：{response.error_message}[/red]")
+        _output_error_envelope_if_requested(
+            output,
+            area=area,
+            filters=filters,
+            sort=sort,
+            limit=limit,
+            error=_upstream_search_error(response.error_message),
+        )
         raise typer.Exit(1)
 
     if not response.restaurants:
         status_console.print("[yellow]沒有找到餐廳[/yellow]")
+        _output_no_results_envelope_if_requested(
+            output,
+            response,
+            area=area,
+            filters=filters,
+            sort=sort,
+            limit=limit,
+        )
         raise typer.Exit(0)
 
     # Limit result count.
     restaurants = response.restaurants[:limit]
 
     # Output results.
-    if output == OutputFormat.JSON:
-        _output_json(restaurants)
-    elif output == OutputFormat.SIMPLE:
-        _output_simple(restaurants)
-    else:
-        _output_table(restaurants)
+    _output_search_results(output, response, restaurants, area=area, filters=filters, sort=sort, limit=limit)
 
     # Show summary stats.
     status_console.print(f"\n[cyan]共找到 {len(response.restaurants)} 家餐廳，顯示前 {len(restaurants)} 家[/cyan]")
@@ -177,7 +358,16 @@ def _output_table(restaurants: list) -> None:
 
 def _output_json(restaurants: list) -> None:
     """Output restaurants as JSON."""
-    console.print(json.dumps(_build_json_data(restaurants), ensure_ascii=False, indent=2))
+    _print_json(_build_json_data(restaurants))
+
+
+def _output_json_envelope(output: RestaurantSearchOutput) -> None:
+    """Output the structured search envelope as JSON."""
+    _print_json(output.model_dump(mode="json"))
+
+
+def _print_json(data: object) -> None:
+    console.print(json.dumps(data, ensure_ascii=False, indent=2), markup=False, highlight=False, soft_wrap=True)
 
 
 def _output_simple(restaurants: list) -> None:

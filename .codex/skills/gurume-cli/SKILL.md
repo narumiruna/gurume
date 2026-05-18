@@ -35,7 +35,7 @@ Pass the area in Japanese where possible (`東京`, `大阪`, `渋谷`, `京都`
 
 ### 3. Run the search
 
-Default invocation — always use JSON output so you can parse it cleanly:
+Default invocation — use JSON output so you can parse results cleanly:
 
 ```bash
 gurume search --area <area> [--cuisine <jp-cuisine>] [--keyword <jp-keyword>] \
@@ -46,11 +46,12 @@ Flag guidance:
 
 - `--sort ranking` (default): good general "best of" results. Use `review-count` when the user wants popular/famous places, `new-open` for newly opened spots.
 - `--limit`: 10 is plenty for a conversational reply. Bump to 20+ only if the user asks for a long list.
-- `--output json`: always use this — `table` is decorative and harder to read programmatically.
+- `--output json`: preferred for agents. It returns `status`, `items`, `applied_filters`, `warnings`, and structured `error` fields. Use legacy `--output json-list` only if you specifically need the old list-only shape.
 
 ### 4. Present results
 
-After running, parse the JSON and summarize for the user. For each restaurant include:
+After running, parse the JSON envelope. If `status` is `error`, surface `error.message` and `error.suggested_action`
+instead of inventing restaurants. Otherwise summarize `items` for the user. For each restaurant include:
 
 - Name (keep the Japanese name; add a romaji/English hint only if it helps)
 - Cuisine / area
@@ -58,12 +59,13 @@ After running, parse the JSON and summarize for the user. For each restaurant in
 - A one-line note (price range, station, what stands out)
 - The Tabelog URL so they can click through
 
-When the command used both `--area` and `--keyword`, treat area filtering as low confidence unless the result URLs
-prove the requested area. Do not present broad keyword results as clean area-scoped recommendations. If the user asked
-for Osaka and the JSON includes non-`/osaka/` URLs, say that the CLI returned mixed-area results and either keep only
-the clearly Osaka URLs or ask whether they want a broader keyword list. This mirrors the MCP tool's warning that keyword
-searches may need suggestion validation and cuisine-specific filtering. If MCP suggestions return a cuisine-like value
-that is not in `gurume list-cuisines`, keep using keyword search.
+When the envelope includes `warnings`, account for them in your answer. When the command used both `--area` and
+`--keyword`, treat area filtering as low confidence unless the result URLs prove the requested area. Do not present
+broad keyword results as clean area-scoped recommendations. If the user asked for Osaka and the JSON includes
+non-`/osaka/` URLs, say that the CLI returned mixed-area results and either keep only the clearly Osaka URLs or ask
+whether they want a broader keyword list. This mirrors the MCP tool's warning that keyword searches may need suggestion
+validation and cuisine-specific filtering. If MCP suggestions return a cuisine-like value that is not in
+`gurume list-cuisines`, keep using keyword search.
 
 Then ask if they want to narrow down (different area, cheaper, dinner only, etc.).
 

@@ -63,3 +63,5 @@
 2026-05-18 | docs(plans): add follow-up plans from skill and MCP comparison (#local)
 2026-05-18 | fix(mcp): reduce noisy suggestion warnings for precise cuisine searches (#local)
 2026-05-18 | fix(retry): guard Tenacity retry outcome logging for ty (#local)
+2026-05-18 | feat(cli): add opt-in structured JSON envelope output (#local)
+2026-05-18 | feat(cli): make `--output json` emit the structured envelope (#local)
