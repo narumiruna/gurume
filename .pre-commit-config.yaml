@@ -29,7 +29,7 @@ repos:
     hooks:
       - id: sync-skills-check
         name: sync skills mirror
-        entry: python scripts/sync_skills.py --check
+        entry: uv run python scripts/sync_skills.py --check
         language: system
         pass_filenames: false
-        files: ^(skills/|\.agents/skills/|scripts/sync_skills\.py|\.pre-commit-config\.yaml$)
+        files: ^(skills/|\.codex/skills/|scripts/sync_skills\.py|\.pre-commit-config\.yaml$)

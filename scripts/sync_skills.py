@@ -11,15 +11,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = ROOT / "skills"
-MIRROR_DIR = ROOT / ".agents" / "skills"
+MIRROR_DIR = ROOT / ".codex" / "skills"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sync skills/ to .agents/skills/.")
+    parser = argparse.ArgumentParser(description="Sync skills/ to .codex/skills/.")
     parser.add_argument(
         "--check",
         action="store_true",
-        help="only verify that .agents/skills/ matches skills/",
+        help="only verify that .codex/skills/ matches skills/",
     )
     return parser.parse_args()
 
@@ -30,9 +30,11 @@ def iter_files(root: Path) -> set[Path]:
     return {path.relative_to(root) for path in root.rglob("*") if path.is_file()}
 
 
-def changed_files(source_files: set[Path], mirror_files: set[Path]) -> list[Path]:
+def changed_files(source_root: Path, mirror_root: Path, source_files: set[Path], mirror_files: set[Path]) -> list[Path]:
     common_files = source_files & mirror_files
-    return sorted(path for path in common_files if not filecmp.cmp(SOURCE_DIR / path, MIRROR_DIR / path, shallow=False))
+    return sorted(
+        path for path in common_files if not filecmp.cmp(source_root / path, mirror_root / path, shallow=False)
+    )
 
 
 def print_diff_summary() -> bool:
@@ -44,10 +46,10 @@ def print_diff_summary() -> bool:
     mirror_files = iter_files(MIRROR_DIR)
     missing_files = sorted(source_files - mirror_files)
     extra_files = sorted(mirror_files - source_files)
-    modified_files = changed_files(source_files, mirror_files)
+    modified_files = changed_files(SOURCE_DIR, MIRROR_DIR, source_files, mirror_files)
 
     if not missing_files and not extra_files and not modified_files:
-        print(".agents/skills/ is in sync with skills/")
+        print(".codex/skills/ is in sync with skills/")
         return True
 
     for path in missing_files:
