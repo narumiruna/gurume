@@ -316,12 +316,9 @@ async def test_search_restaurants_limit_applied(sample_restaurants):
 
 
 
-
 @pytest.mark.asyncio
-async def test_search_restaurants_with_validated_area_and_supported_cuisine_has_no_suggestion_warning(
-    sample_restaurants,
-):
-    """Mapped area + supported cuisine should avoid suggestion-reminder warning noise."""
+async def test_search_restaurants_with_mapped_area_only_has_no_ambiguous_warning(sample_restaurants):
+    """Mapped area-only searches should not emit suggestion-reminder warning noise."""
     mock_response = SearchResponse(
         status=SearchStatus.SUCCESS,
         restaurants=sample_restaurants,
@@ -333,12 +330,12 @@ async def test_search_restaurants_with_validated_area_and_supported_cuisine_has_
 
         results = await tabelog_search_restaurants(
             area="東京都",
-            cuisine="寿司",
             limit=10,
         )
 
         assert results.status == "success"
         assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
+
 
 @pytest.mark.asyncio
 async def test_search_restaurants_invalid_limit():
