@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import HttpUrl
 from pydantic import TypeAdapter
 
+from .area_mapping import get_area_slug
 from .detail import RestaurantDetail
 from .genre_mapping import get_genre_code
 from .restaurant import Restaurant
@@ -225,7 +226,7 @@ def _build_search_warnings(
 ) -> list[str]:
     warnings: list[str] = []
 
-    if area is not None and keyword is None and cuisine is None:
+    if area is not None and keyword is None and cuisine is None and get_area_slug(area) is None:
         warnings.append("Use `tabelog_get_area_suggestions` first when the user provides an ambiguous area name.")
 
     if cuisine is None and keyword is not None:

@@ -65,3 +65,4 @@
 2026-05-18 | fix(retry): guard Tenacity retry outcome logging for ty (#local)
 2026-05-18 | feat(cli): add opt-in structured JSON envelope output (#local)
 2026-05-18 | feat(cli): make `--output json` emit the structured envelope (#local)
+2026-05-18 | fix(mcp): suppress ambiguous-area warning for mapped area-only searches (#NRM-11)
