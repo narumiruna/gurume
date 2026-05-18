@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import httpx
 from loguru import logger
+from tenacity import RetryCallState
 from tenacity import retry
 from tenacity import retry_if_exception_type
 from tenacity import stop_after_attempt
@@ -26,6 +27,19 @@ from .exceptions import RateLimitError
 DEFAULT_MAX_ATTEMPTS = 3
 DEFAULT_MIN_WAIT = 1  # seconds
 DEFAULT_MAX_WAIT = 10  # seconds
+
+
+def _retry_exception_name(retry_state: RetryCallState) -> str:
+    """Return the retry exception name, if Tenacity has recorded one."""
+    outcome = retry_state.outcome
+    if outcome is None:
+        return "unknown error"
+
+    exception = outcome.exception()
+    if exception is None:
+        return "unknown error"
+
+    return exception.__class__.__name__
 
 
 def is_retryable_error(exception: BaseException) -> bool:
@@ -63,14 +77,17 @@ def create_retry_decorator(
     Returns:
         Retry decorator configured with exponential backoff
     """
+
+    def log_before_sleep(retry_state: RetryCallState) -> None:
+        logger.warning(
+            f"Retry attempt {retry_state.attempt_number}/{max_attempts} after {_retry_exception_name(retry_state)}"
+        )
+
     return retry(
         retry=retry_if_exception_type((httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError)),
         stop=stop_after_attempt(max_attempts),
         wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
-        before_sleep=lambda retry_state: logger.warning(
-            f"Retry attempt {retry_state.attempt_number}/{max_attempts} "
-            f"after {retry_state.outcome.exception().__class__.__name__}"
-        ),
+        before_sleep=log_before_sleep,
         reraise=True,
     )
 

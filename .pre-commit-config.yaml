@@ -8,21 +8,21 @@ repos:
         args: ["--fix=lf"]
       - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.11
+    rev: v0.15.13
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.7
+    rev: 0.11.14
     hooks:
       - id: uv-lock
   - repo: https://github.com/narumiruna/ty-pre-commit
-    rev: v0.0.31
+    rev: v0.0.37
     hooks:
       - id: ty-check
   - repo: https://github.com/tombi-toml/tombi-pre-commit
-    rev: v0.9.18
+    rev: v0.11.5
     hooks:
       - id: tombi-format
   - repo: local

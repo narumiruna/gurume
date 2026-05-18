@@ -4,8 +4,9 @@ version         = "0.0.9"
 description     = "Python library, CLI, TUI, and MCP server for discovering Japanese restaurants on Tabelog"
 readme          = "README.md"
 requires-python = ">=3.12"
+license         = "MIT"
+license-files   = ["LICENSE"]
 authors         = [{ name = "narumi", email = "toucans-cutouts0f@icloud.com" }]
-license         = { file = "LICENSE" }
 keywords        = [
   "cli",
   "fastmcp",
@@ -39,15 +40,12 @@ dependencies    = [
   "beautifulsoup4>=4.14.3",
   "loguru>=0.7.3",
   "lxml>=6.1.0",
-  "mcp[cli]>=1.27.0",
-  "pydantic>=2.13.2",
+  "mcp[cli]>=1.27.1",
+  "pydantic>=2.13.4",
   "tenacity>=9.1.4",
-  "textual>=8.2.4",
-  "typer>=0.24.1",
+  "textual>=8.2.6",
+  "typer>=0.25.1",
 ]
-
-[project.scripts]
-gurume = "gurume.cli:main"
 
 [project.urls]
 Documentation = "https://narumiruna.github.io/gurume/"
@@ -55,18 +53,21 @@ Homepage      = "https://github.com/narumiruna/gurume"
 Issues        = "https://github.com/narumiruna/gurume/issues"
 Repository    = "https://github.com/narumiruna/gurume"
 
+[project.scripts]
+gurume = "gurume.cli:main"
+
 [dependency-groups]
 dev  = [
   "pytest>=9.0.3",
   "pytest-asyncio>=1.3.0",
   "pytest-cov>=7.1.0",
-  "ruff>=0.15.11",
-  "ty>=0.0.31",
+  "ruff>=0.15.13",
+  "ty>=0.0.37",
 ]
 docs = [
   "mkdocs>=1.6.1",
-  "mkdocs-material>=9.5.0",
-  "mkdocstrings[python]>=0.27.0",
+  "mkdocs-material>=9.7.6",
+  "mkdocstrings[python]>=1.0.4",
 ]
 
 [build-system]
