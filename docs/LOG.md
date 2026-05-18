@@ -57,4 +57,5 @@
 2026-05-14 | docs(code): translate docstrings and comments to English (#local)
 2026-05-14 | chore(pyproject): add richer PEP 621 metadata links and discoverability tags (#local)
 2026-05-14 | docs(project): refresh stale README, TUI, MCP, and test docs (#local)
+2026-05-18 | docs(plans): add gurume search reliability plans (#local)
 2026-05-18 | fix(mcp): preserve upstream suggestion datatypes for CLI/MCP consistency (#local)
