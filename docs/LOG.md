@@ -58,3 +58,4 @@
 2026-05-14 | chore(pyproject): add richer PEP 621 metadata links and discoverability tags (#local)
 2026-05-14 | docs(project): refresh stale README, TUI, MCP, and test docs (#local)
 2026-05-18 | fix(mcp): preserve upstream suggestion datatypes for CLI/MCP consistency (#local)
+2026-05-18 | chore(skills): add canonical-to-runtime sync script (#local)

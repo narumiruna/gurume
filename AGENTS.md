@@ -46,7 +46,8 @@ The MCP server (`src/gurume/server.py`, FastMCP), CLI, and TUI all sit on top of
 - `skills/` is the canonical source for skill files.
 - `.agents/skills/` is a Codex CLI runtime mirror.
 - Edit `skills/` first.
-- After any skill change, sync `skills/` to `.agents/skills/`.
+- After any skill change, sync `skills/` to `.agents/skills/` with `uv run python scripts/sync_skills.py`.
+- Verify the mirror with `uv run python scripts/sync_skills.py --check`.
 - Do not edit `.agents/skills/` as the source of truth.
 
 ## MEMORY.md
