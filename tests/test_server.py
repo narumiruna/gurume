@@ -235,6 +235,8 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
         assert results.applied_filters.keyword == "ラーメン"
         assert results.applied_filters.sort == "review-count"
         assert results.applied_filters.page == 1
+        assert any("tabelog_list_cuisines" in warning for warning in results.warnings)
+        assert any("Area + keyword searches are best-effort" in warning for warning in results.warnings)
         mock_search.assert_called_once()
 
 
@@ -736,6 +738,31 @@ async def test_get_area_suggestions_accepts_town_datatype():
 
 
 @pytest.mark.asyncio
+async def test_get_area_suggestions_accepts_major_municipal_datatype():
+    """Area suggestions can return upstream MajorMunicipal datatypes."""
+    with patch(
+        "gurume.server.get_area_suggestions_async",
+        new_callable=AsyncMock,
+    ) as mock_get_suggestions:
+        mock_get_suggestions.return_value = [
+            AreaSuggestion(
+                name="大阪市",
+                datatype="MajorMunicipal",
+                id_in_datatype=27100,
+                lat=34.6937,
+                lng=135.5023,
+            )
+        ]
+
+        results = await tabelog_get_area_suggestions(query="大阪")
+
+    assert results.status == "success"
+    assert len(results.items) == 1
+    assert results.items[0].name == "大阪市"
+    assert results.items[0].datatype == "MajorMunicipal"
+
+
+@pytest.mark.asyncio
 async def test_get_area_suggestions_strips_whitespace(sample_area_suggestions):
     """Test that query whitespace is stripped"""
     with patch(
@@ -823,6 +850,31 @@ async def test_get_keyword_suggestions_success(sample_keyword_suggestions):
 
         # Verify API was called with stripped query
         mock_get_suggestions.assert_called_once_with("すき")
+
+
+@pytest.mark.asyncio
+async def test_get_keyword_suggestions_accepts_genre3_datatype():
+    """Keyword suggestions can return upstream Genre3 datatypes."""
+    with patch(
+        "gurume.server.get_keyword_suggestions_async",
+        new_callable=AsyncMock,
+    ) as mock_get_suggestions:
+        mock_get_suggestions.return_value = [
+            KeywordSuggestion(
+                name="お好み焼き",
+                datatype="Genre3",
+                id_in_datatype=301,
+                lat=None,
+                lng=None,
+            )
+        ]
+
+        results = await tabelog_get_keyword_suggestions(query="お好み焼き")
+
+    assert results.status == "success"
+    assert len(results.items) == 1
+    assert results.items[0].name == "お好み焼き"
+    assert results.items[0].datatype == "Genre3"
 
 
 @pytest.mark.asyncio

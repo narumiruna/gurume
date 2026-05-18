@@ -41,6 +41,14 @@ Do not commit secrets. Natural-language parsing has been removed from the CLI/TU
 ## MCP and CLI Consistency
 The MCP server (`src/gurume/server.py`, FastMCP), CLI, and TUI all sit on top of the same search APIs. Keep tool outputs structured and validation errors clear, and when you change parameters or output behavior in one interface, check whether the others should change too.
 
+## Skills
+
+- `skills/` is the canonical source for skill files.
+- `.agents/skills/` is a Codex CLI runtime mirror.
+- Edit `skills/` first.
+- After any skill change, sync `skills/` to `.agents/skills/`.
+- Do not edit `.agents/skills/` as the source of truth.
+
 ## MEMORY.md
 
 - `docs/MEMORY.md` is not auto-loaded. Check it before non-trivial debugging or design work when prior project context may matter.

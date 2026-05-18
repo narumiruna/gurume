@@ -18,6 +18,8 @@
 - Tabelog path-based result pages such as `/tokyo/rstLst/` and cuisine pages may ignore `sk=<keyword>`; keyword searches should use the search endpoint with `sa`, `sk`, and `sw`, and MCP should reject `keyword + cuisine` unless live evidence proves both filters are honored.
 - Detail menu pages are optional: some restaurants return 404 for `/dtlmenu/` while `/party/` has current course data in `.rstdtl-course-list`; treat optional menu/course 404s as empty sections and parse `/party/` courses from current selectors.
 - CLI keyword auto-detection is a special case: when `--keyword` exactly matches a supported cuisine, clear the keyword and search as area+cuisine so city paths like `/hyogo/A2801/rstLst/cafe/` are used.
+- Keep CLI skill guidance and MCP behavior aligned for `area + keyword`: Tabelog can return broad cross-prefecture results, and MCP suggestion `Genre2` values are only valid as `cuisine` when present in `tabelog_list_cuisines`; otherwise preserve upstream datatypes like `Genre3` / `MajorMunicipal` and warn or filter by URL evidence before presenting area-scoped recommendations.
+- `skills/gurume-cli/` is the external installer source, while `.agents/skills/gurume-cli/` is the Codex CLI runtime mirror. Keep both copies synchronized and verify with `diff -ru skills/gurume-cli .agents/skills/gurume-cli`.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

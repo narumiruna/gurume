@@ -24,7 +24,10 @@ Do **not** trigger for: non-Japan restaurants, recipes, food delivery apps, or g
 
 If the user mentions a specific cuisine, map it to one of Tabelog's supported cuisine names. The full list is in `references/cuisines.md` — read that file when you need the mapping. Cuisine names **must be passed in Japanese** (e.g. `ラーメン`, not `ramen`).
 
-If the user's request doesn't fit the fixed list (e.g. "tonkotsu ramen", "omakase sushi"), drop `--cuisine` and put the extra detail into `--keyword` instead. Cuisine + keyword can be combined.
+If the user's request doesn't fit the fixed list (e.g. "tonkotsu ramen", "omakase sushi", "okonomiyaki"), drop
+`--cuisine` and put the extra detail into `--keyword` instead. Cuisine + keyword can be combined in the CLI, but
+the MCP tool intentionally rejects `keyword + cuisine`; prefer the shared behavior of either supported cuisine-only
+search or best-effort keyword search.
 
 ### 2. Resolve the area
 
@@ -54,6 +57,13 @@ After running, parse the JSON and summarize for the user. For each restaurant in
 - Rating and review count if present
 - A one-line note (price range, station, what stands out)
 - The Tabelog URL so they can click through
+
+When the command used both `--area` and `--keyword`, treat area filtering as low confidence unless the result URLs
+prove the requested area. Do not present broad keyword results as clean area-scoped recommendations. If the user asked
+for Osaka and the JSON includes non-`/osaka/` URLs, say that the CLI returned mixed-area results and either keep only
+the clearly Osaka URLs or ask whether they want a broader keyword list. This mirrors the MCP tool's warning that keyword
+searches may need suggestion validation and cuisine-specific filtering. If MCP suggestions return a cuisine-like value
+that is not in `gurume list-cuisines`, keep using keyword search.
 
 Then ask if they want to narrow down (different area, cheaper, dinner only, etc.).
 
@@ -92,4 +102,6 @@ gurume search --area 三重 --cuisine すき焼き --sort ranking --limit 10 --o
 
 - Tabelog HTML is the upstream source, so results occasionally contain odd encoding or missing fields. Handle missing keys gracefully when summarizing.
 - The CLI hits the network — if it fails, surface the error to the user rather than fabricating restaurants.
+- `--area` + `--keyword` can be broad even when `applied` text looks area-specific. Use URL evidence before claiming
+  a result belongs to the requested area.
 - Reply to the user in the same language they used (often Traditional Chinese, Japanese, or English).

@@ -545,3 +545,43 @@ def test_get_area_suggestions_parses_town_datatype():
         assert len(results) == 1
         assert results[0].name == "三重町"
         assert results[0].datatype == "Town"
+
+
+def test_get_area_suggestions_preserves_unlisted_datatype():
+    """Area parser preserves upstream datatype strings that are not locally enumerated."""
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {
+            "name": "大阪市",
+            "datatype": "MajorMunicipal",
+            "id_in_datatype": 27100,
+            "lat": 34.6937,
+            "lng": 135.5023,
+        }
+    ]
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response):
+        results = get_area_suggestions(query="大阪")
+        assert len(results) == 1
+        assert results[0].name == "大阪市"
+        assert results[0].datatype == "MajorMunicipal"
+
+
+def test_get_keyword_suggestions_preserves_unlisted_datatype():
+    """Keyword parser preserves upstream datatype strings that are not locally enumerated."""
+    mock_response = Mock()
+    mock_response.json.return_value = [
+        {
+            "name": "お好み焼き",
+            "datatype": "Genre3",
+            "id_in_datatype": 301,
+        }
+    ]
+    mock_response.raise_for_status = Mock()
+
+    with patch("httpx.get", return_value=mock_response):
+        results = get_keyword_suggestions(query="お好み焼き")
+        assert len(results) == 1
+        assert results[0].name == "お好み焼き"
+        assert results[0].datatype == "Genre3"
