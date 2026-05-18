@@ -67,3 +67,4 @@
 2026-05-18 | feat(cli): make `--output json` emit the structured envelope (#local)
 2026-05-18 | fix(mcp): suppress ambiguous-area warning for mapped area-only searches (#NRM-11)
 2026-05-18 | test(mcp): align warning regression with mapped area-only policy (#NRM-11)
+2026-05-18 | test(mcp): split limit and ambiguous-area warning assertions (#NRM-11)
