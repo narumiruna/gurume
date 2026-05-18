@@ -5,7 +5,6 @@ from __future__ import annotations
 from datetime import date
 from datetime import time
 from typing import Literal
-from typing import cast
 
 from pydantic import HttpUrl
 from pydantic import TypeAdapter
@@ -26,7 +25,6 @@ from .server_models import ReviewOutput
 from .server_models import SearchFiltersOutput
 from .server_models import SearchMetaOutput
 from .server_models import SortOption
-from .server_models import SuggestionDatatype
 from .server_models import SuggestionListOutput
 from .server_models import SuggestionOutput
 from .server_models import ToolErrorOutput
@@ -210,7 +208,7 @@ def _to_suggestion_outputs(suggestions: list[AreaSuggestion] | list[KeywordSugge
     return [
         SuggestionOutput(
             name=suggestion.name,
-            datatype=cast(SuggestionDatatype, suggestion.datatype),
+            datatype=suggestion.datatype,
             id_in_datatype=suggestion.id_in_datatype,
             lat=suggestion.lat,
             lng=suggestion.lng,
@@ -232,9 +230,14 @@ def _build_search_warnings(
 
     if cuisine is None and keyword is not None:
         warnings.append(
-            "If the keyword is actually a cuisine type, call `tabelog_get_keyword_suggestions` and pass the "
-            "Genre2 result as `cuisine` for more precise matches."
+            "If the keyword is actually a cuisine type, call `tabelog_get_keyword_suggestions` and "
+            "`tabelog_list_cuisines`; pass it as `cuisine` only when it is in the supported cuisine list."
         )
+        if area is not None:
+            warnings.append(
+                "Area + keyword searches are best-effort and may include other prefectures; validate result URLs "
+                "before presenting them as area-scoped recommendations."
+            )
 
     if reservation_date is not None:
         warnings.append("Reservation filters reflect Tabelog availability data and may change over time.")

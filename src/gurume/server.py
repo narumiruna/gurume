@@ -92,17 +92,20 @@ Step 1: Get area suggestions (if user provides area)
 
 Step 2: Get keyword/cuisine suggestions (if searching by cuisine/keyword)
 → Use: tabelog_get_keyword_suggestions(query="user's keyword")
-→ Identify if it's Genre2 (cuisine) or Restaurant (name)
+→ Identify if it matches a supported cuisine from tabelog_list_cuisines, or is a free-text keyword / restaurant name
 
 Step 3: Search with validated parameters
-→ Use: tabelog_search_restaurants(area=validated_area, cuisine=validated_cuisine)
+→ Use: tabelog_search_restaurants(area=validated_area, cuisine=supported_cuisine)
+→ If the suggestion is not supported by tabelog_list_cuisines, use keyword search and treat area filtering as
+  best-effort
 
 Optional Step 4: Filter by reservation availability
 → Add reservation_date='YYYYMMDD', reservation_time='HHMM', party_size=N
 → Example: reservation_date='20260427', reservation_time='1900', party_size=2
 
 🔑 KEY PRINCIPLES:
-- Cuisine searches: Use `cuisine` parameter (more accurate than `keyword`)
+- Cuisine searches: Use `cuisine` only for names returned by `tabelog_list_cuisines`
+- Keyword searches are best-effort; validate result URLs before presenting them as area-scoped recommendations
 - Always validate user input with suggestion tools before searching
 - All parameters and results are in Japanese
 - Use reservation filters to check availability on specific dates
