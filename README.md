@@ -60,10 +60,10 @@ gurume search --area 東京 --keyword 寿司
 gurume search --area 三重 --cuisine すき焼き
 
 # Change sort order and output format
-gurume search --area 大阪 --cuisine ラーメン --sort ranking --output json
+gurume search --area 大阪 --cuisine ラーメン --sort ranking --output json-list
 
 # Return a structured JSON envelope for scripts and agents
-gurume search --area 大阪 --cuisine ラーメン --sort ranking --output json-envelope
+gurume search --area 大阪 --cuisine ラーメン --sort ranking --output json
 
 # List all supported cuisines
 gurume list-cuisines
@@ -82,12 +82,12 @@ Current `gurume search` options:
 - `--cuisine`, `-c`
 - `--sort`, `-s`: `ranking`, `review-count`, `new-open`, `standard`
 - `--limit`, `-n`
-- `--output`, `-o`: `table`, `json`, `json-envelope`, `simple`
+- `--output`, `-o`: `table`, `json`, `json-envelope`, `json-list`, `simple`
 
 Notes:
 
 - For natural-language input, use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant — it decomposes free-form text into the structured flags above.
-- `--output json` preserves the legacy list-only JSON shape. Use `--output json-envelope` when you need `status`, `items`, `meta`, `applied_filters`, `warnings`, and structured `error` fields.
+- `--output json` returns a structured envelope (`status`, `items`, `meta`, `applied_filters`, `warnings`, `error`). Use `--output json-list` for the legacy list-only JSON shape.
 - Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
 
 ### 🐍 Python Library

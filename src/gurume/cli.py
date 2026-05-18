@@ -44,6 +44,7 @@ class OutputFormat(StrEnum):
     TABLE = "table"
     JSON = "json"
     JSON_ENVELOPE = "json-envelope"
+    JSON_LIST = "json-list"
     SIMPLE = "simple"
 
 
@@ -211,7 +212,7 @@ def _output_error_envelope_if_requested(
     limit: int,
     error: ToolErrorOutput,
 ) -> None:
-    if output == OutputFormat.JSON_ENVELOPE:
+    if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
         _output_json_envelope(
             _build_error_json_envelope(area=area, filters=filters, sort=sort, limit=limit, error=error)
         )
@@ -226,7 +227,7 @@ def _output_no_results_envelope_if_requested(
     sort: SortOption,
     limit: int,
 ) -> None:
-    if output == OutputFormat.JSON_ENVELOPE:
+    if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
         _output_json_envelope(_build_search_json_envelope(response, area=area, filters=filters, sort=sort, limit=limit))
 
 
@@ -240,9 +241,9 @@ def _output_search_results(
     sort: SortOption,
     limit: int,
 ) -> None:
-    if output == OutputFormat.JSON:
+    if output == OutputFormat.JSON_LIST:
         _output_json(restaurants)
-    elif output == OutputFormat.JSON_ENVELOPE:
+    elif output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
         _output_json_envelope(_build_search_json_envelope(response, area=area, filters=filters, sort=sort, limit=limit))
     elif output == OutputFormat.SIMPLE:
         _output_simple(restaurants)
@@ -265,8 +266,11 @@ def search(
       gurume search --area 東京 --keyword 寿司
       gurume search -a 三重 -c すき焼き --sort ranking
       gurume search --area 大阪 --cuisine ラーメン -o json
+      gurume search --area 大阪 --cuisine ラーメン -o json-list
     """
-    status_console = err_console if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE) else console
+    status_console = (
+        err_console if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE, OutputFormat.JSON_LIST) else console
+    )
 
     if not area and not keyword and not cuisine:
         status_console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")

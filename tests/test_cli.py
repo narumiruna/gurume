@@ -376,7 +376,7 @@ class TestCLIArguments:
 class TestSearchCommand:
     """Test `gurume search` command behavior."""
 
-    def test_json_output_is_machine_parseable(self):
+    def test_json_list_output_is_machine_parseable(self):
         from typer.testing import CliRunner
 
         from gurume.cli import app
@@ -387,7 +387,7 @@ class TestSearchCommand:
         )
         runner = CliRunner()
         with patch("gurume.search.SearchRequest.search_sync", return_value=response):
-            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json"])
+            result = runner.invoke(app, ["search", "--area", "東京", "--cuisine", "寿司", "--output", "json-list"])
 
         assert result.exit_code == 0
         assert json.loads(result.stdout) == [
@@ -404,7 +404,8 @@ class TestSearchCommand:
         ]
         assert "搜尋中" in result.stderr
 
-    def test_json_envelope_output_contains_search_metadata(self):
+    @pytest.mark.parametrize("output_format", ["json", "json-envelope"])
+    def test_json_envelope_output_contains_search_metadata(self, output_format: str):
         from typer.testing import CliRunner
 
         from gurume.cli import app
@@ -434,7 +435,7 @@ class TestSearchCommand:
         with patch("gurume.search.SearchRequest.search_sync", return_value=response):
             result = runner.invoke(
                 app,
-                ["search", "--area", "東京", "--cuisine", "寿司", "--limit", "1", "--output", "json-envelope"],
+                ["search", "--area", "東京", "--cuisine", "寿司", "--limit", "1", "--output", output_format],
             )
 
         payload = json.loads(result.stdout)
@@ -539,7 +540,7 @@ class TestSearchCommand:
         assert payload["applied_filters"]["genre_code"] == "RC0201"
         assert "搜尋錯誤" in result.stderr
 
-    def test_search_help_lists_json_envelope_output(self):
+    def test_search_help_lists_json_envelope_outputs(self):
         import re
 
         from typer.testing import CliRunner
@@ -552,6 +553,7 @@ class TestSearchCommand:
         assert result.exit_code == 0
         plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
         assert "json-envelope" in plain
+        assert "json-list" in plain
 
     def test_limit_must_be_positive(self):
         import re

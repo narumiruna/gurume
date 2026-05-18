@@ -46,13 +46,12 @@ Flag guidance:
 
 - `--sort ranking` (default): good general "best of" results. Use `review-count` when the user wants popular/famous places, `new-open` for newly opened spots.
 - `--limit`: 10 is plenty for a conversational reply. Bump to 20+ only if the user asks for a long list.
-- `--output json`: default for this skill; it is compact and convenient.
-- `--output json-envelope`: use this when you need `status`, `items`, `applied_filters`, `warnings`, or structured `error` fields.
+- `--output json`: preferred for agents. It returns `status`, `items`, `applied_filters`, `warnings`, and structured `error` fields. Use legacy `--output json-list` only if you specifically need the old list-only shape.
 
 ### 4. Present results
 
-After running, parse the JSON and summarize for the user. If you used `--output json-envelope` and `status` is `error`,
-surface `error.message` and `error.suggested_action` instead of inventing restaurants. For each restaurant include:
+After running, parse the JSON envelope. If `status` is `error`, surface `error.message` and `error.suggested_action`
+instead of inventing restaurants. Otherwise summarize `items` for the user. For each restaurant include:
 
 - Name (keep the Japanese name; add a romaji/English hint only if it helps)
 - Cuisine / area
