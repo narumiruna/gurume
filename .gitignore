@@ -145,3 +145,6 @@ dmypy.json
 
 # MkDocs build output
 /site/
+
+# skills
+skills-lock.json
