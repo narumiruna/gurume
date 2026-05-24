@@ -38,6 +38,7 @@ classifiers     = [
 ]
 dependencies    = [
   "beautifulsoup4>=4.14.3",
+  "curl-cffi>=0.15.0",
   "loguru>=0.7.3",
   "lxml>=6.1.0",
   "mcp[cli]>=1.27.1",

@@ -56,7 +56,7 @@ the current repository state.
 
 - **Playwright-based scraping fallback**
   - Only consider this if a reproducible Tabelog regression shows that core data is no longer available through the
-    current `httpx` + BeautifulSoup flow, or if a new feature requires browser-only behavior.
+    current `curl_cffi` + BeautifulSoup flow, or if a new feature requires browser-only behavior.
 
 - **Large API redesign**
   - Defer fluent builders, broad convenience layers, and major request/response API reshaping unless current usage
@@ -67,7 +67,7 @@ the current repository state.
 
 ## Notes
 
-- Core restaurant search currently works with `httpx` + BeautifulSoup; Playwright is not needed for the main search
+- Core restaurant search currently works with `curl_cffi` + BeautifulSoup; Playwright is not needed for the main search
   path.
 - Area suggestions and keyword suggestions are already implemented in `suggest.py`.
 - The Textual TUI already exists and should be treated as a maintained feature, not a future concept.

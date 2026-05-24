@@ -8,14 +8,15 @@ from enum import StrEnum
 from functools import cache
 from typing import Any
 
-import httpx
 from bs4 import BeautifulSoup
+from curl_cffi import requests
 
 from .area_mapping import get_area_slug
 from .cache import cache_set
 from .cache import cached_get
 from .exceptions import InvalidParameterError
 from .genre_mapping import get_cuisine_slug_by_code
+from .http_client import DEFAULT_IMPERSONATE
 from .retry import fetch_with_retry
 from .retry import fetch_with_retry_async
 
@@ -437,12 +438,13 @@ class RestaurantSearchRequest:
         if use_retry:
             resp = fetch_with_retry(url=url, params=params, headers=headers, timeout=30.0)
         else:
-            resp = httpx.get(
+            resp = requests.get(
                 url=url,
                 params=params,
                 headers=headers,
                 timeout=30.0,
-                follow_redirects=True,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
             )
             resp.raise_for_status()
 
@@ -478,7 +480,11 @@ class RestaurantSearchRequest:
         if use_retry:
             resp = await fetch_with_retry_async(url=url, params=params, headers=headers, request_timeout=30.0)
         else:
-            async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+            async with requests.AsyncSession(
+                timeout=30.0,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
+            ) as client:
                 resp = await client.get(
                     url=url,
                     params=params,

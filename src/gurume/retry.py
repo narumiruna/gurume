@@ -12,7 +12,8 @@ Features:
 
 from __future__ import annotations
 
-import httpx
+from curl_cffi import requests
+from curl_cffi.requests import exceptions as request_errors
 from loguru import logger
 from tenacity import RetryCallState
 from tenacity import retry
@@ -22,11 +23,17 @@ from tenacity import wait_exponential
 
 from .exceptions import NetworkError
 from .exceptions import RateLimitError
+from .http_client import DEFAULT_IMPERSONATE
 
 # Default retry configuration
 DEFAULT_MAX_ATTEMPTS = 3
 DEFAULT_MIN_WAIT = 1  # seconds
 DEFAULT_MAX_WAIT = 10  # seconds
+
+RETRYABLE_REQUEST_ERRORS = (
+    request_errors.ConnectionError,
+    request_errors.Timeout,
+)
 
 
 def _retry_exception_name(retry_state: RetryCallState) -> str:
@@ -52,12 +59,13 @@ def is_retryable_error(exception: BaseException) -> bool:
         True if the exception should trigger a retry
     """
     # Retry on network errors
-    if isinstance(exception, httpx.ConnectError | httpx.TimeoutException | httpx.NetworkError):
+    if isinstance(exception, RETRYABLE_REQUEST_ERRORS):
         return True
 
     # Retry on server errors (5xx)
-    if isinstance(exception, httpx.HTTPStatusError):
-        return 500 <= exception.response.status_code < 600
+    if isinstance(exception, request_errors.HTTPError):
+        response = exception.response
+        return response is not None and 500 <= response.status_code < 600
 
     return False
 
@@ -84,7 +92,7 @@ def create_retry_decorator(
         )
 
     return retry(
-        retry=retry_if_exception_type((httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError)),
+        retry=retry_if_exception_type(RETRYABLE_REQUEST_ERRORS),
         stop=stop_after_attempt(max_attempts),
         wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
         before_sleep=log_before_sleep,
@@ -96,7 +104,7 @@ def create_retry_decorator(
 retry_on_failure = create_retry_decorator()
 
 
-def handle_http_errors(response: httpx.Response) -> None:
+def handle_http_errors(response: requests.Response) -> None:
     """Handle HTTP errors and raise appropriate exceptions
 
     Args:
@@ -108,14 +116,17 @@ def handle_http_errors(response: httpx.Response) -> None:
     """
     try:
         response.raise_for_status()
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == 429:
+    except request_errors.HTTPError as e:
+        status_code = getattr(e.response, "status_code", None)
+        if not isinstance(status_code, int):
+            raise NetworkError("HTTP error") from e
+        if status_code == 429:
             raise RateLimitError("Rate limit exceeded. Please slow down requests.") from e
-        if 500 <= e.response.status_code < 600:
-            raise NetworkError(f"Server error: {e.response.status_code}") from e
-        if 400 <= e.response.status_code < 500:
-            raise NetworkError(f"Client error: {e.response.status_code}") from e
-        raise NetworkError(f"HTTP error: {e.response.status_code}") from e
+        if 500 <= status_code < 600:
+            raise NetworkError(f"Server error: {status_code}") from e
+        if 400 <= status_code < 500:
+            raise NetworkError(f"Client error: {status_code}") from e
+        raise NetworkError(f"HTTP error: {status_code}") from e
 
 
 @retry_on_failure
@@ -124,13 +135,20 @@ def _fetch_with_retry_impl(
     params: dict | None = None,
     headers: dict | None = None,
     timeout: float = 10.0,
-) -> httpx.Response:
+) -> requests.Response:
     """Internal implementation of fetch with retry
 
     This function is decorated with @retry_on_failure and will retry
     on transient network errors.
     """
-    response = httpx.get(url=url, params=params, headers=headers, timeout=timeout, follow_redirects=True)
+    response = requests.get(
+        url=url,
+        params=params,
+        headers=headers,
+        timeout=timeout,
+        allow_redirects=True,
+        impersonate=DEFAULT_IMPERSONATE,
+    )
     handle_http_errors(response)
     return response
 
@@ -140,7 +158,7 @@ def fetch_with_retry(
     params: dict | None = None,
     headers: dict | None = None,
     timeout: float = 10.0,
-) -> httpx.Response:
+) -> requests.Response:
     """Fetch URL with automatic retry on transient failures
 
     Args:
@@ -158,7 +176,7 @@ def fetch_with_retry(
     """
     try:
         return _fetch_with_retry_impl(url, params, headers, timeout)
-    except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+    except RETRYABLE_REQUEST_ERRORS as e:
         # All retries failed
         logger.error(f"Failed to fetch {url} after all retry attempts: {e}")
         raise NetworkError(f"Failed to fetch {url} after {DEFAULT_MAX_ATTEMPTS} attempts") from e
@@ -169,7 +187,7 @@ async def fetch_with_retry_async(
     params: dict | None = None,
     headers: dict | None = None,
     request_timeout: float = 10.0,
-) -> httpx.Response:
+) -> requests.Response:
     """Fetch URL with automatic retry on transient failures (async version)
 
     Args:
@@ -192,11 +210,15 @@ async def fetch_with_retry_async(
 
     for attempt in range(1, max_attempts + 1):
         try:
-            async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
+            async with requests.AsyncSession(
+                timeout=request_timeout,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
+            ) as client:
                 response = await client.get(url=url, params=params, headers=headers)
                 handle_http_errors(response)
                 return response
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError) as e:
+        except RETRYABLE_REQUEST_ERRORS as e:
             if attempt < max_attempts:
                 wait_time = min(min_wait * (2 ** (attempt - 1)), max_wait)
                 logger.warning(f"Retry attempt {attempt}/{max_attempts} after {e.__class__.__name__}")
@@ -206,7 +228,7 @@ async def fetch_with_retry_async(
             else:
                 logger.error(f"All {max_attempts} retry attempts failed")
                 raise NetworkError(f"Failed to fetch {url} after {max_attempts} attempts") from e
-        except httpx.HTTPError as e:
+        except request_errors.RequestException as e:
             logger.error(f"HTTP request failed: {e}")
             raise NetworkError(f"Failed to fetch {url}") from e
 

@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import httpx
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume.suggest import AreaSuggestion
 from gurume.suggest import KeywordSuggestion
@@ -14,6 +14,11 @@ from gurume.suggest import get_area_suggestions
 from gurume.suggest import get_area_suggestions_async
 from gurume.suggest import get_keyword_suggestions
 from gurume.suggest import get_keyword_suggestions_async
+
+
+def _http_error(status_code: int, message: str) -> request_errors.HTTPError:
+    return request_errors.HTTPError(message, 0, Mock(status_code=status_code))
+
 
 # ============================================================================
 # Test Data Fixtures
@@ -93,7 +98,7 @@ def test_get_area_suggestions_success(sample_area_response):
     mock_response.json.return_value = sample_area_response
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response) as mock_get:
+    with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         results = get_area_suggestions(query="東京")
 
         # Verify results
@@ -133,7 +138,7 @@ def test_get_area_suggestions_strips_whitespace(sample_area_response):
     mock_response.json.return_value = sample_area_response
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response) as mock_get:
+    with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         get_area_suggestions(query="  東京  ")
 
         call_args = mock_get.call_args
@@ -142,8 +147,8 @@ def test_get_area_suggestions_strips_whitespace(sample_area_response):
 
 def test_get_area_suggestions_http_error():
     """Test handling HTTP errors"""
-    with patch("httpx.get") as mock_get:
-        mock_get.side_effect = httpx.HTTPStatusError("404 Not Found", request=Mock(), response=Mock())
+    with patch("curl_cffi.requests.get") as mock_get:
+        mock_get.side_effect = _http_error(404, "404 Not Found")
 
         # Should return empty list on error
         results = get_area_suggestions(query="東京")
@@ -152,8 +157,8 @@ def test_get_area_suggestions_http_error():
 
 def test_get_area_suggestions_network_error():
     """Test handling network errors"""
-    with patch("httpx.get") as mock_get:
-        mock_get.side_effect = httpx.ConnectError("Connection failed")
+    with patch("curl_cffi.requests.get") as mock_get:
+        mock_get.side_effect = request_errors.ConnectionError("Connection failed")
 
         # Should return empty list on error
         results = get_area_suggestions(query="東京")
@@ -166,7 +171,7 @@ def test_get_area_suggestions_json_error():
     mock_response.json.side_effect = ValueError("Invalid JSON")
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         # Should return empty list on JSON error
         results = get_area_suggestions(query="東京")
         assert results == []
@@ -178,7 +183,7 @@ def test_get_area_suggestions_empty_response():
     mock_response.json.return_value = []
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
         assert results == []
 
@@ -194,7 +199,7 @@ def test_get_area_suggestions_missing_fields():
     ]
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
 
         # Should use defaults for missing fields
@@ -223,7 +228,7 @@ async def test_get_area_suggestions_async_success(sample_area_response):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_area_suggestions_async(query="東京")
 
         # Verify results
@@ -249,11 +254,11 @@ async def test_get_area_suggestions_async_empty_query():
 async def test_get_area_suggestions_async_http_error():
     """Test async handling HTTP errors"""
     mock_client = AsyncMock()
-    mock_client.get = AsyncMock(side_effect=httpx.HTTPStatusError("404", request=Mock(), response=Mock()))
+    mock_client.get = AsyncMock(side_effect=_http_error(404, "404"))
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_area_suggestions_async(query="東京")
         assert results == []
 
@@ -269,7 +274,7 @@ def test_get_keyword_suggestions_success(sample_keyword_response):
     mock_response.json.return_value = sample_keyword_response
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response) as mock_get:
+    with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         results = get_keyword_suggestions(query="すき")
 
         # Verify results
@@ -311,7 +316,7 @@ def test_get_keyword_suggestions_strips_whitespace(sample_keyword_response):
     mock_response.json.return_value = sample_keyword_response
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response) as mock_get:
+    with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         get_keyword_suggestions(query="  すき  ")
 
         call_args = mock_get.call_args
@@ -320,8 +325,8 @@ def test_get_keyword_suggestions_strips_whitespace(sample_keyword_response):
 
 def test_get_keyword_suggestions_http_error():
     """Test handling HTTP errors"""
-    with patch("httpx.get") as mock_get:
-        mock_get.side_effect = httpx.HTTPStatusError("500 Server Error", request=Mock(), response=Mock())
+    with patch("curl_cffi.requests.get") as mock_get:
+        mock_get.side_effect = _http_error(500, "500 Server Error")
 
         # Should return empty list on error
         results = get_keyword_suggestions(query="すき")
@@ -330,8 +335,8 @@ def test_get_keyword_suggestions_http_error():
 
 def test_get_keyword_suggestions_network_error():
     """Test handling network errors"""
-    with patch("httpx.get") as mock_get:
-        mock_get.side_effect = httpx.TimeoutException("Request timeout")
+    with patch("curl_cffi.requests.get") as mock_get:
+        mock_get.side_effect = request_errors.Timeout("Request timeout")
 
         # Should return empty list on error
         results = get_keyword_suggestions(query="すき")
@@ -344,7 +349,7 @@ def test_get_keyword_suggestions_empty_response():
     mock_response.json.return_value = []
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_keyword_suggestions(query="すき")
         assert results == []
 
@@ -366,7 +371,7 @@ async def test_get_keyword_suggestions_async_success(sample_keyword_response):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_keyword_suggestions_async(query="すき")
 
         # Verify results
@@ -393,11 +398,11 @@ async def test_get_keyword_suggestions_async_empty_query():
 async def test_get_keyword_suggestions_async_http_error():
     """Test async handling HTTP errors"""
     mock_client = AsyncMock()
-    mock_client.get = AsyncMock(side_effect=httpx.HTTPStatusError("500", request=Mock(), response=Mock()))
+    mock_client.get = AsyncMock(side_effect=_http_error(500, "500"))
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_keyword_suggestions_async(query="すき")
         assert results == []
 
@@ -459,7 +464,7 @@ def test_get_area_suggestions_raises_on_suggest_empty():
     mock_response.json.return_value = {"suggest_empty": True}
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
+    with patch("curl_cffi.requests.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
         get_area_suggestions(query="東京")
 
 
@@ -469,7 +474,7 @@ def test_get_keyword_suggestions_raises_on_suggest_empty():
     mock_response.json.return_value = {"suggest_empty": True}
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
+    with patch("curl_cffi.requests.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
         get_keyword_suggestions(query="すき")
 
 
@@ -485,7 +490,10 @@ async def test_get_area_suggestions_async_raises_on_suggest_empty():
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client), pytest.raises(TabelogSuggestUnavailableError):
+    with (
+        patch("curl_cffi.requests.AsyncSession", return_value=mock_client),
+        pytest.raises(TabelogSuggestUnavailableError),
+    ):
         await get_area_suggestions_async(query="東京")
 
 
@@ -501,7 +509,10 @@ async def test_get_keyword_suggestions_async_raises_on_suggest_empty():
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("httpx.AsyncClient", return_value=mock_client), pytest.raises(TabelogSuggestUnavailableError):
+    with (
+        patch("curl_cffi.requests.AsyncSession", return_value=mock_client),
+        pytest.raises(TabelogSuggestUnavailableError),
+    ):
         await get_keyword_suggestions_async(query="すき")
 
 
@@ -519,7 +530,7 @@ def test_get_area_suggestions_parses_prefecture_datatype():
     ]
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
         assert len(results) == 1
         assert results[0].name == "東京都"
@@ -540,7 +551,7 @@ def test_get_area_suggestions_parses_town_datatype():
     ]
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="三重")
         assert len(results) == 1
         assert results[0].name == "三重町"
@@ -561,7 +572,7 @@ def test_get_area_suggestions_preserves_unlisted_datatype():
     ]
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="大阪")
         assert len(results) == 1
         assert results[0].name == "大阪市"
@@ -580,7 +591,7 @@ def test_get_keyword_suggestions_preserves_unlisted_datatype():
     ]
     mock_response.raise_for_status = Mock()
 
-    with patch("httpx.get", return_value=mock_response):
+    with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_keyword_suggestions(query="お好み焼き")
         assert len(results) == 1
         assert results[0].name == "お好み焼き"

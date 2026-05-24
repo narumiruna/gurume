@@ -3,8 +3,8 @@
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import httpx
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume.exceptions import NetworkError
 from gurume.exceptions import RateLimitError
@@ -14,31 +14,35 @@ from gurume.retry import handle_http_errors
 from gurume.retry import is_retryable_error
 
 
+def _http_error(status_code: int, message: str = "error") -> request_errors.HTTPError:
+    return request_errors.HTTPError(message, 0, Mock(status_code=status_code))
+
+
 class TestRetryHelpers:
     """Test retry helper functions"""
 
     def test_is_retryable_error_network_errors(self):
         """Test network errors are retryable"""
-        assert is_retryable_error(httpx.ConnectError("connection failed"))
-        assert is_retryable_error(httpx.TimeoutException("timeout"))
-        assert is_retryable_error(httpx.NetworkError("network error"))
+        assert is_retryable_error(request_errors.ConnectionError("connection failed"))
+        assert is_retryable_error(request_errors.Timeout("timeout"))
+        assert is_retryable_error(request_errors.ConnectionError("network error"))
 
     def test_is_retryable_error_server_errors(self):
         """Test 5xx errors are retryable"""
         mock_response = Mock()
         mock_response.status_code = 500
-        error = httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
+        error = request_errors.HTTPError("error", 0, mock_response)
         assert is_retryable_error(error)
 
         mock_response.status_code = 503
-        error = httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
+        error = request_errors.HTTPError("error", 0, mock_response)
         assert is_retryable_error(error)
 
     def test_is_retryable_error_client_errors(self):
         """Test 4xx errors are not retryable"""
         mock_response = Mock()
         mock_response.status_code = 404
-        error = httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
+        error = request_errors.HTTPError("error", 0, mock_response)
         assert not is_retryable_error(error)
 
     def test_handle_http_errors_success(self):
@@ -53,9 +57,7 @@ class TestRetryHelpers:
         """Test 429 raises RateLimitError"""
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_response.raise_for_status = Mock(
-            side_effect=httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
-        )
+        mock_response.raise_for_status = Mock(side_effect=_http_error(429))
 
         with pytest.raises(RateLimitError):
             handle_http_errors(mock_response)
@@ -64,9 +66,7 @@ class TestRetryHelpers:
         """Test 5xx raises NetworkError"""
         mock_response = Mock()
         mock_response.status_code = 500
-        mock_response.raise_for_status = Mock(
-            side_effect=httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
-        )
+        mock_response.raise_for_status = Mock(side_effect=_http_error(500))
 
         with pytest.raises(NetworkError):
             handle_http_errors(mock_response)
@@ -75,7 +75,7 @@ class TestRetryHelpers:
 class TestFetchWithRetry:
     """Test fetch_with_retry function"""
 
-    @patch("gurume.retry.httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_success_first_try(self, mock_get):
         """Test successful fetch on first try"""
         mock_response = Mock()
@@ -87,20 +87,18 @@ class TestFetchWithRetry:
         assert result == mock_response
         assert mock_get.call_count == 1
 
-    @patch("gurume.retry.httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_rate_limit_error(self, mock_get):
         """Test rate limit error raises immediately"""
         mock_response = Mock()
         mock_response.status_code = 429
-        mock_response.raise_for_status = Mock(
-            side_effect=httpx.HTTPStatusError("error", request=Mock(), response=mock_response)
-        )
+        mock_response.raise_for_status = Mock(side_effect=_http_error(429))
         mock_get.return_value = mock_response
 
         with pytest.raises(RateLimitError):
             fetch_with_retry("http://example.com")
 
-    @patch("gurume.retry.httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_success_after_retries(self, mock_get):
         """Test successful fetch after retries"""
         # First two calls fail with network error, third succeeds
@@ -109,8 +107,8 @@ class TestFetchWithRetry:
         mock_response_success.raise_for_status = Mock()
 
         mock_get.side_effect = [
-            httpx.ConnectError("connection failed"),
-            httpx.TimeoutException("timeout"),
+            request_errors.ConnectionError("connection failed"),
+            request_errors.Timeout("timeout"),
             mock_response_success,
         ]
 
@@ -118,10 +116,10 @@ class TestFetchWithRetry:
         assert result == mock_response_success
         assert mock_get.call_count == 3
 
-    @patch("gurume.retry.httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_all_retries_fail(self, mock_get):
         """Test all retries fail raises NetworkError"""
-        mock_get.side_effect = [httpx.ConnectError("failed")] * (DEFAULT_MAX_ATTEMPTS + 1)
+        mock_get.side_effect = [request_errors.ConnectionError("failed")] * (DEFAULT_MAX_ATTEMPTS + 1)
 
         with pytest.raises(NetworkError):
             fetch_with_retry("http://example.com")
@@ -133,7 +131,7 @@ class TestFetchWithRetry:
 class TestFetchWithRetryAsync:
     """Test fetch_with_retry_async function"""
 
-    @patch("gurume.retry.httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_fetch_async_success_first_try(self, mock_async_client):
         """Test successful async fetch on first try"""
         from unittest.mock import AsyncMock
