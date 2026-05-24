@@ -4,8 +4,8 @@ from datetime import datetime
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import httpx
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume.restaurant import Restaurant
 from gurume.search import SearchMeta
@@ -234,7 +234,7 @@ class TestSearchRequest:
         assert restaurant_request.party_size == 2
         assert restaurant_request.page == 2
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_respects_start_page(self, mock_get, mock_html_response):
         """Test synchronous search starts from the requested page"""
         mock_response = Mock()
@@ -260,7 +260,7 @@ class TestSearchRequest:
         called_params = mock_get.call_args.kwargs["params"]
         assert called_params["PG"] == "2"
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_single_page(self, mock_get, mock_html_response):
         """Test synchronous search for single page"""
         mock_response = Mock()
@@ -283,10 +283,10 @@ class TestSearchRequest:
         assert response.meta.total_count == 100
         assert response.error_message is None
 
-        # Check that httpx.get was called once
+        # Check that curl_cffi.get was called once
         mock_get.assert_called_once()
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_multiple_pages(self, mock_get, mock_html_response):
         """Test synchronous search for multiple pages"""
         mock_response = Mock()
@@ -307,10 +307,10 @@ class TestSearchRequest:
         assert len(response.restaurants) == 6  # 2 restaurants per page * 3 pages
         assert response.meta is not None
 
-        # Check that httpx.get was called 3 times
+        # Check that curl_cffi.get was called 3 times
         assert mock_get.call_count == 3
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_no_results(self, mock_get):
         """Test synchronous search with no results"""
         mock_response = Mock()
@@ -332,10 +332,10 @@ class TestSearchRequest:
         assert response.meta is not None
         assert response.meta.total_count == 0
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_http_error(self, mock_get):
         """Test synchronous search with HTTP error"""
-        mock_get.side_effect = httpx.HTTPStatusError("404 Not Found", request=Mock(), response=Mock())
+        mock_get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
         request = SearchRequest(area="銀座", keyword="寿司")
         response = request.do_sync()
@@ -344,7 +344,7 @@ class TestSearchRequest:
         assert response.error_message is not None and "404 Not Found" in response.error_message
         assert len(response.restaurants) == 0
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_without_meta(self, mock_get, mock_html_response):
         """Test synchronous search without metadata"""
         mock_response = Mock()
@@ -366,7 +366,7 @@ class TestSearchRequest:
         assert response.meta is None
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async_single_page(self, mock_client_class, mock_html_response):
         """Test asynchronous search for single page"""
         from unittest.mock import AsyncMock
@@ -396,12 +396,12 @@ class TestSearchRequest:
         assert response.meta is not None
         assert response.meta.total_count == 100
 
-        # Check that AsyncClient was created with correct parameters
-        mock_client_class.assert_called_once_with(timeout=30.0, follow_redirects=True)
+        # Check that AsyncSession was created with correct parameters
+        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="chrome")
         mock_client.get.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async_multiple_pages(self, mock_client_class, mock_html_response):
         """Test asynchronous search for multiple pages"""
         from unittest.mock import AsyncMock
@@ -434,13 +434,13 @@ class TestSearchRequest:
         assert mock_client.get.call_count == 2
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async_http_error(self, mock_client_class):
         """Test asynchronous search with HTTP error"""
         from unittest.mock import AsyncMock
 
         mock_client = AsyncMock()
-        mock_client.get = AsyncMock(side_effect=httpx.HTTPStatusError("404 Not Found", request=Mock(), response=Mock()))
+        mock_client.get = AsyncMock(side_effect=request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404)))
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
@@ -454,7 +454,7 @@ class TestSearchRequest:
         assert len(response.restaurants) == 0
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async_no_results(self, mock_client_class):
         """Test asynchronous search with no results"""
         from unittest.mock import AsyncMock

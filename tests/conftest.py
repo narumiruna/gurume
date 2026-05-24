@@ -44,8 +44,8 @@ def mock_html_response():
 
 
 @pytest.fixture
-def mock_httpx_response(mock_html_response):
-    """Mock httpx response"""
+def mock_curl_cffi_response(mock_html_response):
+    """Mock curl_cffi response"""
     response = Mock()
     response.text = mock_html_response
     response.raise_for_status = Mock()
@@ -54,12 +54,12 @@ def mock_httpx_response(mock_html_response):
 
 
 @pytest.fixture
-def mock_httpx_client(mock_httpx_response):
-    """Mock httpx client"""
+def mock_curl_cffi_client(mock_curl_cffi_response):
+    """Mock curl_cffi client"""
     from unittest.mock import AsyncMock
 
     client = AsyncMock()
-    client.get = AsyncMock(return_value=mock_httpx_response)
+    client.get = AsyncMock(return_value=mock_curl_cffi_response)
     client.__aenter__ = AsyncMock(return_value=client)
     client.__aexit__ = AsyncMock(return_value=None)
     return client

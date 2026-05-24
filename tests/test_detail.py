@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import httpx
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume import Course
 from gurume import MenuItem
@@ -13,6 +13,10 @@ from gurume import RestaurantDetail
 from gurume import RestaurantDetailRequest
 from gurume import Review
 from gurume.exceptions import InvalidParameterError
+
+
+def _http_error(status_code: int, message: str) -> request_errors.HTTPError:
+    return request_errors.HTTPError(message, 0, Mock(status_code=status_code))
 
 
 class TestReviewModel:
@@ -302,7 +306,7 @@ class TestRestaurantDetailRequest:
         assert restaurant.reservation_url == "https://tabelog.com/tokyo/A1301/A130101/13000001/reserve/"
         assert restaurant.image_urls == ["https://example.com/a.jpg", "https://example.com/b.jpg"]
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_sync(self, mock_get):
         # Mock HTTP responses
         main_response = Mock()
@@ -334,18 +338,14 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.phone == "03-1111-2222"
         assert mock_get.call_count == 4
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_sync_ignores_optional_menu_404_and_parses_party_courses(self, mock_get):
         main_response = Mock()
         main_response.text = "<html><body><table><tr><th>営業時間</th><td>17:00 - 22:00</td></tr></table></body></html>"
         main_response.raise_for_status = Mock()
 
         menu_response = Mock()
-        menu_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "404 Not Found",
-            request=Mock(),
-            response=Mock(status_code=404),
-        )
+        menu_response.raise_for_status.side_effect = _http_error(404, "404 Not Found")
 
         course_response = Mock()
         course_response.text = """
@@ -377,7 +377,7 @@ class TestRestaurantDetailRequest:
         assert detail.courses[0].items == ["6品"]
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_fetch_async(self, mock_client):
         # Mock HTTP responses
         main_response = Mock()
@@ -414,18 +414,14 @@ class TestRestaurantDetailRequest:
         assert mock_client_instance.get.call_count == 4
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_fetch_async_ignores_optional_course_404(self, mock_client):
         main_response = Mock()
         main_response.text = "<html><body></body></html>"
         main_response.raise_for_status = Mock()
 
         course_response = Mock()
-        course_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-            "404 Not Found",
-            request=Mock(),
-            response=Mock(status_code=404),
-        )
+        course_response.raise_for_status.side_effect = _http_error(404, "404 Not Found")
 
         mock_client_instance = AsyncMock()
         mock_client_instance.get = AsyncMock(side_effect=[main_response, course_response])
@@ -445,7 +441,7 @@ class TestRestaurantDetailRequest:
         assert isinstance(detail, RestaurantDetail)
         assert detail.courses == []
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_sync_only_reviews(self, mock_get):
         main_response = Mock()
         main_response.text = "<html><body></body></html>"
@@ -468,7 +464,7 @@ class TestRestaurantDetailRequest:
         assert isinstance(detail, RestaurantDetail)
         assert mock_get.call_count == 2
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_fetch_sync_multiple_review_pages(self, mock_get):
         main_response = Mock()
         main_response.text = "<html><body></body></html>"

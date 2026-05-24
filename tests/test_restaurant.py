@@ -3,8 +3,8 @@
 from unittest.mock import Mock
 from unittest.mock import patch
 
-import httpx
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume.restaurant import PriceRange
 from gurume.restaurant import Restaurant
@@ -86,7 +86,7 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].rating is None
         assert restaurants[0].review_count is None
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync(self, mock_get, mock_html_response):
         """Test synchronous search"""
         mock_response = Mock()
@@ -105,17 +105,18 @@ class TestRestaurantSearchRequest:
         assert len(restaurants) == 2
         assert restaurants[0].name == "テストレストラン1"
 
-        # Check that httpx.get was called with correct parameters
+        # Check that curl_cffi.get was called with correct parameters
         mock_get.assert_called_once()
         call_args = mock_get.call_args
         assert call_args[1]["url"] == "https://tabelog.com/rst/rstsearch"
         assert call_args[1]["params"]["sa"] == "銀座"
         assert call_args[1]["params"]["sk"] == "寿司"
         assert int(call_args[1]["params"]["svps"]) == 2
-        assert call_args[1]["follow_redirects"] is True
+        assert call_args[1]["allow_redirects"] is True
+        assert call_args[1]["impersonate"] == "chrome"
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async(self, mock_client_class, mock_html_response):
         """Test asynchronous search"""
         from unittest.mock import AsyncMock
@@ -142,28 +143,28 @@ class TestRestaurantSearchRequest:
         assert len(restaurants) == 2
         assert restaurants[0].name == "テストレストラン1"
 
-        # Check that AsyncClient was created with correct parameters
-        mock_client_class.assert_called_once_with(timeout=30.0, follow_redirects=True)
+        # Check that AsyncSession was created with correct parameters
+        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="chrome")
         mock_client.get.assert_called_once()
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_do_sync_http_error(self, mock_get):
         """Test handling HTTP errors in synchronous search"""
-        mock_get.side_effect = httpx.HTTPStatusError("404 Not Found", request=Mock(), response=Mock())
+        mock_get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
         request = RestaurantSearchRequest(area="銀座")
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(request_errors.HTTPError):
             request.search_sync(use_cache=False, use_retry=False)
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_do_async_http_error(self, mock_client_class):
         """Test handling HTTP errors in asynchronous search"""
         from unittest.mock import AsyncMock
 
         mock_client = AsyncMock()
-        mock_client.get = AsyncMock(side_effect=httpx.HTTPStatusError("404 Not Found", request=Mock(), response=Mock()))
+        mock_client.get = AsyncMock(side_effect=request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404)))
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
@@ -171,7 +172,7 @@ class TestRestaurantSearchRequest:
 
         request = RestaurantSearchRequest(area="銀座")
 
-        with pytest.raises(httpx.HTTPStatusError):
+        with pytest.raises(request_errors.HTTPError):
             await request.search(use_cache=False, use_retry=False)
 
 

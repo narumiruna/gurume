@@ -15,7 +15,7 @@ from gurume import query_restaurants
 class TestIntegration:
     """Integration tests using real-like scenarios"""
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_basic_search_integration(self, mock_get):
         """Test basic search integration"""
         mock_html = """
@@ -69,7 +69,7 @@ class TestIntegration:
         assert int(call_args[1]["params"]["svps"]) == 2
         assert call_args[1]["params"]["SrtT"] == "rt"
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_advanced_search_integration(self, mock_get):
         """Test advanced search with filters integration"""
         mock_html = """
@@ -135,7 +135,7 @@ class TestIntegration:
         assert params["ChkOnlineBooking"] == "1"
         assert params["ChkRoom"] == "1"
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_multi_page_search_integration(self, mock_get):
         """Test multi-page search integration"""
         # Mock responses for multiple pages
@@ -205,7 +205,7 @@ class TestIntegration:
         assert mock_get.call_count == 2
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
+    @patch("curl_cffi.requests.AsyncSession")
     async def test_async_search_integration(self, mock_client_class):
         """Test async search integration"""
         from unittest.mock import AsyncMock
@@ -263,11 +263,11 @@ class TestIntegration:
         assert restaurant.genres == ["日本料理"]
         assert restaurant.dinner_price == "ディナー ¥15,000～¥19,999"
 
-        # Verify async client was used correctly
-        mock_client_class.assert_called_once_with(timeout=30.0, follow_redirects=True)
+        # Verify async session was used correctly
+        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="chrome")
         mock_client.get.assert_called_once()
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_error_handling_integration(self, mock_get):
         """Test error handling integration"""
         # Test HTTP error
@@ -281,7 +281,7 @@ class TestIntegration:
         assert len(response.restaurants) == 0
         assert response.meta is None
 
-    @patch("httpx.get")
+    @patch("curl_cffi.requests.get")
     def test_no_results_integration(self, mock_get):
         """Test no results integration"""
         mock_html = """

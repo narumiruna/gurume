@@ -11,17 +11,19 @@ from datetime import UTC
 from datetime import datetime
 from enum import StrEnum
 
-import httpx
 from bs4 import BeautifulSoup
+from curl_cffi import requests
+from curl_cffi.requests import exceptions as request_errors
 
 from .area_mapping import get_area_slug
+from .http_client import DEFAULT_IMPERSONATE
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
 from .restaurant import build_search_url_and_params
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-SEARCH_EXCEPTIONS = (httpx.HTTPError, RuntimeError, ValueError, TypeError)
+SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
 
 
 def _now() -> datetime:
@@ -312,12 +314,13 @@ class SearchRequest:
     def _search_page_sync(self, request: RestaurantSearchRequest) -> tuple[str, list[Restaurant]]:
         url, params = self._build_url_and_params(request)
         try:
-            resp = httpx.get(
+            resp = requests.get(
                 url=url,
                 params=params,
                 headers=self._build_headers(),
                 timeout=self.timeout,
-                follow_redirects=True,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
             )
             resp.raise_for_status()
         except BaseException as e:
@@ -328,7 +331,7 @@ class SearchRequest:
 
     async def _search_page_async(
         self,
-        client: httpx.AsyncClient,
+        client: requests.AsyncSession,
         request: RestaurantSearchRequest,
     ) -> tuple[str, list[Restaurant]]:
         url, params = self._build_url_and_params(request)
@@ -381,7 +384,11 @@ class SearchRequest:
             all_restaurants: list[Restaurant] = []
             meta = None
 
-            async with httpx.AsyncClient(timeout=self.timeout, follow_redirects=True) as client:
+            async with requests.AsyncSession(
+                timeout=self.timeout,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
+            ) as client:
                 start_page = self.page
                 end_page = self.page + self.max_pages
 

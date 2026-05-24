@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-import httpx
+from curl_cffi import requests
+from curl_cffi.requests import exceptions as request_errors
+
+from .http_client import DEFAULT_IMPERSONATE
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -104,12 +107,13 @@ def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggesti
     params = {"sa": query.strip()}
 
     try:
-        resp = httpx.get(
+        resp = requests.get(
             url=SUGGEST_URL,
             params=params,
             headers=_build_headers(),
             timeout=timeout,
-            follow_redirects=True,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -119,7 +123,7 @@ def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggesti
             return []
     except TabelogSuggestUnavailableError:
         raise
-    except (httpx.HTTPError, ValueError):
+    except (request_errors.RequestException, ValueError):
         return []
     else:
         return _parse_area_suggestions(data)
@@ -141,7 +145,11 @@ async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) 
     params = {"sa": query.strip()}
 
     try:
-        async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
+        async with requests.AsyncSession(
+            timeout=request_timeout,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        ) as client:
             resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
             resp.raise_for_status()
             data = resp.json()
@@ -151,7 +159,7 @@ async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) 
                 return []
     except TabelogSuggestUnavailableError:
         raise
-    except (httpx.HTTPError, ValueError):
+    except (request_errors.RequestException, ValueError):
         return []
     else:
         return _parse_area_suggestions(data)
@@ -173,12 +181,13 @@ def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSu
     params = {"sk": query.strip()}
 
     try:
-        resp = httpx.get(
+        resp = requests.get(
             url=SUGGEST_URL,
             params=params,
             headers=_build_headers(),
             timeout=timeout,
-            follow_redirects=True,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
         )
         resp.raise_for_status()
         data = resp.json()
@@ -188,7 +197,7 @@ def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSu
             return []
     except TabelogSuggestUnavailableError:
         raise
-    except (httpx.HTTPError, ValueError):
+    except (request_errors.RequestException, ValueError):
         return []
     else:
         return _parse_keyword_suggestions(data)
@@ -210,7 +219,11 @@ async def get_keyword_suggestions_async(query: str, request_timeout: float = 10.
     params = {"sk": query.strip()}
 
     try:
-        async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=True) as client:
+        async with requests.AsyncSession(
+            timeout=request_timeout,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        ) as client:
             resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
             resp.raise_for_status()
             data = resp.json()
@@ -220,7 +233,7 @@ async def get_keyword_suggestions_async(query: str, request_timeout: float = 10.
                 return []
     except TabelogSuggestUnavailableError:
         raise
-    except (httpx.HTTPError, ValueError):
+    except (request_errors.RequestException, ValueError):
         return []
     else:
         return _parse_keyword_suggestions(data)

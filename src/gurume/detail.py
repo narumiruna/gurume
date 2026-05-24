@@ -8,10 +8,12 @@ from dataclasses import field
 from typing import Any
 from urllib.parse import urljoin
 
-import httpx
 from bs4 import BeautifulSoup
+from curl_cffi import requests
+from curl_cffi.requests import exceptions as request_errors
 
 from .exceptions import InvalidParameterError
+from .http_client import DEFAULT_IMPERSONATE
 from .restaurant import Restaurant
 
 USER_AGENT = (
@@ -483,24 +485,35 @@ class RestaurantDetailRequest:
             return [item for item in image if isinstance(item, str) and item]
         return []
 
-    def _is_not_found_error(self, error: httpx.HTTPStatusError) -> bool:
-        return error.response.status_code == 404
+    def _is_not_found_error(self, error: request_errors.HTTPError) -> bool:
+        return error.response is not None and error.response.status_code == 404
 
     def _fetch_optional_sync(self, url: str, headers: dict[str, str]) -> str | None:
-        resp = httpx.get(url, headers=headers, timeout=30.0, follow_redirects=True)
+        resp = requests.get(
+            url,
+            headers=headers,
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         try:
             resp.raise_for_status()
-        except httpx.HTTPStatusError as e:
+        except request_errors.HTTPError as e:
             if self._is_not_found_error(e):
                 return None
             raise
         return resp.text
 
-    async def _fetch_optional_async(self, client: httpx.AsyncClient, url: str, headers: dict[str, str]) -> str | None:
+    async def _fetch_optional_async(
+        self,
+        client: requests.AsyncSession,
+        url: str,
+        headers: dict[str, str],
+    ) -> str | None:
         resp = await client.get(url, headers=headers)
         try:
             resp.raise_for_status()
-        except httpx.HTTPStatusError as e:
+        except request_errors.HTTPError as e:
             if self._is_not_found_error(e):
                 return None
             raise
@@ -512,7 +525,13 @@ class RestaurantDetailRequest:
 
         base_url = self._get_base_url()
 
-        main_resp = httpx.get(base_url, headers=headers, timeout=30.0, follow_redirects=True)
+        main_resp = requests.get(
+            base_url,
+            headers=headers,
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         main_resp.raise_for_status()
         restaurant = self._parse_restaurant(main_resp.text, base_url)
 
@@ -527,7 +546,13 @@ class RestaurantDetailRequest:
                 if page > 1:
                     review_url += f"?PG={page}"
 
-                resp = httpx.get(review_url, headers=headers, timeout=30.0, follow_redirects=True)
+                resp = requests.get(
+                    review_url,
+                    headers=headers,
+                    timeout=30.0,
+                    allow_redirects=True,
+                    impersonate=DEFAULT_IMPERSONATE,
+                )
                 resp.raise_for_status()
                 reviews.extend(self._parse_reviews(resp.text))
 
@@ -560,7 +585,11 @@ class RestaurantDetailRequest:
         menu_items = []
         courses = []
 
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+        async with requests.AsyncSession(
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        ) as client:
             main_resp = await client.get(base_url, headers=headers)
             main_resp.raise_for_status()
             restaurant = self._parse_restaurant(main_resp.text, base_url)
