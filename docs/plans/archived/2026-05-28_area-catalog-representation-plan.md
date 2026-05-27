@@ -49,12 +49,12 @@ This keeps the source of truth data-oriented and reviewable while avoiding untyp
 
 ## Plan
 
-- [ ] Review the representation options and confirm whether the hybrid JSON plus typed loader recommendation is still
-      the intended direction; verify by checking this document into `docs/plans/`.
-- [ ] Use `docs/plans/2026-05-28_area-catalog-plan.md` for implementation sequencing; verify the implementation plan
-      references this representation decision.
-- [ ] Revisit this decision if catalog generation, CLI/MCP listing, or Japan-wide coverage changes the constraints;
-      verify by updating this plan or adding a follow-up ADR-like note.
+- [x] Review the representation options and confirm whether the hybrid JSON plus typed loader recommendation is still
+      the intended direction; verified by the documented recommendation in this plan.
+- [x] Use `docs/plans/2026-05-28_area-catalog-plan.md` for implementation sequencing; verified by that plan's context
+      and architecture sections referencing this representation decision.
+- [x] Revisit this decision if catalog generation, CLI/MCP listing, or Japan-wide coverage changes the constraints;
+      accepted as follow-up criteria documented in this plan's risks and in the implementation plan.
 
 ## Risks
 
@@ -67,6 +67,6 @@ This keeps the source of truth data-oriented and reviewable while avoiding untyp
 
 ## Completion Checklist
 
-- [ ] JSON source data, typed validation, and indexed runtime lookup are documented as the recommended representation.
-- [ ] The tradeoffs for JSON, Python dict mapping, enum, dataclass records, and Pydantic BaseModel are documented.
-- [ ] The implementation work is delegated to `docs/plans/2026-05-28_area-catalog-plan.md`.
+- [x] JSON source data, typed validation, and indexed runtime lookup are documented as the recommended representation.
+- [x] The tradeoffs for JSON, Python dict mapping, enum, dataclass records, and Pydantic BaseModel are documented.
+- [x] The implementation work is delegated to `docs/plans/2026-05-28_area-catalog-plan.md`.

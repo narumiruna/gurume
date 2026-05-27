@@ -8,8 +8,8 @@ and `天王寺` to Tabelog area paths, while existing prefecture and major-city 
 
 ## Context
 
-`docs/plans/2026-05-28_area-catalog-representation-plan.md` compares representation choices and recommends a hybrid:
-JSON as the source-of-truth catalog, strict validation, then dataclass or indexed dictionary lookup at runtime.
+`docs/plans/archived/2026-05-28_area-catalog-representation-plan.md` compares representation choices and recommends a
+hybrid: JSON as the source-of-truth catalog, strict validation, then dataclass or indexed dictionary lookup at runtime.
 
 The implementation should apply that choice without attempting a Japan-wide hierarchy in the first PR. The immediate
 value is reducing low-confidence `area + keyword` searches for common Osaka requests by mapping user-facing area names
