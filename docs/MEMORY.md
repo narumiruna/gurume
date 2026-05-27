@@ -10,6 +10,7 @@
 - Do not assume `sa=<area>` query parameters produce correct area filtering. Accurate prefecture-level filtering depends on path-based area slugs such as `/tokyo/rstLst/`; unmapped areas may fall back to broader results.
 - Cuisine searches should prefer genre-code-based URL paths over plain keyword matching. Use `genre_mapping.py` to keep cuisine filtering precise before adding ad hoc matching logic.
 - Tabelog prefecture cuisine pages no longer honor the legacy `LstG` query alone; build area+cuisine searches from mapped `/AREA/rstLst/<segment>/` paths, where `<segment>` may be a slug like `yakiniku` or a category token like `RC0107` / `MC0101`.
+- No-area and `全国` cuisine ranking searches also need path-based URLs such as `/rstLst/RC0107/`; do not rely on `rst/rstsearch` plus `LstG` for supported cuisine filters.
 - Major city searches may need nested Tabelog area paths instead of prefecture slugs, for example `札幌 -> hokkaido/A0101`, `名古屋 -> aichi/A2301`, and `神戸 -> hyogo/A2801`.
 - Suggestion endpoints and detail pages are upstream-controlled and may change response shape; preserve defensive parsing and actionable error messages when touching these flows.
 - Tabelog area suggestions may return `datatype="Town"`; keep MCP `SuggestionDatatype` aligned with upstream values or FastMCP structured output validation will fail before returning an envelope.

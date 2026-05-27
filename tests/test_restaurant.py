@@ -86,6 +86,46 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].rating is None
         assert restaurants[0].review_count is None
 
+    def test_parse_sukiyaki_ranking_cards(self):
+        """Parse current Tabelog ranking card markup for sukiyaki pages."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="https://tabelog.com/tokyo/A1301/A130101/13287203/">
+                    東京肉しゃぶ家 秀彬
+                </a>
+                <div class="list-rst__area-genre">
+                    [東京] 銀座駅 481m / しゃぶしゃぶ、<mark>すき焼き</mark>、とんかつ
+                </div>
+                <span class="c-rating__val c-rating__val--strong list-rst__rating-val">4.16</span>
+                <em class="list-rst__rvw-count-num cpy-review-count">148</em>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="https://tabelog.com/mie/A2401/A240102/24000069/">
+                    和田金
+                </a>
+                <div class="list-rst__area-genre">
+                    [三重] 松阪市 / <mark>すき焼き</mark>
+                </div>
+                <span class="c-rating__val c-rating__val--strong list-rst__rating-val">4.13</span>
+                <em class="list-rst__rvw-count-num cpy-review-count">1318</em>
+            </div>
+        </body></html>
+        """
+
+        request = RestaurantSearchRequest()
+        restaurants = request._parse_restaurants(html)
+
+        assert [restaurant.name for restaurant in restaurants] == ["東京肉しゃぶ家 秀彬", "和田金"]
+        assert restaurants[0].url == "https://tabelog.com/tokyo/A1301/A130101/13287203/"
+        assert restaurants[0].rating == 4.16
+        assert restaurants[0].review_count == 148
+        assert any("すき焼き" in genre for genre in restaurants[0].genres)
+        assert restaurants[1].url == "https://tabelog.com/mie/A2401/A240102/24000069/"
+        assert restaurants[1].rating == 4.13
+        assert restaurants[1].review_count == 1318
+        assert any("すき焼き" in genre for genre in restaurants[1].genres)
+
     @patch("curl_cffi.requests.get")
     def test_do_sync(self, mock_get, mock_html_response):
         """Test synchronous search"""

@@ -71,3 +71,4 @@
 2026-05-18 | test(mcp): split limit and ambiguous-area warning assertions (#NRM-11)
 2026-05-27 | research(http): verify Tabelog Cloudflare headers (#local)
 2026-05-28 | docs(plans): add cuisine ranking and restaurant output usability fix plans (#local)
+2026-05-28 | fix(search): route national cuisine rankings through Tabelog cuisine paths (#local)

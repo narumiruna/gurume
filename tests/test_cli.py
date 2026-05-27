@@ -429,6 +429,10 @@ class TestSearchCommand:
                 total_pages=3,
                 has_next_page=True,
                 has_prev_page=False,
+                source_url="https://tabelog.com/tokyo/rstLst/sushi/",
+                source_params={"PG": "1", "SrtT": "rt"},
+                cuisine_filter_confidence="high",
+                cuisine_filter_reason="1/1 parsed results included 寿司",
             ),
         )
         runner = CliRunner()
@@ -457,6 +461,10 @@ class TestSearchCommand:
         assert payload["limit"] == 1
         assert payload["has_more"] is True
         assert payload["meta"]["total_count"] == 42
+        assert payload["meta"]["source_url"] == "https://tabelog.com/tokyo/rstLst/sushi/"
+        assert payload["meta"]["source_params"] == {"PG": "1", "SrtT": "rt"}
+        assert payload["meta"]["cuisine_filter_confidence"] == "high"
+        assert payload["meta"]["cuisine_filter_reason"] == "1/1 parsed results included 寿司"
         assert payload["applied_filters"]["area"] == "東京"
         assert payload["applied_filters"]["cuisine"] == "寿司"
         assert payload["applied_filters"]["genre_code"] == "RC0201"
@@ -584,6 +592,22 @@ class TestSearchCommand:
 
         assert result.exit_code == 0
         assert "無法精準映射地區" in result.output
+
+    def test_national_area_with_cuisine_does_not_warn_about_broad_results(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(
+            status=SearchStatus.SUCCESS,
+            restaurants=[Restaurant(name="すき焼き店", url="https://tabelog.com/tokyo/A1301/A130101/1/")],
+        )
+        runner = CliRunner()
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = runner.invoke(app, ["search", "--area", "全国", "--cuisine", "すき焼き", "--limit", "1"])
+
+        assert result.exit_code == 0
+        assert "無法精準映射地區" not in result.output
 
     def test_keyword_matching_cuisine_uses_cuisine_filter_without_keyword(self):
         from typer.testing import CliRunner

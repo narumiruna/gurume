@@ -173,6 +173,10 @@ async def test_search_restaurants_success(sample_restaurants):
             total_pages=1,
             has_next_page=False,
             has_prev_page=False,
+            source_url="https://tabelog.com/tokyo/rstLst/sushi/",
+            source_params={"PG": "1", "SrtT": "rt"},
+            cuisine_filter_confidence="high",
+            cuisine_filter_reason="2/2 parsed results included 寿司",
         ),
     )
 
@@ -207,6 +211,10 @@ async def test_search_restaurants_success(sample_restaurants):
         assert results.has_more is False
         assert results.meta is not None
         assert results.meta.current_page == 1
+        assert str(results.meta.source_url) == "https://tabelog.com/tokyo/rstLst/sushi/"
+        assert results.meta.source_params == {"PG": "1", "SrtT": "rt"}
+        assert results.meta.cuisine_filter_confidence == "high"
+        assert results.meta.cuisine_filter_reason == "2/2 parsed results included 寿司"
         assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
 
         # Verify SearchRequest was called correctly
