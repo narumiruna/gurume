@@ -79,6 +79,19 @@ class SearchMetaOutput(BaseModel):
     total_pages: int | None = Field(description="Total number of result pages reported by Tabelog")
     has_next_page: bool = Field(description="Whether Tabelog reports a next result page")
     has_prev_page: bool = Field(description="Whether Tabelog reports a previous result page")
+    source_url: HttpUrl | None = Field(default=None, description="Tabelog URL fetched for the first parsed page")
+    source_params: dict[str, str] = Field(
+        default_factory=dict,
+        description="Query parameters sent with the first parsed page request",
+    )
+    cuisine_filter_confidence: Literal["high", "low", "not_applicable"] | None = Field(
+        default=None,
+        description="Confidence that parsed results match the requested supported cuisine",
+    )
+    cuisine_filter_reason: str | None = Field(
+        default=None,
+        description="Machine-readable evidence summary for cuisine filter confidence",
+    )
 
 
 class SearchFiltersOutput(BaseModel):

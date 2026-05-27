@@ -8,6 +8,7 @@ import pytest
 from curl_cffi.requests import exceptions as request_errors
 
 from gurume.restaurant import Restaurant
+from gurume.restaurant import SortType
 from gurume.search import SearchMeta
 from gurume.search import SearchRequest
 from gurume.search import SearchResponse
@@ -34,6 +35,9 @@ class TestSearchMeta:
         assert meta.total_pages == 5
         assert meta.has_next_page is True
         assert meta.has_prev_page is False
+        assert meta.source_url is None
+        assert meta.source_params == {}
+        assert meta.cuisine_filter_confidence is None
         assert isinstance(meta.search_time, datetime)
 
 
@@ -66,6 +70,7 @@ class TestSearchResponse:
         assert len(response.restaurants) == 2
         assert response.meta is not None and response.meta.total_count == 2
         assert response.error_message is None
+        assert response.warnings == []
 
     def test_search_response_no_results(self):
         """Test no results search response"""
@@ -281,10 +286,54 @@ class TestSearchRequest:
         assert len(response.restaurants) == 2
         assert response.meta is not None
         assert response.meta.total_count == 100
+        assert response.meta.source_url == "https://tabelog.com/rst/rstsearch"
+        assert response.meta.source_params["sa"] == "銀座"
+        assert response.meta.source_params["sk"] == "寿司"
+        assert response.meta.source_params["sw"] == "寿司"
         assert response.error_message is None
 
         # Check that curl_cffi.get was called once
         mock_get.assert_called_once()
+
+    @patch("curl_cffi.requests.get")
+    def test_cuisine_filter_mismatch_adds_machine_readable_warning(self, mock_get):
+        """Supported cuisine searches must expose low-confidence mismatches."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/tokyo/A1301/A130101/13000001/">鮨</a>
+                <span class="c-rating__val">4.5</span>
+                <em class="list-rst__rvw-count-num">123</em>
+                <div class="list-rst__area-genre"> [東京] 銀座 / 寿司</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/tokyo/A1301/A130101/13000002/">天ぷら</a>
+                <span class="c-rating__val">4.2</span>
+                <em class="list-rst__rvw-count-num">456</em>
+                <div class="list-rst__area-genre"> [東京] 銀座 / 天ぷら</div>
+            </div>
+            <span class="c-page-count__num">2</span>
+        </body></html>
+        """
+        mock_response = Mock()
+        mock_response.text = html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        request = SearchRequest(genre_code="RC0107", sort_type=SortType.RANKING, max_pages=1, include_meta=True)
+
+        response = request.do_sync()
+
+        assert response.status == SearchStatus.SUCCESS
+        assert response.meta is not None
+        assert response.meta.source_url == "https://tabelog.com/rstLst/RC0107/"
+        assert response.meta.source_params["SrtT"] == "rt"
+        assert response.meta.cuisine_filter_confidence == "low"
+        assert response.meta.cuisine_filter_reason == "0/2 parsed results included すき焼き"
+        assert response.warnings == [
+            "filter_mismatch:cuisine: only 0/2 parsed results included すき焼き; "
+            "verify `meta.source_url` before presenting results as cuisine-scoped."
+        ]
 
     @patch("curl_cffi.requests.get")
     def test_do_sync_multiple_pages(self, mock_get, mock_html_response):
@@ -519,14 +568,21 @@ class TestBuildSearchUrlAndParams:
         assert params["sw"] == "今半"
         assert "LstG" not in params
 
-    def test_genre_only_uses_query_param(self):
+    def test_genre_only_uses_cuisine_path_segment(self):
         from gurume.restaurant import build_search_url_and_params
 
         url, params = build_search_url_and_params({"SrtT": "standard"}, None, "RC0201")
-        # Genre code MUST be in query, not in URL path
-        assert url == "https://tabelog.com/rst/rstsearch"
-        assert "/rstLst/RC0201" not in url
-        assert params["LstG"] == "RC0201"
+        assert url == "https://tabelog.com/rstLst/sushi/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
+    def test_national_area_and_genre_uses_cuisine_path_segment(self):
+        from gurume.restaurant import build_search_url_and_params
+
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "全国"}, None, "RC0107")
+        assert url == "https://tabelog.com/rstLst/RC0107/"
+        assert "LstG" not in params
+        assert "sa" not in params
 
     def test_area_and_genre_uses_cuisine_path_segment(self):
         from gurume.restaurant import build_search_url_and_params

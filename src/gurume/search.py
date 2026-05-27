@@ -4,18 +4,21 @@ import contextlib
 import json
 import re
 from collections.abc import Callable
+from collections.abc import Mapping
 from dataclasses import asdict
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import UTC
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from bs4 import BeautifulSoup
 from curl_cffi import requests
 from curl_cffi.requests import exceptions as request_errors
 
 from .area_mapping import get_area_slug
+from .genre_mapping import get_genre_name_by_code
 from .http_client import DEFAULT_IMPERSONATE
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
@@ -24,6 +27,7 @@ from .restaurant import build_search_url_and_params
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
+CuisineFilterConfidence = Literal["high", "low", "not_applicable"]
 
 
 def _now() -> datetime:
@@ -54,6 +58,20 @@ class SearchMeta:
     has_next_page: bool
     has_prev_page: bool
     search_time: datetime = field(default_factory=_now)
+    source_url: str | None = None
+    source_params: dict[str, str] = field(default_factory=dict)
+    cuisine_filter_confidence: CuisineFilterConfidence | None = None
+    cuisine_filter_reason: str | None = None
+
+
+@dataclass
+class SearchPageResult:
+    """Fetched search page content and source evidence."""
+
+    html: str
+    restaurants: list[Restaurant]
+    source_url: str
+    source_params: dict[str, str]
 
 
 @dataclass
@@ -64,6 +82,7 @@ class SearchResponse:
     restaurants: list[Restaurant] = field(default_factory=list)
     meta: SearchMeta | None = None
     error_message: str | None = None
+    warnings: list[str] = field(default_factory=list)
 
     def filter(
         self,
@@ -97,6 +116,7 @@ class SearchResponse:
             restaurants=filtered,
             meta=self.meta,
             error_message=self.error_message,
+            warnings=list(self.warnings),
         )
 
     def sort_by(self, key: str, reverse: bool = False) -> SearchResponse:
@@ -120,6 +140,7 @@ class SearchResponse:
             restaurants=sorted_restaurants,
             meta=self.meta,
             error_message=self.error_message,
+            warnings=list(self.warnings),
         )
 
     def top(self, n: int) -> SearchResponse:
@@ -136,6 +157,7 @@ class SearchResponse:
             restaurants=self.restaurants[:n],
             meta=self.meta,
             error_message=self.error_message,
+            warnings=list(self.warnings),
         )
 
     def to_json(self, indent: int = 2) -> str:
@@ -152,6 +174,7 @@ class SearchResponse:
             "restaurants": [asdict(r) for r in self.restaurants],
             "meta": asdict(self.meta) if self.meta else None,
             "error_message": self.error_message,
+            "warnings": self.warnings,
         }
         return json.dumps(data, ensure_ascii=False, indent=indent, default=str)
 
@@ -166,6 +189,7 @@ class SearchResponse:
             "restaurants": [asdict(r) for r in self.restaurants],
             "meta": asdict(self.meta) if self.meta else None,
             "error_message": self.error_message,
+            "warnings": list(self.warnings),
         }
 
 
@@ -188,7 +212,14 @@ class SearchRequest:
     include_meta: bool = True
     timeout: float = 30.0
 
-    def _parse_meta(self, html: str, current_page: int) -> SearchMeta:
+    def _parse_meta(
+        self,
+        html: str,
+        current_page: int,
+        *,
+        source_url: str | None = None,
+        source_params: dict[str, str] | None = None,
+    ) -> SearchMeta:
         """Parse search metadata."""
         soup = BeautifulSoup(html, "lxml")
 
@@ -217,6 +248,8 @@ class SearchRequest:
             total_pages=total_pages,
             has_next_page=has_next_page,
             has_prev_page=has_prev_page,
+            source_url=source_url,
+            source_params=source_params or {},
         )
 
     def _parse_total_count(self, soup: BeautifulSoup, parsed_item_count: int) -> int | None:
@@ -298,11 +331,24 @@ class SearchRequest:
         area_slug = get_area_slug(self.area) if self.area else None
         return build_search_url_and_params(params, area_slug, self.genre_code)
 
-    def _update_meta(self, meta: SearchMeta | None, html: str, page: int) -> SearchMeta | None:
+    def _stringify_params(self, params: Mapping[str, object]) -> dict[str, str]:
+        return {str(key): str(value) for key, value in params.items() if value is not None}
+
+    def _update_meta(
+        self,
+        meta: SearchMeta | None,
+        page_result: SearchPageResult,
+        page: int,
+    ) -> SearchMeta | None:
         if meta is not None or not self.include_meta:
             return meta
 
-        meta = self._parse_meta(html, page)
+        meta = self._parse_meta(
+            page_result.html,
+            page,
+            source_url=page_result.source_url,
+            source_params=page_result.source_params,
+        )
         if meta.total_pages is None:
             return meta
 
@@ -311,8 +357,9 @@ class SearchRequest:
             self.max_pages = remaining_pages
         return meta
 
-    def _search_page_sync(self, request: RestaurantSearchRequest) -> tuple[str, list[Restaurant]]:
+    def _search_page_sync(self, request: RestaurantSearchRequest) -> SearchPageResult:
         url, params = self._build_url_and_params(request)
+        source_params = self._stringify_params(params)
         try:
             resp = requests.get(
                 url=url,
@@ -327,14 +374,20 @@ class SearchRequest:
             _reraise_if_fatal(e)
             raise RuntimeError(str(e)) from e
         else:
-            return resp.text, request._parse_restaurants(resp.text)
+            return SearchPageResult(
+                html=resp.text,
+                restaurants=request._parse_restaurants(resp.text),
+                source_url=url,
+                source_params=source_params,
+            )
 
     async def _search_page_async(
         self,
         client: requests.AsyncSession,
         request: RestaurantSearchRequest,
-    ) -> tuple[str, list[Restaurant]]:
+    ) -> SearchPageResult:
         url, params = self._build_url_and_params(request)
+        source_params = self._stringify_params(params)
         try:
             resp = await client.get(url=url, params=params, headers=self._build_headers())
             resp.raise_for_status()
@@ -342,7 +395,53 @@ class SearchRequest:
             _reraise_if_fatal(e)
             raise RuntimeError(str(e)) from e
         else:
-            return resp.text, request._parse_restaurants(resp.text)
+            return SearchPageResult(
+                html=resp.text,
+                restaurants=request._parse_restaurants(resp.text),
+                source_url=url,
+                source_params=source_params,
+            )
+
+    def _annotate_cuisine_filter(
+        self,
+        meta: SearchMeta | None,
+        restaurants: list[Restaurant],
+    ) -> list[str]:
+        if self.genre_code is None:
+            return []
+
+        cuisine_name = get_genre_name_by_code(self.genre_code)
+        if cuisine_name is None:
+            if meta is not None:
+                meta.cuisine_filter_confidence = "not_applicable"
+                meta.cuisine_filter_reason = "unknown_genre_code"
+            return []
+
+        if not restaurants:
+            if meta is not None:
+                meta.cuisine_filter_confidence = "not_applicable"
+                meta.cuisine_filter_reason = "no_results"
+            return []
+
+        matched_count = sum(
+            1 for restaurant in restaurants if any(cuisine_name in genre for genre in restaurant.genres)
+        )
+        total_count = len(restaurants)
+        confidence = "high" if matched_count / total_count >= 0.8 else "low"
+        reason = f"{matched_count}/{total_count} parsed results included {cuisine_name}"
+
+        if meta is not None:
+            meta.cuisine_filter_confidence = confidence
+            meta.cuisine_filter_reason = reason
+
+        if confidence == "high":
+            return []
+
+        return [
+            "filter_mismatch:cuisine: "
+            f"only {matched_count}/{total_count} parsed results included {cuisine_name}; "
+            "verify `meta.source_url` before presenting results as cuisine-scoped."
+        ]
 
     def search_sync(self) -> SearchResponse:
         """Run the search synchronously."""
@@ -355,17 +454,18 @@ class SearchRequest:
 
             for page in range(start_page, end_page):
                 request = self._create_restaurant_request(page)
-                html, restaurants = self._search_page_sync(request)
-                all_restaurants.extend(restaurants)
-                meta = self._update_meta(meta, html, page)
+                page_result = self._search_page_sync(request)
+                all_restaurants.extend(page_result.restaurants)
+                meta = self._update_meta(meta, page_result, page)
                 if meta and meta.total_count == 0:
                     break
 
                 # Stop when the current page has no results.
-                if not restaurants:
+                if not page_result.restaurants:
                     break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
+            warnings = self._annotate_cuisine_filter(meta, all_restaurants)
         except SEARCH_EXCEPTIONS as e:
             return SearchResponse(
                 status=SearchStatus.ERROR,
@@ -376,6 +476,7 @@ class SearchRequest:
                 status=status,
                 restaurants=all_restaurants,
                 meta=meta,
+                warnings=warnings,
             )
 
     async def search(self) -> SearchResponse:
@@ -394,17 +495,18 @@ class SearchRequest:
 
                 for page in range(start_page, end_page):
                     request = self._create_restaurant_request(page)
-                    html, restaurants = await self._search_page_async(client, request)
-                    all_restaurants.extend(restaurants)
-                    meta = self._update_meta(meta, html, page)
+                    page_result = await self._search_page_async(client, request)
+                    all_restaurants.extend(page_result.restaurants)
+                    meta = self._update_meta(meta, page_result, page)
                     if meta and meta.total_count == 0:
                         break
 
                     # Stop when the current page has no results.
-                    if not restaurants:
+                    if not page_result.restaurants:
                         break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
+            warnings = self._annotate_cuisine_filter(meta, all_restaurants)
         except SEARCH_EXCEPTIONS as e:
             return SearchResponse(
                 status=SearchStatus.ERROR,
@@ -415,6 +517,7 @@ class SearchRequest:
                 status=status,
                 restaurants=all_restaurants,
                 meta=meta,
+                warnings=warnings,
             )
 
     def do_sync(self) -> SearchResponse:

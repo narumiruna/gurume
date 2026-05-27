@@ -202,6 +202,10 @@ def _to_search_meta_output(meta: SearchMeta | None) -> SearchMetaOutput | None:
         total_pages=meta.total_pages,
         has_next_page=meta.has_next_page,
         has_prev_page=meta.has_prev_page,
+        source_url=_as_http_url(meta.source_url) if meta.source_url else None,
+        source_params=meta.source_params,
+        cuisine_filter_confidence=meta.cuisine_filter_confidence,
+        cuisine_filter_reason=meta.cuisine_filter_reason,
     )
 
 
@@ -286,9 +290,14 @@ def _build_search_output(
     reservation_time: str | None,
     party_size: int | None,
     status: Literal["success", "no_results"],
+    extra_warnings: list[str] | None = None,
 ) -> RestaurantSearchOutput:
     meta_output = _to_search_meta_output(meta)
     returned_count = len(items)
+    warnings = _build_search_warnings(area, keyword, cuisine, reservation_date)
+    for warning in extra_warnings or []:
+        if warning not in warnings:
+            warnings.append(warning)
 
     return RestaurantSearchOutput(
         status=status,
@@ -308,7 +317,7 @@ def _build_search_output(
             reservation_time=reservation_time,
             party_size=party_size,
         ),
-        warnings=_build_search_warnings(area, keyword, cuisine, reservation_date),
+        warnings=warnings,
     )
 
 

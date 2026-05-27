@@ -345,6 +345,7 @@ async def tabelog_search_restaurants(
         reservation_time=reservation_time,
         party_size=party_size,
         status=status,
+        extra_warnings=response.warnings,
     )
 
 

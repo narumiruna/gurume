@@ -39,10 +39,10 @@ def build_search_url_and_params(
 ) -> tuple[str, dict[str, Any]]:
     """Build the Tabelog search URL and adjust params for area/genre filters.
 
-    Area-only searches still use ``/{area_slug}/rstLst/``. Area + cuisine searches
+    Area-only searches still use ``/{area_slug}/rstLst/``. Cuisine searches
     now require a cuisine-specific path segment (for example ``.../yakiniku/`` or
     ``.../MC0101/``) because the legacy ``LstG`` query parameter is ignored by
-    current Tabelog prefecture pages.
+    current Tabelog pages.
 
     Args:
         params: Search params dict (mutated in place and returned).
@@ -65,6 +65,11 @@ def build_search_url_and_params(
         params.pop("sa", None)
         params.pop("LstG", None)
         return f"https://tabelog.com/{area_slug}/rstLst/{cuisine_slug}/", params
+
+    if cuisine_slug and params.get("sa") in (None, "全国"):
+        params.pop("sa", None)
+        params.pop("LstG", None)
+        return f"https://tabelog.com/rstLst/{cuisine_slug}/", params
 
     if area_slug:
         url = f"https://tabelog.com/{area_slug}/rstLst/"

@@ -64,6 +64,8 @@ SORT_TYPE_MAP = {
     SortOption.STANDARD: SortType.STANDARD,
 }
 
+NATIONAL_AREAS = {"全国"}
+
 
 @dataclass(frozen=True)
 class ResolvedSearchFilters:
@@ -118,6 +120,8 @@ def _server_sort_option(sort: SortOption) -> ServerSortOption:
 
 
 def _unmapped_area_warning(area: str | None, genre_code: str | None) -> str | None:
+    if area in NATIONAL_AREAS:
+        return None
     if area and genre_code and get_area_slug(area) is None:
         return "Area could not be mapped precisely; results may include restaurants from other areas."
     return None
@@ -156,6 +160,7 @@ def _build_search_json_envelope(
         reservation_time=None,
         party_size=None,
         status=status,
+        extra_warnings=response.warnings,
     )
     return _append_warnings(output, [_unmapped_area_warning(area, filters.genre_code)])
 

@@ -24,6 +24,7 @@ def _genre_matches(genres: list[str], expected_terms: set[str]) -> bool:
 @pytest.mark.parametrize(
     ("area", "cuisine", "expected_terms"),
     [
+        ("全国", "すき焼き", {"すき焼き"}),
         ("東京", "ラーメン", {"ラーメン", "つけ麺"}),
         ("大阪", "焼肉", {"焼肉", "ホルモン"}),
         ("三重", "すき焼き", {"すき焼き"}),
