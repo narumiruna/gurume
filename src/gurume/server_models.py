@@ -92,6 +92,18 @@ class SearchMetaOutput(BaseModel):
         default=None,
         description="Machine-readable evidence summary for cuisine filter confidence",
     )
+    area_filter_applied: bool | None = Field(
+        default=None,
+        description="Whether parsed evidence indicates the requested area filter was honored",
+    )
+    area_filter_confidence: Literal["high", "low", "not_applicable"] | None = Field(
+        default=None,
+        description="Confidence that parsed result URLs match the requested mapped area",
+    )
+    area_filter_reason: str | None = Field(
+        default=None,
+        description="Machine-readable evidence summary for area filter confidence",
+    )
 
 
 class SearchFiltersOutput(BaseModel):
