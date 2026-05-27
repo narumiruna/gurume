@@ -72,3 +72,4 @@
 2026-05-27 | research(http): verify Tabelog Cloudflare headers (#local)
 2026-05-28 | docs(plans): add cuisine ranking and restaurant output usability fix plans (#local)
 2026-05-28 | fix(search): route national cuisine rankings through Tabelog cuisine paths (#local)
+2026-05-28 | docs(plans): compare area catalog representations and implementation scope (#local)
