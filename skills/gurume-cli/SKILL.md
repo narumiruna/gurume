@@ -46,7 +46,7 @@ Flag guidance:
 
 - `--sort ranking` (default): good general "best of" results. Use `review-count` when the user wants popular/famous places, `new-open` for newly opened spots.
 - `--limit`: 10 is plenty for a conversational reply. Bump to 20+ only if the user asks for a long list.
-- `--output json`: preferred for agents. It returns `status`, `items`, `applied_filters`, `warnings`, and structured `error` fields. Use legacy `--output json-list` only if you specifically need the old list-only shape.
+- `--output json`: preferred for agents. It returns `status`, `items`, `meta`, `applied_filters`, `warnings`, and structured `error` fields. Use legacy `--output json-list` only if you specifically need the old list-only shape.
 
 ### 4. Present results
 
@@ -60,12 +60,12 @@ instead of inventing restaurants. Otherwise summarize `items` for the user. For 
 - The Tabelog URL so they can click through
 
 When the envelope includes `warnings`, account for them in your answer. When the command used both `--area` and
-`--keyword`, treat area filtering as low confidence unless the result URLs prove the requested area. Do not present
-broad keyword results as clean area-scoped recommendations. If the user asked for Osaka and the JSON includes
-non-`/osaka/` URLs, say that the CLI returned mixed-area results and either keep only the clearly Osaka URLs or ask
-whether they want a broader keyword list. This mirrors the MCP tool's warning that keyword searches may need suggestion
-validation and cuisine-specific filtering. If MCP suggestions return a cuisine-like value that is not in
-`gurume list-cuisines`, keep using keyword search.
+`--keyword`, check `meta.area_filter_confidence` first. Treat `low`, missing, or unavailable confidence as low
+confidence unless the result URLs prove the requested area. Do not present broad keyword results as clean area-scoped
+recommendations. If the user asked for Osaka and the JSON includes non-`/osaka/` URLs, say that the CLI returned
+mixed-area results and either keep only the clearly Osaka URLs or ask whether they want a broader keyword list. This
+mirrors the MCP tool's warning that keyword searches may need suggestion validation and cuisine-specific filtering. If
+MCP suggestions return a cuisine-like value that is not in `gurume list-cuisines`, keep using keyword search.
 
 Then ask if they want to narrow down (different area, cheaper, dinner only, etc.).
 

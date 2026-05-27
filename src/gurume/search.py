@@ -12,6 +12,7 @@ from datetime import UTC
 from datetime import datetime
 from enum import StrEnum
 from typing import Literal
+from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from curl_cffi import requests
@@ -28,6 +29,8 @@ from .restaurant import build_search_url_and_params
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
 CuisineFilterConfidence = Literal["high", "low", "not_applicable"]
+AreaFilterConfidence = Literal["high", "low", "not_applicable"]
+NATIONAL_AREAS = {"全国"}
 
 
 def _now() -> datetime:
@@ -62,6 +65,9 @@ class SearchMeta:
     source_params: dict[str, str] = field(default_factory=dict)
     cuisine_filter_confidence: CuisineFilterConfidence | None = None
     cuisine_filter_reason: str | None = None
+    area_filter_applied: bool | None = None
+    area_filter_confidence: AreaFilterConfidence | None = None
+    area_filter_reason: str | None = None
 
 
 @dataclass
@@ -427,7 +433,7 @@ class SearchRequest:
             1 for restaurant in restaurants if any(cuisine_name in genre for genre in restaurant.genres)
         )
         total_count = len(restaurants)
-        confidence = "high" if matched_count / total_count >= 0.8 else "low"
+        confidence = "high" if matched_count == total_count else "low"
         reason = f"{matched_count}/{total_count} parsed results included {cuisine_name}"
 
         if meta is not None:
@@ -441,6 +447,61 @@ class SearchRequest:
             "filter_mismatch:cuisine: "
             f"only {matched_count}/{total_count} parsed results included {cuisine_name}; "
             "verify `meta.source_url` before presenting results as cuisine-scoped."
+        ]
+
+    def _restaurant_url_matches_area_path(self, restaurant_url: str, area_slug: str) -> bool:
+        area_path = area_slug.strip("/")
+        parsed = urlparse(restaurant_url)
+        path = parsed.path if parsed.scheme else restaurant_url
+        return f"/{path.lstrip('/')}".startswith(f"/{area_path}/")
+
+    def _annotate_area_filter(
+        self,
+        meta: SearchMeta | None,
+        restaurants: list[Restaurant],
+    ) -> list[str]:
+        if self.area is None or meta is None:
+            return []
+
+        area = self.area.strip()
+        if area in NATIONAL_AREAS:
+            meta.area_filter_confidence = "not_applicable"
+            meta.area_filter_reason = "national_area"
+            return []
+
+        area_slug = get_area_slug(area)
+        if area_slug is None:
+            meta.area_filter_applied = False
+            meta.area_filter_confidence = "low"
+            meta.area_filter_reason = f"unmapped_area:{area}"
+            return [
+                f"filter_mismatch:area: could not map requested area {area}; "
+                "validate the area before presenting results as area-scoped."
+            ]
+
+        if not restaurants:
+            meta.area_filter_confidence = "not_applicable"
+            meta.area_filter_reason = "no_results"
+            return []
+
+        matched_count = sum(
+            1 for restaurant in restaurants if self._restaurant_url_matches_area_path(restaurant.url, area_slug)
+        )
+        total_count = len(restaurants)
+        confidence = "high" if matched_count == total_count else "low"
+        reason = f"{matched_count}/{total_count} parsed result URLs matched {area_slug}"
+
+        meta.area_filter_applied = confidence == "high"
+        meta.area_filter_confidence = confidence
+        meta.area_filter_reason = reason
+
+        if confidence == "high":
+            return []
+
+        return [
+            "filter_mismatch:area: "
+            f"only {matched_count}/{total_count} parsed result URLs matched {area_slug}; "
+            "verify `meta.source_url` before presenting results as area-scoped."
         ]
 
     def search_sync(self) -> SearchResponse:
@@ -465,7 +526,10 @@ class SearchRequest:
                     break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
-            warnings = self._annotate_cuisine_filter(meta, all_restaurants)
+            warnings = [
+                *self._annotate_area_filter(meta, all_restaurants),
+                *self._annotate_cuisine_filter(meta, all_restaurants),
+            ]
         except SEARCH_EXCEPTIONS as e:
             return SearchResponse(
                 status=SearchStatus.ERROR,
@@ -506,7 +570,10 @@ class SearchRequest:
                         break
 
             status = SearchStatus.SUCCESS if all_restaurants else SearchStatus.NO_RESULTS
-            warnings = self._annotate_cuisine_filter(meta, all_restaurants)
+            warnings = [
+                *self._annotate_area_filter(meta, all_restaurants),
+                *self._annotate_cuisine_filter(meta, all_restaurants),
+            ]
         except SEARCH_EXCEPTIONS as e:
             return SearchResponse(
                 status=SearchStatus.ERROR,

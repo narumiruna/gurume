@@ -177,6 +177,9 @@ async def test_search_restaurants_success(sample_restaurants):
             source_params={"PG": "1", "SrtT": "rt"},
             cuisine_filter_confidence="high",
             cuisine_filter_reason="2/2 parsed results included 寿司",
+            area_filter_applied=True,
+            area_filter_confidence="high",
+            area_filter_reason="2/2 parsed result URLs matched tokyo",
         ),
     )
 
@@ -215,6 +218,9 @@ async def test_search_restaurants_success(sample_restaurants):
         assert results.meta.source_params == {"PG": "1", "SrtT": "rt"}
         assert results.meta.cuisine_filter_confidence == "high"
         assert results.meta.cuisine_filter_reason == "2/2 parsed results included 寿司"
+        assert results.meta.area_filter_applied is True
+        assert results.meta.area_filter_confidence == "high"
+        assert results.meta.area_filter_reason == "2/2 parsed result URLs matched tokyo"
         assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
 
         # Verify SearchRequest was called correctly
@@ -248,6 +254,51 @@ async def test_search_restaurants_with_keyword(sample_restaurants):
         assert any("Area + keyword searches are best-effort" in warning for warning in results.warnings)
         assert not any("tabelog_get_area_suggestions" in warning for warning in results.warnings)
         mock_search.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_with_keyword_exposes_low_area_confidence(sample_restaurants):
+    """MCP search output exposes machine-readable low confidence for mixed-prefecture keyword results."""
+    mock_response = SearchResponse(
+        status=SearchStatus.SUCCESS,
+        restaurants=sample_restaurants,
+        meta=SearchMeta(
+            total_count=2,
+            current_page=1,
+            results_per_page=2,
+            total_pages=1,
+            has_next_page=False,
+            has_prev_page=False,
+            source_url="https://tabelog.com/rst/rstsearch",
+            source_params={"PG": "1", "SrtT": "rt", "sa": "大阪", "sk": "お好み焼き", "sw": "お好み焼き"},
+            area_filter_applied=False,
+            area_filter_confidence="low",
+            area_filter_reason="0/2 parsed result URLs matched osaka",
+        ),
+        warnings=[
+            "filter_mismatch:area: only 0/2 parsed result URLs matched osaka; "
+            "verify `meta.source_url` before presenting results as area-scoped."
+        ],
+    )
+
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock) as mock_search:
+        mock_search.return_value = mock_response
+
+        results = await tabelog_search_restaurants(
+            area="大阪",
+            keyword="お好み焼き",
+            sort="ranking",
+            limit=10,
+        )
+
+    assert results.status == "success"
+    assert results.meta is not None
+    assert results.meta.area_filter_applied is False
+    assert results.meta.area_filter_confidence == "low"
+    assert results.meta.area_filter_reason == "0/2 parsed result URLs matched osaka"
+    assert any("filter_mismatch:area" in warning for warning in results.warnings)
+    assert any("Area + keyword searches are best-effort" in warning for warning in results.warnings)
+    mock_search.assert_called_once()
 
 
 @pytest.mark.asyncio

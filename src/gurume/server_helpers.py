@@ -206,6 +206,9 @@ def _to_search_meta_output(meta: SearchMeta | None) -> SearchMetaOutput | None:
         source_params=meta.source_params,
         cuisine_filter_confidence=meta.cuisine_filter_confidence,
         cuisine_filter_reason=meta.cuisine_filter_reason,
+        area_filter_applied=meta.area_filter_applied,
+        area_filter_confidence=meta.area_filter_confidence,
+        area_filter_reason=meta.area_filter_reason,
     )
 
 

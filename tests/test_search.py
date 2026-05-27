@@ -38,6 +38,8 @@ class TestSearchMeta:
         assert meta.source_url is None
         assert meta.source_params == {}
         assert meta.cuisine_filter_confidence is None
+        assert meta.area_filter_applied is None
+        assert meta.area_filter_confidence is None
         assert isinstance(meta.search_time, datetime)
 
 
@@ -336,6 +338,147 @@ class TestSearchRequest:
         ]
 
     @patch("curl_cffi.requests.get")
+    def test_area_keyword_mismatch_adds_machine_readable_warning(self, mock_get):
+        """Mapped area keyword searches must expose URL evidence when Tabelog returns other prefectures."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/hiroshima/A3401/A340101/34000001/">広島焼き店</a>
+                <span class="c-rating__val">4.0</span>
+                <em class="list-rst__rvw-count-num">123</em>
+                <div class="list-rst__area-genre"> [広島] 八丁堀 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/tokyo/A1301/A130101/13000002/">東京お好み焼き店</a>
+                <span class="c-rating__val">3.9</span>
+                <em class="list-rst__rvw-count-num">88</em>
+                <div class="list-rst__area-genre"> [東京] 銀座 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270101/27000003/">大阪お好み焼き店</a>
+                <span class="c-rating__val">3.8</span>
+                <em class="list-rst__rvw-count-num">77</em>
+                <div class="list-rst__area-genre"> [大阪] 梅田 / お好み焼き</div>
+            </div>
+            <span class="c-page-count__num">3</span>
+        </body></html>
+        """
+        mock_response = Mock()
+        mock_response.text = html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
+
+        response = request.do_sync()
+
+        assert response.status == SearchStatus.SUCCESS
+        assert response.meta is not None
+        assert response.meta.source_url == "https://tabelog.com/rst/rstsearch"
+        assert response.meta.source_params["sa"] == "大阪"
+        assert response.meta.source_params["sk"] == "お好み焼き"
+        assert response.meta.area_filter_applied is False
+        assert response.meta.area_filter_confidence == "low"
+        assert response.meta.area_filter_reason == "1/3 parsed result URLs matched osaka"
+        assert response.warnings == [
+            "filter_mismatch:area: only 1/3 parsed result URLs matched osaka; "
+            "verify `meta.source_url` before presenting results as area-scoped."
+        ]
+
+    @patch("curl_cffi.requests.get")
+    def test_area_keyword_matching_urls_sets_high_confidence(self, mock_get):
+        """Mapped area keyword searches can be high confidence when result URLs all match the area path."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270101/27000001/">大阪お好み焼き店</a>
+                <span class="c-rating__val">4.0</span>
+                <em class="list-rst__rvw-count-num">123</em>
+                <div class="list-rst__area-genre"> [大阪] 梅田 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270102/27000002/">大阪焼き店</a>
+                <span class="c-rating__val">3.9</span>
+                <em class="list-rst__rvw-count-num">88</em>
+                <div class="list-rst__area-genre"> [大阪] 難波 / お好み焼き</div>
+            </div>
+            <span class="c-page-count__num">2</span>
+        </body></html>
+        """
+        mock_response = Mock()
+        mock_response.text = html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
+
+        response = request.do_sync()
+
+        assert response.status == SearchStatus.SUCCESS
+        assert response.meta is not None
+        assert response.meta.area_filter_applied is True
+        assert response.meta.area_filter_confidence == "high"
+        assert response.meta.area_filter_reason == "2/2 parsed result URLs matched osaka"
+        assert response.warnings == []
+
+    @patch("curl_cffi.requests.get")
+    def test_area_keyword_single_mismatched_url_keeps_low_confidence(self, mock_get):
+        """Any out-of-area parsed URL keeps area confidence low."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270101/27000001/">大阪お好み焼き1</a>
+                <span class="c-rating__val">4.0</span>
+                <em class="list-rst__rvw-count-num">123</em>
+                <div class="list-rst__area-genre"> [大阪] 梅田 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270102/27000002/">大阪お好み焼き2</a>
+                <span class="c-rating__val">3.9</span>
+                <em class="list-rst__rvw-count-num">88</em>
+                <div class="list-rst__area-genre"> [大阪] 難波 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270103/27000003/">大阪お好み焼き3</a>
+                <span class="c-rating__val">3.8</span>
+                <em class="list-rst__rvw-count-num">77</em>
+                <div class="list-rst__area-genre"> [大阪] 心斎橋 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/osaka/A2701/A270104/27000004/">大阪お好み焼き4</a>
+                <span class="c-rating__val">3.7</span>
+                <em class="list-rst__rvw-count-num">66</em>
+                <div class="list-rst__area-genre"> [大阪] 天王寺 / お好み焼き</div>
+            </div>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="/hiroshima/A3401/A340101/34000005/">広島お好み焼き</a>
+                <span class="c-rating__val">3.6</span>
+                <em class="list-rst__rvw-count-num">55</em>
+                <div class="list-rst__area-genre"> [広島] 八丁堀 / お好み焼き</div>
+            </div>
+            <span class="c-page-count__num">5</span>
+        </body></html>
+        """
+        mock_response = Mock()
+        mock_response.text = html
+        mock_response.raise_for_status = Mock()
+        mock_get.return_value = mock_response
+
+        request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
+
+        response = request.do_sync()
+
+        assert response.status == SearchStatus.SUCCESS
+        assert response.meta is not None
+        assert response.meta.area_filter_applied is False
+        assert response.meta.area_filter_confidence == "low"
+        assert response.meta.area_filter_reason == "4/5 parsed result URLs matched osaka"
+        assert response.warnings == [
+            "filter_mismatch:area: only 4/5 parsed result URLs matched osaka; "
+            "verify `meta.source_url` before presenting results as area-scoped."
+        ]
+
+    @patch("curl_cffi.requests.get")
     def test_do_sync_multiple_pages(self, mock_get, mock_html_response):
         """Test synchronous search for multiple pages"""
         mock_response = Mock()
@@ -567,6 +710,28 @@ class TestBuildSearchUrlAndParams:
         assert params["sk"] == "今半"
         assert params["sw"] == "今半"
         assert "LstG" not in params
+
+    def test_area_keyword_and_area_cuisine_url_policy_is_documented(self):
+        """Keyword searches keep rstsearch params while cuisine searches move filters into paths."""
+        from gurume.restaurant import build_search_url_and_params
+
+        keyword_url, keyword_params = build_search_url_and_params(
+            {"SrtT": "rt", "sa": "大阪", "sk": "お好み焼き"},
+            "osaka",
+            None,
+        )
+        cuisine_url, cuisine_params = build_search_url_and_params(
+            {"SrtT": "rt", "sa": "大阪"},
+            "osaka",
+            "RC0107",
+        )
+
+        assert keyword_url == "https://tabelog.com/rst/rstsearch"
+        assert keyword_params["sa"] == "大阪"
+        assert keyword_params["sk"] == "お好み焼き"
+        assert keyword_params["sw"] == "お好み焼き"
+        assert cuisine_url == "https://tabelog.com/osaka/rstLst/RC0107/"
+        assert "sa" not in cuisine_params
 
     def test_genre_only_uses_cuisine_path_segment(self):
         from gurume.restaurant import build_search_url_and_params
