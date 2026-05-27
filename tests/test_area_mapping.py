@@ -1,9 +1,28 @@
 """Tests for area mapping (area name to URL slug conversion)"""
 
+import pytest
+
 from gurume.area_mapping import CITY_AREA_PATH_MAPPING
 from gurume.area_mapping import CITY_MAPPING
 from gurume.area_mapping import PREFECTURE_MAPPING
+from gurume.area_mapping import get_area_catalog_entries
 from gurume.area_mapping import get_area_slug
+from gurume.area_mapping import parse_area_catalog_rows
+
+
+def _catalog_row(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "name": "梅田",
+        "path": "osaka/A2701/A270101",
+        "level": "subarea",
+        "parent": "osaka/A2701",
+        "aliases": ["大阪駅"],
+        "source": "https://tabelog.com/osaka/A2701/A270101/",
+        "verified_at": "2026-05-28",
+    }
+    row.update(overrides)
+    return row
+
 
 # ============================================================================
 # Test get_area_slug with full prefecture names (都/府/県 suffix)
@@ -80,6 +99,24 @@ def test_get_area_slug_nagoya_city():
 def test_get_area_slug_kobe_city():
     """Test Kobe city path"""
     assert get_area_slug("神戸") == "hyogo/A2801"
+
+
+def test_get_area_slug_osaka_catalog_seed_names():
+    """Test curated Osaka subarea paths from the catalog"""
+    assert get_area_slug("梅田") == "osaka/A2701/A270101"
+    assert get_area_slug("北新地") == "osaka/A2701/A270101"
+    assert get_area_slug("難波") == "osaka/A2701/A270202"
+    assert get_area_slug("心斎橋") == "osaka/A2701/A270201"
+    assert get_area_slug("天王寺") == "osaka/A2701/A270203"
+
+
+def test_get_area_slug_osaka_catalog_aliases():
+    """Test curated Osaka subarea aliases from the catalog"""
+    assert get_area_slug("大阪駅") == "osaka/A2701/A270101"
+    assert get_area_slug("北新地駅") == "osaka/A2701/A270101"
+    assert get_area_slug("なんば") == "osaka/A2701/A270202"
+    assert get_area_slug("心斎橋駅") == "osaka/A2701/A270201"
+    assert get_area_slug("天王寺区") == "osaka/A2701/A270203"
 
 
 def test_get_area_slug_all_major_cities():
@@ -339,6 +376,62 @@ def test_city_area_path_prefecture_subset():
     path_prefecture_slugs = {path.split("/", maxsplit=1)[0] for path in CITY_AREA_PATH_MAPPING.values()}
 
     assert path_prefecture_slugs.issubset(prefecture_slugs), "Some city paths start with unknown prefecture slugs"
+
+
+def test_area_catalog_seed_rows_validate():
+    """Test packaged catalog rows load with expected Osaka seed paths"""
+    entries = get_area_catalog_entries()
+    paths_by_name = {entry.name: entry.path for entry in entries}
+
+    assert paths_by_name == {
+        "梅田": "osaka/A2701/A270101",
+        "北新地": "osaka/A2701/A270101",
+        "難波": "osaka/A2701/A270202",
+        "心斎橋": "osaka/A2701/A270201",
+        "天王寺": "osaka/A2701/A270203",
+    }
+    assert all(entry.source.startswith("https://tabelog.com/") for entry in entries)
+    assert all(entry.verified_at == "2026-05-28" for entry in entries)
+
+
+def test_area_catalog_rejects_missing_required_key():
+    """Test catalog validation rejects incomplete rows"""
+    row = _catalog_row()
+    del row["source"]
+
+    with pytest.raises(ValueError, match="missing required keys: source"):
+        parse_area_catalog_rows([row])
+
+
+def test_area_catalog_rejects_duplicate_names():
+    """Test catalog validation rejects duplicate names"""
+    rows = [_catalog_row(aliases=["大阪駅"]), _catalog_row(aliases=["梅田駅"])]
+
+    with pytest.raises(ValueError, match="duplicate area catalog name: 梅田"):
+        parse_area_catalog_rows(rows)
+
+
+def test_area_catalog_rejects_duplicate_lookup_keys():
+    """Test catalog validation rejects duplicate aliases across rows"""
+    rows = [
+        _catalog_row(name="梅田", aliases=["共通"]),
+        _catalog_row(name="難波", path="osaka/A2701/A270202", aliases=["共通"]),
+    ]
+
+    with pytest.raises(ValueError, match="duplicate area catalog lookup key: 共通"):
+        parse_area_catalog_rows(rows)
+
+
+def test_area_catalog_rejects_invalid_path_shape():
+    """Test catalog validation rejects non-area paths"""
+    with pytest.raises(ValueError, match="unsupported shape: osaka/rstLst"):
+        parse_area_catalog_rows([_catalog_row(path="osaka/rstLst")])
+
+
+def test_area_catalog_rejects_unsupported_level():
+    """Test catalog validation rejects unknown levels"""
+    with pytest.raises(ValueError, match="unsupported: ward"):
+        parse_area_catalog_rows([_catalog_row(level="ward")])
 
 
 # ============================================================================

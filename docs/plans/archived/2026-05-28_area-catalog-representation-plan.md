@@ -6,7 +6,7 @@ Choose a maintainable representation for a Tabelog area catalog that can cover f
 Success means the implementation choice is explicit, testable, and suitable for adding Osaka seed areas first while
 leaving room for broader Tabelog area coverage later.
 
-The executable implementation plan is `docs/plans/2026-05-28_area-catalog-plan.md`; this document records the
+The executable implementation plan is `docs/plans/archived/2026-05-28_area-catalog-plan.md`; this document records the
 representation decision and tradeoffs.
 
 ## Context
@@ -51,7 +51,7 @@ This keeps the source of truth data-oriented and reviewable while avoiding untyp
 
 - [x] Review the representation options and confirm whether the hybrid JSON plus typed loader recommendation is still
       the intended direction; verified by the documented recommendation in this plan.
-- [x] Use `docs/plans/2026-05-28_area-catalog-plan.md` for implementation sequencing; verified by that plan's context
+- [x] Use `docs/plans/archived/2026-05-28_area-catalog-plan.md` for implementation sequencing; verified by that plan's context
       and architecture sections referencing this representation decision.
 - [x] Revisit this decision if catalog generation, CLI/MCP listing, or Japan-wide coverage changes the constraints;
       accepted as follow-up criteria documented in this plan's risks and in the implementation plan.
@@ -69,4 +69,4 @@ This keeps the source of truth data-oriented and reviewable while avoiding untyp
 
 - [x] JSON source data, typed validation, and indexed runtime lookup are documented as the recommended representation.
 - [x] The tradeoffs for JSON, Python dict mapping, enum, dataclass records, and Pydantic BaseModel are documented.
-- [x] The implementation work is delegated to `docs/plans/2026-05-28_area-catalog-plan.md`.
+- [x] The implementation work is delegated to `docs/plans/archived/2026-05-28_area-catalog-plan.md`.
