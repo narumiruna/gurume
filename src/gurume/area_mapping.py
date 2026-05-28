@@ -2,6 +2,37 @@
 
 from __future__ import annotations
 
+import json
+import re
+from dataclasses import dataclass
+from datetime import date
+from functools import cache
+from importlib import resources
+from typing import Any
+from typing import Literal
+from typing import cast
+
+AreaLevel = Literal["subarea"]
+
+_AREA_CATALOG_RESOURCE = "data/area_catalog.json"
+_AREA_PATH_RE = re.compile(r"^[a-z]+(?:/A\d+){1,2}$")
+_REQUIRED_CATALOG_KEYS = frozenset({"name", "path", "level", "parent", "aliases", "source", "verified_at"})
+_SUPPORTED_AREA_LEVELS: set[str] = {"subarea"}
+
+
+@dataclass(frozen=True)
+class AreaCatalogEntry:
+    """Validated Tabelog area catalog row."""
+
+    name: str
+    path: str
+    level: AreaLevel
+    parent: str
+    aliases: tuple[str, ...]
+    source: str
+    verified_at: str
+
+
 # Prefecture mapping.
 PREFECTURE_MAPPING = {
     # Hokkaido and Tohoku.
@@ -87,6 +118,120 @@ for full_name, slug in PREFECTURE_MAPPING.items():
             break
 
 
+def _require_non_empty_string(row: dict[str, Any], key: str) -> str:
+    value = row[key]
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"area catalog {key} must be a non-empty string")
+    return value
+
+
+def _parse_catalog_aliases(row: dict[str, Any]) -> tuple[str, ...]:
+    aliases = row["aliases"]
+    if not isinstance(aliases, list):
+        raise TypeError("area catalog aliases must be a list")
+
+    parsed_aliases: list[str] = []
+    seen_aliases: set[str] = set()
+    for alias in aliases:
+        if not isinstance(alias, str) or not alias:
+            raise ValueError("area catalog aliases must contain non-empty strings")
+        if alias in seen_aliases:
+            raise ValueError(f"duplicate area catalog alias in row: {alias}")
+        seen_aliases.add(alias)
+        parsed_aliases.append(alias)
+    return tuple(parsed_aliases)
+
+
+def _parse_catalog_row(row: dict[str, Any]) -> AreaCatalogEntry:
+    missing_keys = _REQUIRED_CATALOG_KEYS - row.keys()
+    if missing_keys:
+        missing = ", ".join(sorted(missing_keys))
+        raise ValueError(f"area catalog row missing required keys: {missing}")
+
+    unexpected_keys = row.keys() - _REQUIRED_CATALOG_KEYS
+    if unexpected_keys:
+        unexpected = ", ".join(sorted(unexpected_keys))
+        raise ValueError(f"area catalog row has unexpected keys: {unexpected}")
+
+    name = _require_non_empty_string(row, "name")
+    path = _require_non_empty_string(row, "path")
+    level = _require_non_empty_string(row, "level")
+    parent = _require_non_empty_string(row, "parent")
+    source = _require_non_empty_string(row, "source")
+    verified_at = _require_non_empty_string(row, "verified_at")
+
+    if not _AREA_PATH_RE.fullmatch(path):
+        raise ValueError(f"area catalog path has unsupported shape: {path}")
+    if not _AREA_PATH_RE.fullmatch(parent):
+        raise ValueError(f"area catalog parent has unsupported shape: {parent}")
+    if level not in _SUPPORTED_AREA_LEVELS:
+        raise ValueError(f"area catalog level is unsupported: {level}")
+    if not source.startswith("https://tabelog.com/"):
+        raise ValueError(f"area catalog source must be a Tabelog URL: {source}")
+    try:
+        date.fromisoformat(verified_at)
+    except ValueError as exc:
+        raise ValueError(f"area catalog verified_at must be an ISO date: {verified_at}") from exc
+
+    return AreaCatalogEntry(
+        name=name,
+        path=path,
+        level=cast(AreaLevel, level),
+        parent=parent,
+        aliases=_parse_catalog_aliases(row),
+        source=source,
+        verified_at=verified_at,
+    )
+
+
+def parse_area_catalog_rows(data: object) -> tuple[AreaCatalogEntry, ...]:
+    """Validate and parse raw area catalog data."""
+    if not isinstance(data, list):
+        raise TypeError("area catalog must be a list")
+
+    parsed_entries: list[AreaCatalogEntry] = []
+    for row in data:
+        if not isinstance(row, dict):
+            raise TypeError("area catalog rows must be objects")
+        parsed_entries.append(_parse_catalog_row(cast(dict[str, Any], row)))
+    entries = tuple(parsed_entries)
+
+    seen_names: set[str] = set()
+    lookup_keys: dict[str, str] = {}
+    for entry in entries:
+        if entry.name in seen_names:
+            raise ValueError(f"duplicate area catalog name: {entry.name}")
+        seen_names.add(entry.name)
+
+        for lookup_key in (entry.name, *entry.aliases):
+            if lookup_key in lookup_keys:
+                raise ValueError(f"duplicate area catalog lookup key: {lookup_key}")
+            lookup_keys[lookup_key] = entry.path
+
+    return entries
+
+
+@cache
+def get_area_catalog_entries() -> tuple[AreaCatalogEntry, ...]:
+    """Load and validate packaged Tabelog area catalog data."""
+    catalog_text = resources.files("gurume").joinpath(_AREA_CATALOG_RESOURCE).read_text(encoding="utf-8")
+    return parse_area_catalog_rows(json.loads(catalog_text))
+
+
+@cache
+def _get_area_catalog_index() -> dict[str, str]:
+    index: dict[str, str] = {}
+    for entry in get_area_catalog_entries():
+        index[entry.name] = entry.path
+        for alias in entry.aliases:
+            index[alias] = entry.path
+    return index
+
+
+def _lookup_catalog_area_path(area_name: str) -> str | None:
+    return _get_area_catalog_index().get(area_name)
+
+
 def _lookup_area_path(area_name: str) -> str | None:
     if area_name in PREFECTURE_MAPPING:
         return PREFECTURE_MAPPING[area_name]
@@ -96,6 +241,8 @@ def _lookup_area_path(area_name: str) -> str | None:
         return CITY_AREA_PATH_MAPPING[area_name]
     if area_name in _PREFIX_TO_SLUG:
         return _PREFIX_TO_SLUG[area_name]
+    if catalog_path := _lookup_catalog_area_path(area_name):
+        return catalog_path
     return None
 
 

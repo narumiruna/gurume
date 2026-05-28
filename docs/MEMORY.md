@@ -24,6 +24,7 @@
 - Keep CLI skill guidance and MCP behavior aligned for `area + keyword`: Tabelog can return broad cross-prefecture results, and MCP suggestion `Genre2` values are only valid as `cuisine` when present in `tabelog_list_cuisines`; otherwise preserve upstream datatypes like `Genre3` / `MajorMunicipal` and warn or filter by URL evidence before presenting area-scoped recommendations.
 - Tabelog homepage, search paths, and suggestion API currently return Cloudflare headers (`server: cloudflare`, `cf-ray`) and set `__cf_bm`; keep `curl_cffi` as the scraping baseline, but do not assume it bypasses every Cloudflare challenge.
 - `skills/gurume-cli/` is the external installer source, while `.codex/skills/gurume-cli/` is the Codex CLI repo-local runtime mirror. Edit `skills/` first, then run `uv run python scripts/sync_skills.py` and verify with `uv run python scripts/sync_skills.py --check`.
+- Tabelog area suggestions expose names, datatypes, and IDs, but not reliable URL paths; expand `area_catalog.json` from verified Tabelog path URLs, not suggestion IDs alone.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

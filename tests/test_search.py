@@ -781,6 +781,17 @@ class TestBuildSearchUrlAndParams:
         assert "LstG" not in params
         assert "sa" not in params
 
+    def test_area_and_genre_supports_catalog_area_path(self):
+        from gurume.area_mapping import get_area_slug
+        from gurume.restaurant import build_search_url_and_params
+
+        area_slug = get_area_slug("心斎橋")
+        url, params = build_search_url_and_params({"SrtT": "rt", "sa": "心斎橋"}, area_slug, "RC1501")
+
+        assert url == "https://tabelog.com/osaka/A2701/A270201/rstLst/yakiniku/"
+        assert "LstG" not in params
+        assert "sa" not in params
+
     def test_search_request_build_url_uses_city_cuisine_path(self):
         from gurume.restaurant import SortType
         from gurume.search import SearchRequest

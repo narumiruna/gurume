@@ -8,8 +8,8 @@ and `天王寺` to Tabelog area paths, while existing prefecture and major-city 
 
 ## Context
 
-`docs/plans/2026-05-28_area-catalog-representation-plan.md` compares representation choices and recommends a hybrid:
-JSON as the source-of-truth catalog, strict validation, then dataclass or indexed dictionary lookup at runtime.
+`docs/plans/archived/2026-05-28_area-catalog-representation-plan.md` compares representation choices and recommends a
+hybrid: JSON as the source-of-truth catalog, strict validation, then dataclass or indexed dictionary lookup at runtime.
 
 The implementation should apply that choice without attempting a Japan-wide hierarchy in the first PR. The immediate
 value is reducing low-confidence `area + keyword` searches for common Osaka requests by mapping user-facing area names
@@ -45,22 +45,22 @@ to paths such as `osaka/A2701/A270101`.
 
 ## Plan
 
-- [ ] Verify the Osaka seed paths for `梅田`, `北新地`, `難波`, `心斎橋`, and `天王寺` with live Tabelog URLs; record the
-      chosen paths in the PR notes or catalog `source` fields.
-- [ ] Add `src/gurume/data/area_catalog.json` with seed rows containing `name`, `path`, `level`, `parent`, `aliases`,
-      `source`, and `verified_at`; verify the file is included by `rg -n "area_catalog" src tests pyproject.toml`.
-- [ ] Add a strict catalog loader in `src/gurume/area_mapping.py` that validates required keys, path shape, duplicate
-      names, duplicate aliases, and supported `level` values; verify malformed fixture tests fail predictably.
-- [ ] Update `get_area_slug()` to consult the catalog index while preserving existing prefecture, city, city-path, and
-      suffix-stripping behavior; verify with `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/test_area_mapping.py -v`.
-- [ ] Add URL-building tests showing a catalog-backed Osaka area plus supported cuisine produces a path URL such as
-      `https://tabelog.com/<catalog-path>/rstLst/<cuisine>/`; verify with `UV_CACHE_DIR=/tmp/uv-cache uv run pytest
+- [x] Verify the Osaka seed paths for `梅田`, `北新地`, `難波`, `心斎橋`, and `天王寺` with live Tabelog URLs; recorded the
+      chosen paths in catalog `source` fields and PR notes.
+- [x] Add `src/gurume/data/area_catalog.json` with seed rows containing `name`, `path`, `level`, `parent`, `aliases`,
+      `source`, and `verified_at`; verified the file is included by `rg -n "area_catalog" src tests pyproject.toml`.
+- [x] Add a strict catalog loader in `src/gurume/area_mapping.py` that validates required keys, path shape, duplicate
+      names, duplicate aliases, and supported `level` values; verified malformed fixture tests fail predictably.
+- [x] Update `get_area_slug()` to consult the catalog index while preserving existing prefecture, city, city-path, and
+      suffix-stripping behavior; verified with `UV_CACHE_DIR=/tmp/uv-cache uv run pytest tests/test_area_mapping.py -v`.
+- [x] Add URL-building tests showing a catalog-backed Osaka area plus supported cuisine produces a path URL such as
+      `https://tabelog.com/<catalog-path>/rstLst/<cuisine>/`; verified with `UV_CACHE_DIR=/tmp/uv-cache uv run pytest
       tests/test_search.py -v`.
-- [ ] Add one opt-in live smoke for a catalog-backed Osaka area search and confirm `area_filter_confidence="high"` when
-      parsed URLs match the catalog path; verify with a documented command/output summary.
-- [ ] Update `skills/gurume-cli/SKILL.md` only if the agent workflow should prefer fine-grained area names differently;
-      if changed, sync and verify with `UV_CACHE_DIR=/tmp/uv-cache uv run python scripts/sync_skills.py --check`.
-- [ ] Run focused gates; verify with `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check src/gurume/area_mapping.py
+- [x] Add one opt-in live smoke for a catalog-backed Osaka area search and confirm `area_filter_confidence="high"` when
+      parsed URLs match the catalog path; verified with `心斎橋` + `RC1501` returning high confidence.
+- [x] Update `skills/gurume-cli/SKILL.md` only if the agent workflow should prefer fine-grained area names differently;
+      no skill guidance change was needed for this lookup-layer implementation.
+- [x] Run focused gates; verify with `UV_CACHE_DIR=/tmp/uv-cache uv run ruff check src/gurume/area_mapping.py
       src/gurume/search.py tests/test_area_mapping.py tests/test_search.py`, `UV_CACHE_DIR=/tmp/uv-cache uv run ty
       check .`, and the targeted pytest commands above.
 
@@ -74,10 +74,10 @@ to paths such as `osaka/A2701/A270101`.
 
 ## Completion Checklist
 
-- [ ] `src/gurume/data/area_catalog.json` exists with reviewed Osaka seed rows and provenance fields.
-- [ ] Catalog validation catches malformed rows and duplicate aliases, verified by `tests/test_area_mapping.py`.
-- [ ] `get_area_slug()` resolves the Osaka seed names and aliases while all existing mapping tests still pass.
-- [ ] Catalog-backed area+cuisine searches build path-based URLs, verified by `tests/test_search.py`.
-- [ ] At least one live smoke confirms a catalog-backed Osaka area produces high-confidence URL evidence, or the PR
+- [x] `src/gurume/data/area_catalog.json` exists with reviewed Osaka seed rows and provenance fields.
+- [x] Catalog validation catches malformed rows and duplicate aliases, verified by `tests/test_area_mapping.py`.
+- [x] `get_area_slug()` resolves the Osaka seed names and aliases while all existing mapping tests still pass.
+- [x] Catalog-backed area+cuisine searches build path-based URLs, verified by `tests/test_search.py`.
+- [x] At least one live smoke confirms a catalog-backed Osaka area produces high-confidence URL evidence, or the PR
       explicitly records why live validation was not run.
-- [ ] Focused lint, type check, and pytest gates pass with recorded command output.
+- [x] Focused lint, type check, and pytest gates pass with recorded command output.

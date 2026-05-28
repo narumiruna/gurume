@@ -1,0 +1,47 @@
+[
+  {
+    "name": "梅田",
+    "path": "osaka/A2701/A270101",
+    "level": "subarea",
+    "parent": "osaka/A2701",
+    "aliases": ["大阪駅", "大阪駅・梅田・新地", "大阪梅田", "東梅田", "西梅田"],
+    "source": "https://tabelog.com/osaka/A2701/A270101/",
+    "verified_at": "2026-05-28"
+  },
+  {
+    "name": "北新地",
+    "path": "osaka/A2701/A270101",
+    "level": "subarea",
+    "parent": "osaka/A2701",
+    "aliases": ["北新地駅"],
+    "source": "https://tabelog.com/osaka/A2701/A270101/",
+    "verified_at": "2026-05-28"
+  },
+  {
+    "name": "難波",
+    "path": "osaka/A2701/A270202",
+    "level": "subarea",
+    "parent": "osaka/A2701",
+    "aliases": ["なんば", "難波駅", "なんば駅", "大阪難波", "大阪難波駅", "道頓堀"],
+    "source": "https://tabelog.com/osaka/A2701/A270202/",
+    "verified_at": "2026-05-28"
+  },
+  {
+    "name": "心斎橋",
+    "path": "osaka/A2701/A270201",
+    "level": "subarea",
+    "parent": "osaka/A2701",
+    "aliases": ["心斎橋駅", "南船場", "長堀橋", "四ツ橋"],
+    "source": "https://tabelog.com/osaka/A2701/A270201/",
+    "verified_at": "2026-05-28"
+  },
+  {
+    "name": "天王寺",
+    "path": "osaka/A2701/A270203",
+    "level": "subarea",
+    "parent": "osaka/A2701",
+    "aliases": ["天王寺駅", "天王寺駅前", "天王寺区", "阿倍野", "あべの"],
+    "source": "https://tabelog.com/osaka/A2701/A270203/",
+    "verified_at": "2026-05-28"
+  }
+]
