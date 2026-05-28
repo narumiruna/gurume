@@ -99,6 +99,20 @@ class TestRestaurantSearchRequest:
                 </div>
                 <span class="c-rating__val c-rating__val--strong list-rst__rating-val">4.16</span>
                 <em class="list-rst__rvw-count-num cpy-review-count">148</em>
+                <ul class="list-rst__info">
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--dinner">
+                            <i class="c-rating-v3__time">夜</i>
+                            <span class="c-rating-v3__val">￥15,000～￥19,999</span>
+                        </p>
+                    </li>
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--lunch">
+                            <i class="c-rating-v3__time">昼</i>
+                            <span class="c-rating-v3__val">￥5,000～￥5,999</span>
+                        </p>
+                    </li>
+                </ul>
             </div>
             <div class="list-rst">
                 <a class="list-rst__rst-name-target" href="https://tabelog.com/mie/A2401/A240102/24000069/">
@@ -109,6 +123,20 @@ class TestRestaurantSearchRequest:
                 </div>
                 <span class="c-rating__val c-rating__val--strong list-rst__rating-val">4.13</span>
                 <em class="list-rst__rvw-count-num cpy-review-count">1318</em>
+                <ul class="list-rst__info">
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--val">
+                            <i class="c-rating-v3__time c-rating-v3__time--dinner">夜</i>
+                            <span class="c-rating-v3__val">￥20,000～￥29,999</span>
+                        </p>
+                    </li>
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--val">
+                            <i class="c-rating-v3__time c-rating-v3__time--lunch">昼</i>
+                            <span class="c-rating-v3__val">￥20,000～￥29,999</span>
+                        </p>
+                    </li>
+                </ul>
             </div>
         </body></html>
         """
@@ -120,10 +148,14 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].url == "https://tabelog.com/tokyo/A1301/A130101/13287203/"
         assert restaurants[0].rating == 4.16
         assert restaurants[0].review_count == 148
+        assert restaurants[0].dinner_price == "￥15,000～￥19,999"
+        assert restaurants[0].lunch_price == "￥5,000～￥5,999"
         assert any("すき焼き" in genre for genre in restaurants[0].genres)
         assert restaurants[1].url == "https://tabelog.com/mie/A2401/A240102/24000069/"
         assert restaurants[1].rating == 4.13
         assert restaurants[1].review_count == 1318
+        assert restaurants[1].dinner_price == "￥20,000～￥29,999"
+        assert restaurants[1].lunch_price == "￥20,000～￥29,999"
         assert any("すき焼き" in genre for genre in restaurants[1].genres)
 
     @patch("curl_cffi.requests.get")

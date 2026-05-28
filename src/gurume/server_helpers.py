@@ -369,9 +369,6 @@ def _validate_detail_params(
     if not restaurant_url.startswith("https://tabelog.com/"):
         raise ValueError("restaurant_url must be a Tabelog HTTPS URL")
 
-    if not any((fetch_reviews, fetch_menu, fetch_courses)):
-        raise ValueError("At least one of fetch_reviews, fetch_menu, or fetch_courses must be true")
-
     if max_review_pages < 1:
         raise ValueError("max_review_pages must be greater than or equal to 1")
 

@@ -26,6 +26,11 @@ USER_AGENT = (
     "Chrome/91.0.4472.124 Safari/537.36"
 )
 ITEM_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
+PRICE_RANGE_RE = re.compile(r"[￥¥]\s*[0-9,]+(?:\s*[～〜~ー-]\s*[￥¥]?\s*[0-9,]+|[～〜~ー-])?")
+DISPLAYED_DINNER_MARKERS = ("ディナー", "夜")
+DISPLAYED_LUNCH_MARKERS = ("ランチ", "昼")
+CLASS_DINNER_MARKERS = ("dinner",)
+CLASS_LUNCH_MARKERS = ("lunch",)
 
 # Tabelog restaurant detail URLs follow `/{area}/A{area_code}/A{subarea_code}/{rst_id}/`.
 # This pattern excludes magazine articles, promotional pages, and other non-restaurant links.
@@ -365,18 +370,83 @@ class RestaurantSearchRequest:
         return self._strip_prefecture(area_genre_text), station, distance, genres
 
     def _parse_prices(self, item: Any) -> tuple[str | None, str | None]:
+        current_lunch_price, current_dinner_price = self._parse_current_price_blocks(item)
+        legacy_lunch_price, legacy_dinner_price = self._parse_legacy_price_blocks(item)
+        return current_lunch_price or legacy_lunch_price, current_dinner_price or legacy_dinner_price
+
+    def _parse_current_price_blocks(self, item: Any) -> tuple[str | None, str | None]:
         lunch_price = None
         dinner_price = None
-        price_elem = item.find("span", class_="list-rst__budget-val")
-        if not price_elem:
-            return lunch_price, dinner_price
 
-        price_text = price_elem.get_text(strip=True)
-        if "ランチ" in price_text:
-            lunch_price = price_text
-        elif "ディナー" in price_text:
-            dinner_price = price_text
+        for price_block in self._select_current_price_blocks(item):
+            value_elem = price_block.select_one(".c-rating-v3__val")
+            value_text = value_elem.get_text(" ", strip=True) if value_elem else price_block.get_text(" ", strip=True)
+            price_text = self._extract_price_range(value_text)
+            if price_text is None:
+                continue
+
+            block_text = price_block.get_text(" ", strip=True)
+            class_text = self._collect_class_text(price_block)
+            if self._is_dinner_price(block_text, class_text):
+                dinner_price = dinner_price or price_text
+            elif self._is_lunch_price(block_text, class_text):
+                lunch_price = lunch_price or price_text
+
         return lunch_price, dinner_price
+
+    def _select_current_price_blocks(self, item: Any) -> list[Any]:
+        seen: set[int] = set()
+        blocks = []
+        for selector in (
+            ".list-rst__info .c-rating-v3",
+            ".list-rst__info-item",
+            ".list-rst__budget .c-rating-v3",
+            ".list-rst__budget-item",
+        ):
+            for element in item.select(selector):
+                element_id = id(element)
+                if element_id not in seen:
+                    seen.add(element_id)
+                    blocks.append(element)
+        return blocks
+
+    def _parse_legacy_price_blocks(self, item: Any) -> tuple[str | None, str | None]:
+        lunch_price = None
+        dinner_price = None
+
+        for price_elem in item.find_all("span", class_="list-rst__budget-val"):
+            price_text = price_elem.get_text(strip=True)
+            if "ランチ" in price_text:
+                lunch_price = lunch_price or price_text
+            elif "ディナー" in price_text:
+                dinner_price = dinner_price or price_text
+
+        return lunch_price, dinner_price
+
+    def _extract_price_range(self, text: str) -> str | None:
+        if match := PRICE_RANGE_RE.search(text):
+            return re.sub(r"\s+", "", match.group(0))
+        return None
+
+    def _collect_class_text(self, element: Any) -> str:
+        classes = []
+        for tagged in (element, *element.find_all(True)):
+            class_value = tagged.get("class", [])
+            if isinstance(class_value, str):
+                classes.append(class_value.lower())
+            else:
+                classes.extend(str(token).lower() for token in class_value)
+        return " ".join(classes)
+
+    def _is_dinner_price(self, text: str, class_text: str) -> bool:
+        return any(marker in text for marker in DISPLAYED_DINNER_MARKERS) or any(
+            marker in class_text for marker in CLASS_DINNER_MARKERS
+        )
+
+    def _is_lunch_price(self, text: str, class_text: str) -> bool:
+        return any(marker in text for marker in DISPLAYED_LUNCH_MARKERS) or any(
+            marker in class_text for marker in CLASS_LUNCH_MARKERS
+        )
 
     def _merge_genres(self, item: Any, genres: list[str]) -> list[str]:
         genre_elem = item.find(class_="list-rst__genre")
