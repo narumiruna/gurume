@@ -158,6 +158,38 @@ class TestRestaurantSearchRequest:
         assert restaurants[1].lunch_price == "￥20,000～￥29,999"
         assert any("すき焼き" in genre for genre in restaurants[1].genres)
 
+    def test_parse_current_price_under_range_marker(self):
+        """Preserve leading markers for under-range list-card prices."""
+        html = """
+        <html><body>
+            <div class="list-rst">
+                <a class="list-rst__rst-name-target" href="https://tabelog.com/tokyo/A1301/A130101/13000001/">
+                    低価格ランチ
+                </a>
+                <ul class="list-rst__info">
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--lunch">
+                            <i class="c-rating-v3__time">昼</i>
+                            <span class="c-rating-v3__val">～￥999</span>
+                        </p>
+                    </li>
+                    <li class="list-rst__info-item">
+                        <p class="c-rating-v3 c-rating-v3--dinner">
+                            <i class="c-rating-v3__time">夜</i>
+                            <span class="c-rating-v3__val">￥1,000～￥1,999</span>
+                        </p>
+                    </li>
+                </ul>
+            </div>
+        </body></html>
+        """
+
+        restaurants = RestaurantSearchRequest()._parse_restaurants(html)
+
+        assert len(restaurants) == 1
+        assert restaurants[0].lunch_price == "～￥999"
+        assert restaurants[0].dinner_price == "￥1,000～￥1,999"
+
     @patch("curl_cffi.requests.get")
     def test_do_sync(self, mock_get, mock_html_response):
         """Test synchronous search"""

@@ -26,7 +26,7 @@ USER_AGENT = (
     "Chrome/91.0.4472.124 Safari/537.36"
 )
 ITEM_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
-PRICE_RANGE_RE = re.compile(r"[￥¥]\s*[0-9,]+(?:\s*[～〜~ー-]\s*[￥¥]?\s*[0-9,]+|[～〜~ー-])?")
+PRICE_RANGE_RE = re.compile(r"[～〜~]?\s*[￥¥]\s*[0-9,]+(?:\s*[～〜~ー-]\s*[￥¥]?\s*[0-9,]+|[～〜~ー-])?")
 DISPLAYED_DINNER_MARKERS = ("ディナー", "夜")
 DISPLAYED_LUNCH_MARKERS = ("ランチ", "昼")
 CLASS_DINNER_MARKERS = ("dinner",)

@@ -77,3 +77,4 @@
 2026-05-28 | feat(search): add Osaka area catalog seed paths (#local)
 2026-05-28 | docs(plans): archive completed search and suggestion plans (#local)
 2026-05-28 | feat(search): expose list-card prices and basic-only details (#local)
+2026-05-28 | fix(search): preserve under-range list-card prices (#84)
