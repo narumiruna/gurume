@@ -1970,8 +1970,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">665</span>
-<span class="normal">666</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">666</span>
 <span class="normal">667</span>
 <span class="normal">668</span>
 <span class="normal">669</span>
@@ -1994,7 +1993,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">686</span>
 <span class="normal">687</span>
 <span class="normal">688</span>
-<span class="normal">689</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+<span class="normal">689</span>
+<span class="normal">690</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
@@ -2055,8 +2055,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">528</span>
-<span class="normal">529</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">529</span>
 <span class="normal">530</span>
 <span class="normal">531</span>
 <span class="normal">532</span>
@@ -2116,7 +2115,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">586</span>
 <span class="normal">587</span>
 <span class="normal">588</span>
-<span class="normal">589</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">589</span>
+<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2214,8 +2214,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">592</span>
-<span class="normal">593</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">593</span>
 <span class="normal">594</span>
 <span class="normal">595</span>
 <span class="normal">596</span>
@@ -2276,7 +2275,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">651</span>
 <span class="normal">652</span>
 <span class="normal">653</span>
-<span class="normal">654</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">654</span>
+<span class="normal">655</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2369,21 +2369,21 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog after the base page.&quot;</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_menu</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page after the base page.&quot;</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_courses</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page after the base page.&quot;</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_review_pages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -2399,7 +2399,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
     <div class="doc doc-contents ">
 
-        <p>Fetch detailed restaurant information including reviews, menu items, and courses.</p>
+        <p>Fetch base restaurant information and optional reviews, menu items, and courses.</p>
 
 
             <details class="mkdocstrings-source">
@@ -2506,7 +2506,8 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">451</span>
 <span class="normal">452</span>
 <span class="normal">453</span>
-<span class="normal">454</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">454</span>
+<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2524,15 +2525,15 @@ delegating response schemas and helper logic to focused modules.</p>
     <span class="p">],</span>
     <span class="n">fetch_reviews</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog after the base page.&quot;</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_menu</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page after the base page.&quot;</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_courses</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page after the base page.&quot;</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_review_pages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
@@ -2543,7 +2544,7 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantDetailOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch detailed restaurant information including reviews, menu items, and courses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch base restaurant information and optional reviews, menu items, and courses.&quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">_validate_detail_params</span><span class="p">(</span><span class="n">restaurant_url</span><span class="p">,</span> <span class="n">fetch_reviews</span><span class="p">,</span> <span class="n">fetch_menu</span><span class="p">,</span> <span class="n">fetch_courses</span><span class="p">,</span> <span class="n">max_review_pages</span><span class="p">)</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">RestaurantDetailRequest</span><span class="p">(</span>
@@ -2566,7 +2567,8 @@ delegating response schemas and helper logic to focused modules.</p>
                 <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid detail request parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;Pass a non-empty `https://tabelog.com/` restaurant URL and enable at least one fetch option.&quot;</span>
+                    <span class="s2">&quot;Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when &quot;</span>
+                    <span class="s2">&quot;only basic restaurant information is needed.&quot;</span>
                 <span class="p">),</span>
                 <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="p">),</span>
@@ -2705,8 +2707,7 @@ Returns list of all supported cuisines:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">457</span>
-<span class="normal">458</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
 <span class="normal">461</span>
@@ -2773,7 +2774,8 @@ Returns list of all supported cuisines:
 <span class="normal">522</span>
 <span class="normal">523</span>
 <span class="normal">524</span>
-<span class="normal">525</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">525</span>
+<span class="normal">526</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
