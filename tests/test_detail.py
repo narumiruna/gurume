@@ -339,6 +339,47 @@ class TestRestaurantDetailRequest:
         assert mock_get.call_count == 4
 
     @patch("curl_cffi.requests.get")
+    def test_fetch_sync_basic_only_fetches_base_page(self, mock_get):
+        main_response = Mock()
+        main_response.text = """
+        <html><body>
+            <table>
+                <tr><th>住所</th><td>東京都中央区銀座1-2-3</td></tr>
+                <tr><th>交通手段</th><td>銀座駅から徒歩3分</td></tr>
+                <tr><th>予約・お問い合わせ</th><td>03-1111-2222</td></tr>
+                <tr><th>営業時間</th><td>11:00 - 22:00</td></tr>
+                <tr><th>定休日</th><td>水曜日</td></tr>
+            </table>
+            <div>予算 ￥8,000～￥9,999 ￥2,000～￥2,999</div>
+        </body></html>
+        """
+        main_response.raise_for_status = Mock()
+        mock_get.return_value = main_response
+
+        request = RestaurantDetailRequest(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=False,
+        )
+
+        detail = request.fetch_sync()
+
+        assert detail.restaurant.url == "https://tabelog.com/tokyo/A1301/A130101/13000001"
+        assert detail.restaurant.address == "東京都中央区銀座1-2-3"
+        assert detail.restaurant.station == "銀座駅"
+        assert detail.restaurant.phone == "03-1111-2222"
+        assert detail.restaurant.business_hours == "11:00 - 22:00"
+        assert detail.restaurant.closed_days == "水曜日"
+        assert detail.restaurant.dinner_price == "￥8,000～￥9,999"
+        assert detail.restaurant.lunch_price == "￥2,000～￥2,999"
+        assert detail.reviews == []
+        assert detail.menu_items == []
+        assert detail.courses == []
+        assert mock_get.call_count == 1
+        assert mock_get.call_args.args[0] == "https://tabelog.com/tokyo/A1301/A130101/13000001"
+
+    @patch("curl_cffi.requests.get")
     def test_fetch_sync_ignores_optional_menu_404_and_parses_party_courses(self, mock_get):
         main_response = Mock()
         main_response.text = "<html><body><table><tr><th>営業時間</th><td>17:00 - 22:00</td></tr></table></body></html>"
@@ -412,6 +453,53 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.url == "https://tabelog.com/tokyo/A1307/A130704/13053564"
         assert detail.restaurant.business_hours == "17:00 - 23:00"
         assert mock_client_instance.get.call_count == 4
+
+    @pytest.mark.asyncio
+    @patch("curl_cffi.requests.AsyncSession")
+    async def test_fetch_async_basic_only_fetches_base_page(self, mock_client):
+        main_response = Mock()
+        main_response.text = """
+        <html><body>
+            <table>
+                <tr><th>住所</th><td>東京都中央区銀座1-2-3</td></tr>
+                <tr><th>交通手段</th><td>銀座駅から徒歩3分</td></tr>
+                <tr><th>予約・お問い合わせ</th><td>03-1111-2222</td></tr>
+                <tr><th>営業時間</th><td>11:00 - 22:00</td></tr>
+                <tr><th>定休日</th><td>水曜日</td></tr>
+            </table>
+            <div>予算 ￥8,000～￥9,999 ￥2,000～￥2,999</div>
+        </body></html>
+        """
+        main_response.raise_for_status = Mock()
+
+        mock_client_instance = AsyncMock()
+        mock_client_instance.get = AsyncMock(return_value=main_response)
+        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
+        mock_client_instance.__aexit__ = AsyncMock()
+        mock_client.return_value = mock_client_instance
+
+        request = RestaurantDetailRequest(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=False,
+        )
+
+        detail = await request.fetch()
+
+        assert detail.restaurant.url == "https://tabelog.com/tokyo/A1301/A130101/13000001"
+        assert detail.restaurant.address == "東京都中央区銀座1-2-3"
+        assert detail.restaurant.station == "銀座駅"
+        assert detail.restaurant.phone == "03-1111-2222"
+        assert detail.restaurant.business_hours == "11:00 - 22:00"
+        assert detail.restaurant.closed_days == "水曜日"
+        assert detail.restaurant.dinner_price == "￥8,000～￥9,999"
+        assert detail.restaurant.lunch_price == "￥2,000～￥2,999"
+        assert detail.reviews == []
+        assert detail.menu_items == []
+        assert detail.courses == []
+        assert mock_client_instance.get.await_count == 1
+        assert mock_client_instance.get.call_args.args[0] == "https://tabelog.com/tokyo/A1301/A130101/13000001"
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")

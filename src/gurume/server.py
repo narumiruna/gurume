@@ -367,15 +367,15 @@ async def tabelog_get_restaurant_details(
     ],
     fetch_reviews: Annotated[
         bool,
-        Field(default=True, description="Whether to fetch review pages from Tabelog."),
+        Field(default=True, description="Whether to fetch review pages from Tabelog after the base page."),
     ] = True,
     fetch_menu: Annotated[
         bool,
-        Field(default=True, description="Whether to fetch the restaurant menu page."),
+        Field(default=True, description="Whether to fetch the restaurant menu page after the base page."),
     ] = True,
     fetch_courses: Annotated[
         bool,
-        Field(default=True, description="Whether to fetch the restaurant course page."),
+        Field(default=True, description="Whether to fetch the restaurant course page after the base page."),
     ] = True,
     max_review_pages: Annotated[
         int,
@@ -386,7 +386,7 @@ async def tabelog_get_restaurant_details(
         ),
     ] = 1,
 ) -> RestaurantDetailOutput:
-    """Fetch detailed restaurant information including reviews, menu items, and courses."""
+    """Fetch base restaurant information and optional reviews, menu items, and courses."""
     try:
         _validate_detail_params(restaurant_url, fetch_reviews, fetch_menu, fetch_courses, max_review_pages)
         request = RestaurantDetailRequest(
@@ -409,7 +409,8 @@ async def tabelog_get_restaurant_details(
                 message=f"Invalid detail request parameters: {e}",
                 retryable=False,
                 suggested_action=(
-                    "Pass a non-empty `https://tabelog.com/` restaurant URL and enable at least one fetch option."
+                    "Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when "
+                    "only basic restaurant information is needed."
                 ),
                 detail=str(e),
             ),

@@ -176,6 +176,9 @@ print(detail.restaurant.name)
 print(len(detail.reviews), len(detail.menu_items), len(detail.courses))
 ```
 
+Set `fetch_reviews=False`, `fetch_menu=False`, and `fetch_courses=False` to fetch only the base restaurant page
+for address, station, phone, hours, closed days, and budget fields.
+
 #### Cuisine helpers
 
 ```python
@@ -275,15 +278,17 @@ Local development:
    Return the supported cuisine list as structured data.
 
 3. `tabelog_get_restaurant_details`
-   Fetch a restaurant detail page and optionally collect reviews, menu items, and courses.
+   Fetch base restaurant information and optionally collect reviews, menu items, and courses.
 
    Parameters:
 
    - `restaurant_url`: required Tabelog restaurant URL
-   - `fetch_reviews`: default `true`
-   - `fetch_menu`: default `true`
-   - `fetch_courses`: default `true`
+   - `fetch_reviews`: default `true`; set `false` to skip review pages
+   - `fetch_menu`: default `true`; set `false` to skip menu pages
+   - `fetch_courses`: default `true`; set `false` to skip course pages
    - `max_review_pages`: minimum `1`, default `1`
+
+   All optional fetch flags may be `false` when only basic restaurant information is needed.
 
 4. `tabelog_get_area_suggestions`
    Return structured area and station suggestions from Tabelog.

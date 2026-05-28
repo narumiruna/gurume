@@ -670,19 +670,66 @@ async def test_get_restaurant_details_success(sample_restaurant_detail):
 
 
 @pytest.mark.asyncio
-async def test_get_restaurant_details_requires_one_enabled_fetch():
-    """Test detail tool rejects empty fetch selection"""
-    result = await tabelog_get_restaurant_details(
+async def test_get_restaurant_details_basic_only_success():
+    """Test detail tool allows base restaurant info without optional sections."""
+    basic_detail = RestaurantDetail(
+        restaurant=Restaurant(
+            name="テスト寿司",
+            url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            rating=4.2,
+            review_count=50,
+            area="銀座",
+            station="銀座駅",
+            genres=["寿司"],
+            lunch_price="￥5,000～￥5,999",
+            dinner_price="￥10,000～￥14,999",
+            address="東京都中央区銀座1-2-3",
+            phone="03-1111-2222",
+            business_hours="11:00 - 22:00",
+            closed_days="日曜日",
+        ),
+        reviews=[],
+        menu_items=[],
+        courses=[],
+    )
+
+    with patch("gurume.server.RestaurantDetailRequest") as mock_request_class:
+        mock_request = mock_request_class.return_value
+        mock_request.fetch = AsyncMock(return_value=basic_detail)
+
+        result = await tabelog_get_restaurant_details(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=False,
+        )
+
+    assert result.status == "success"
+    assert result.restaurant is not None
+    assert result.restaurant.name == "テスト寿司"
+    assert result.restaurant.lunch_price == "￥5,000～￥5,999"
+    assert result.restaurant.dinner_price == "￥10,000～￥14,999"
+    assert result.address == "東京都中央区銀座1-2-3"
+    assert result.station == "銀座駅"
+    assert result.phone == "03-1111-2222"
+    assert result.business_hours == "11:00 - 22:00"
+    assert result.closed_days == "日曜日"
+    assert result.review_count == 0
+    assert result.menu_item_count == 0
+    assert result.course_count == 0
+    assert result.fetch_reviews is False
+    assert result.fetch_menu is False
+    assert result.fetch_courses is False
+    assert result.reviews == []
+    assert result.menu_items == []
+    assert result.courses == []
+    mock_request_class.assert_called_once_with(
         restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
         fetch_reviews=False,
         fetch_menu=False,
         fetch_courses=False,
+        max_review_pages=1,
     )
-
-    assert result.status == "error"
-    assert result.error is not None
-    assert result.error.error_code == "invalid_parameters"
-    assert "At least one of fetch_reviews" in result.error.detail
 
 
 @pytest.mark.asyncio
@@ -694,6 +741,8 @@ async def test_get_restaurant_details_invalid_url():
     assert result.error is not None
     assert result.error.error_code == "invalid_parameters"
     assert "restaurant_url must be a Tabelog HTTPS URL" in result.error.detail
+    assert "optional fetch flags" in result.error.suggested_action
+    assert "enable at least one" not in result.error.suggested_action
 
 
 @pytest.mark.asyncio

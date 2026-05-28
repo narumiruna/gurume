@@ -420,6 +420,8 @@ class TestSearchCommand:
                     review_count=50,
                     area="銀座",
                     genres=["寿司"],
+                    lunch_price="￥5,000～￥5,999",
+                    dinner_price="￥10,000～￥14,999",
                 )
             ],
             meta=SearchMeta(
@@ -453,8 +455,8 @@ class TestSearchCommand:
                 "area": "銀座",
                 "genres": ["寿司"],
                 "url": "https://tabelog.com/tokyo/A1301/A130101/1/",
-                "lunch_price": None,
-                "dinner_price": None,
+                "lunch_price": "￥5,000～￥5,999",
+                "dinner_price": "￥10,000～￥14,999",
             }
         ]
         assert payload["returned_count"] == 1
