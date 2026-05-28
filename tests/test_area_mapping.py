@@ -119,6 +119,11 @@ def test_get_area_slug_osaka_catalog_aliases():
     assert get_area_slug("天王寺区") == "osaka/A2701/A270203"
 
 
+def test_get_area_slug_does_not_map_ambiguous_nihonbashi():
+    """Test ambiguous Nihonbashi requests require caller-side disambiguation"""
+    assert get_area_slug("日本橋") is None
+
+
 def test_get_area_slug_all_major_cities():
     """Test all major cities in CITY_MAPPING"""
     for city, expected_slug in CITY_MAPPING.items():

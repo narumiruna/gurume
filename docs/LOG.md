@@ -74,5 +74,4 @@
 2026-05-28 | fix(search): route national cuisine rankings through Tabelog cuisine paths (#local)
 2026-05-28 | docs(plans): compare area catalog representations and implementation scope (#local)
 2026-05-28 | fix(search): expose area filter confidence for keyword searches (#local)
-2026-05-28 | docs(plans): archive completed area catalog representation decision (#local)
 2026-05-28 | feat(search): add Osaka area catalog seed paths (#local)
