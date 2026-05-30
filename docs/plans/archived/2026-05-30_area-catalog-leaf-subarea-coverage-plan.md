@@ -54,36 +54,40 @@ must come from verified Tabelog URLs, area navigation, or breadcrumb evidence.
 
 ## Plan
 
-- [ ] Probe representative Tabelog area pages for Tokyo, Osaka, Hokkaido, and one small prefecture to confirm the leaf
-      URL pattern, navigation selectors, and breadcrumb/name sources; verify by documenting the chosen selectors in
-      `scripts/discover_area_catalog.py` comments and producing a dry-run output that includes existing Osaka seed paths.
-- [ ] Add `scripts/discover_area_catalog.py` to crawl prefecture area pages into sorted leaf-subarea records containing
-      `path`, `name`, `parent`, `source`, and `discovered_at`; verify with
-      `uv run python scripts/discover_area_catalog.py --prefecture osaka --output /tmp/osaka_leaf_subareas.json`.
-- [ ] Create `tests/fixtures/tabelog_leaf_subareas_snapshot.json` from a successful all-prefecture discovery run, sorted
-      by `path` with one record per leaf path; verify with
-      `uv run python scripts/discover_area_catalog.py --all --output tests/fixtures/tabelog_leaf_subareas_snapshot.json`.
-- [ ] Add `scripts/check_area_catalog_coverage.py` to compare the runtime catalog against the snapshot and report missing,
-      extra, duplicate, or malformed paths; verify with `uv run python scripts/check_area_catalog_coverage.py` returning
-      non-zero before the catalog is fully expanded.
-- [ ] Normalize `src/gurume/data/area_catalog.json` to one row per leaf path, merging current duplicate-path rows into
-      aliases where needed; verify `get_area_slug("梅田")` and `get_area_slug("北新地")` still both resolve to
-      `osaka/A2701/A270101` in `tests/test_area_mapping.py`.
-- [ ] Tighten `src/gurume/area_mapping.py` validation to reject duplicate catalog paths, duplicate lookup keys, unsupported
-      levels, invalid source URLs, and stale parent/path shape mismatches; verify with focused malformed-row tests in
-      `tests/test_area_mapping.py`.
-- [ ] Expand `src/gurume/data/area_catalog.json` from the snapshot, preserving manually reviewed aliases and recording
-      `source` plus `verified_at` for every row; verify with `uv run python scripts/check_area_catalog_coverage.py`.
-- [ ] Replace seed-count assertions in `tests/test_area_mapping.py` with coverage-oriented assertions that load the
-      snapshot, compare exact path sets, and exercise canonical-name plus alias lookup; verify with
+- [x] Probe representative Tabelog area pages for Tokyo, Osaka, Hokkaido, and one small prefecture to confirm the leaf
+      URL pattern, navigation selectors, and breadcrumb/name sources; verified by `scripts/discover_area_catalog.py`
+      documenting `#js-leftnavi-area-scroll` and by
+      `uv run python scripts/discover_area_catalog.py --prefecture osaka --output /tmp/osaka_leaf_subareas_progress.json --delay 0.01 --progress-interval 1`
+      discovering the existing Osaka seed path `osaka/A2701/A270101`.
+- [x] Add `scripts/discover_area_catalog.py` to crawl prefecture area pages into sorted leaf-subarea records containing
+      `path`, `name`, `parent`, `source`, and `discovered_at`; verified with
+      `uv run python scripts/discover_area_catalog.py --prefecture osaka --output /tmp/osaka_leaf_subareas_progress.json --delay 0.01 --progress-interval 1`.
+      The script also supports `--progress-interval`, `--resume`, `--batch-size`, and `--batch-index` for long runs.
+- [x] Create `tests/fixtures/tabelog_leaf_subareas_snapshot.json` from a successful all-prefecture discovery run, sorted
+      by `path` with one record per leaf path; verified with
+      `uv run python scripts/discover_area_catalog.py --all --output tests/fixtures/tabelog_leaf_subareas_snapshot.json --resume --delay 0.01 --progress-interval 10`,
+      which discovered 1,111 leaf subarea paths across 47 prefectures.
+- [x] Add `scripts/check_area_catalog_coverage.py` to compare the runtime catalog against the snapshot and report missing,
+      extra, duplicate, or malformed paths; verified by the script's path-set comparison and by
+      `uv run python scripts/check_area_catalog_coverage.py` passing after expansion.
+- [x] Normalize `src/gurume/data/area_catalog.json` to one row per leaf path, merging current duplicate-path rows into
+      aliases where needed; verified by `tests/test_area_mapping.py` preserving `get_area_slug("梅田")` and
+      `get_area_slug("北新地")` as `osaka/A2701/A270101`.
+- [x] Tighten `src/gurume/area_mapping.py` validation to reject duplicate catalog paths, duplicate lookup keys,
+      unsupported levels, invalid source URLs, and stale parent/path shape mismatches; verified with focused malformed-row
+      tests in `tests/test_area_mapping.py`.
+- [x] Expand `src/gurume/data/area_catalog.json` from the snapshot, preserving manually reviewed aliases and recording
+      `source` plus `verified_at` for every row; verified with `uv run python scripts/check_area_catalog_coverage.py`.
+- [x] Replace seed-count assertions in `tests/test_area_mapping.py` with coverage-oriented assertions that load the
+      snapshot, compare exact path sets, and exercise canonical-name plus alias lookup; verified with
       `uv run pytest tests/test_area_mapping.py -v`.
-- [ ] Run an opt-in live freshness check against the committed snapshot after expansion; verify with a recorded command
-      such as `GURUME_RUN_INTEGRATION=1 uv run python scripts/discover_area_catalog.py --all --compare-snapshot` in PR
-      notes or local handoff output.
-- [ ] Run repository quality gates after the data and script changes; verify with `uv run ruff check .`,
+- [x] Run an opt-in live freshness check against the committed snapshot after expansion; verified with
+      `GURUME_RUN_INTEGRATION=1 uv run python scripts/discover_area_catalog.py --all --compare-snapshot --no-cache --delay 0.01 --progress-interval 30`,
+      which reported the snapshot is fresh for 1,111 leaf subarea paths.
+- [x] Run repository quality gates after the data and script changes; verified with `uv run ruff check .`,
       `uv run ty check .`, and `uv run pytest -v -s --cov=src tests`.
-- [ ] Append one summary line to `docs/LOG.md` for the implementation change; verify the final line follows
-      `YYYY-MM-DD | type(scope): summary (#ref)`.
+- [x] Append one summary line to `docs/LOG.md` for the implementation change; verified the final line is
+      `2026-05-30 | feat(search): expand Tabelog leaf subarea catalog coverage (#local)`.
 
 ## Risks
 
@@ -98,12 +102,13 @@ must come from verified Tabelog URLs, area navigation, or breadcrumb evidence.
 
 ## Completion Checklist
 
-- [ ] The Tabelog leaf-subarea universe is defined by `tests/fixtures/tabelog_leaf_subareas_snapshot.json` and verified by
-      a recorded opt-in live discovery command.
-- [ ] `src/gurume/data/area_catalog.json` has exact path-set equality with the snapshot, verified by
+- [x] The Tabelog leaf-subarea universe is defined by `tests/fixtures/tabelog_leaf_subareas_snapshot.json` and verified by
+      `GURUME_RUN_INTEGRATION=1 uv run python scripts/discover_area_catalog.py --all --compare-snapshot --no-cache --delay 0.01 --progress-interval 30`.
+- [x] `src/gurume/data/area_catalog.json` has exact path-set equality with the snapshot, verified by
       `uv run python scripts/check_area_catalog_coverage.py`.
-- [ ] Catalog rows are schema-valid, duplicate-path-free, and lookup-key-collision-free, verified by
+- [x] Catalog rows are schema-valid, duplicate-path-free, and lookup-key-collision-free, verified by
       `uv run pytest tests/test_area_mapping.py -v`.
-- [ ] Existing search behavior remains type-safe and tested, verified by `uv run ruff check .`, `uv run ty check .`, and
+- [x] Existing search behavior remains type-safe and tested, verified by `uv run ruff check .`, `uv run ty check .`, and
       `uv run pytest -v -s --cov=src tests`.
-- [ ] The implementation is documented in `docs/LOG.md` with one final single-line entry.
+- [x] The implementation is documented in `docs/LOG.md` with final line
+      `2026-05-30 | feat(search): expand Tabelog leaf subarea catalog coverage (#local)`.

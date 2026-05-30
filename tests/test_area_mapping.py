@@ -1,5 +1,8 @@
 """Tests for area mapping (area name to URL slug conversion)"""
 
+import json
+from pathlib import Path
+
 import pytest
 
 from gurume.area_mapping import CITY_AREA_PATH_MAPPING
@@ -9,19 +12,28 @@ from gurume.area_mapping import get_area_catalog_entries
 from gurume.area_mapping import get_area_slug
 from gurume.area_mapping import parse_area_catalog_rows
 
+_SNAPSHOT_PATH = Path(__file__).parent / "fixtures" / "tabelog_leaf_subareas_snapshot.json"
+
 
 def _catalog_row(**overrides: object) -> dict[str, object]:
+    path = str(overrides.get("path", "osaka/A2701/A270101"))
     row: dict[str, object] = {
-        "name": "梅田",
-        "path": "osaka/A2701/A270101",
+        "name": "大阪駅・梅田・新地",
+        "path": path,
         "level": "subarea",
-        "parent": "osaka/A2701",
-        "aliases": ["大阪駅"],
-        "source": "https://tabelog.com/osaka/A2701/A270101/",
-        "verified_at": "2026-05-28",
+        "parent": path.rsplit("/", maxsplit=1)[0],
+        "aliases": ["梅田", "大阪駅"],
+        "source": f"https://tabelog.com/{path}/",
+        "verified_at": "2026-05-30",
     }
     row.update(overrides)
     return row
+
+
+def _load_snapshot_rows() -> list[dict[str, object]]:
+    data = json.loads(_SNAPSHOT_PATH.read_text(encoding="utf-8"))
+    assert isinstance(data, list)
+    return data
 
 
 # ============================================================================
@@ -383,20 +395,34 @@ def test_city_area_path_prefecture_subset():
     assert path_prefecture_slugs.issubset(prefecture_slugs), "Some city paths start with unknown prefecture slugs"
 
 
-def test_area_catalog_seed_rows_validate():
-    """Test packaged catalog rows load with expected Osaka seed paths"""
+def test_area_catalog_covers_verified_leaf_subarea_snapshot():
+    """Test packaged catalog paths exactly cover the verified Tabelog leaf-subarea snapshot"""
     entries = get_area_catalog_entries()
-    paths_by_name = {entry.name: entry.path for entry in entries}
+    snapshot_rows = _load_snapshot_rows()
+    snapshot_paths = {row["path"] for row in snapshot_rows}
+    catalog_paths = {entry.path for entry in entries}
 
-    assert paths_by_name == {
-        "梅田": "osaka/A2701/A270101",
-        "北新地": "osaka/A2701/A270101",
-        "難波": "osaka/A2701/A270202",
-        "心斎橋": "osaka/A2701/A270201",
-        "天王寺": "osaka/A2701/A270203",
-    }
-    assert all(entry.source.startswith("https://tabelog.com/") for entry in entries)
-    assert all(entry.verified_at == "2026-05-28" for entry in entries)
+    assert len(entries) == len(snapshot_rows) == 1111
+    assert catalog_paths == snapshot_paths
+    assert all(entry.source == f"https://tabelog.com/{entry.path}/" for entry in entries)
+    assert all(entry.parent == entry.path.rsplit("/", maxsplit=1)[0] for entry in entries)
+    assert all(entry.verified_at == "2026-05-30" for entry in entries)
+
+
+def test_area_catalog_lookup_resolves_unshadowed_snapshot_names():
+    """Test catalog canonical names resolve unless a legacy prefecture-prefix mapping intentionally shadows them"""
+    shadowed_names: list[tuple[str, str, str | None]] = []
+    for entry in get_area_catalog_entries():
+        result = get_area_slug(entry.name)
+        if result != entry.path:
+            shadowed_names.append((entry.name, entry.path, result))
+
+    assert shadowed_names == [("山形", "yamagata/A0601/A060101", "yamagata")]
+
+
+def test_area_catalog_lookup_resolves_shadowed_yamagata_subarea_alias():
+    """Test the Yamagata leaf subarea remains reachable despite the legacy prefecture-prefix mapping"""
+    assert get_area_slug("山形市") == "yamagata/A0601/A060101"
 
 
 def test_area_catalog_rejects_missing_required_key():
@@ -412,7 +438,7 @@ def test_area_catalog_rejects_duplicate_names():
     """Test catalog validation rejects duplicate names"""
     rows = [_catalog_row(aliases=["大阪駅"]), _catalog_row(aliases=["梅田駅"])]
 
-    with pytest.raises(ValueError, match="duplicate area catalog name: 梅田"):
+    with pytest.raises(ValueError, match="duplicate area catalog name: 大阪駅・梅田・新地"):
         parse_area_catalog_rows(rows)
 
 
@@ -437,6 +463,26 @@ def test_area_catalog_rejects_unsupported_level():
     """Test catalog validation rejects unknown levels"""
     with pytest.raises(ValueError, match="unsupported: ward"):
         parse_area_catalog_rows([_catalog_row(level="ward")])
+
+
+def test_area_catalog_rejects_duplicate_paths():
+    """Test catalog validation rejects duplicate paths across canonical rows"""
+    rows = [_catalog_row(name="大阪駅・梅田・新地"), _catalog_row(name="梅田", aliases=[])]
+
+    with pytest.raises(ValueError, match="duplicate area catalog path: osaka/A2701/A270101"):
+        parse_area_catalog_rows(rows)
+
+
+def test_area_catalog_rejects_parent_path_mismatch():
+    """Test catalog validation rejects stale parent values"""
+    with pytest.raises(ValueError, match="parent does not match path"):
+        parse_area_catalog_rows([_catalog_row(parent="osaka/A2705")])
+
+
+def test_area_catalog_rejects_source_path_mismatch():
+    """Test catalog validation rejects stale source URLs"""
+    with pytest.raises(ValueError, match="source must match path URL"):
+        parse_area_catalog_rows([_catalog_row(source="https://tabelog.com/osaka/A2701/A270102/")])
 
 
 # ============================================================================

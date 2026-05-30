@@ -166,8 +166,11 @@ def _parse_catalog_row(row: dict[str, Any]) -> AreaCatalogEntry:
         raise ValueError(f"area catalog parent has unsupported shape: {parent}")
     if level not in _SUPPORTED_AREA_LEVELS:
         raise ValueError(f"area catalog level is unsupported: {level}")
-    if not source.startswith("https://tabelog.com/"):
-        raise ValueError(f"area catalog source must be a Tabelog URL: {source}")
+    if parent != path.rsplit("/", maxsplit=1)[0]:
+        raise ValueError(f"area catalog parent does not match path: {parent} -> {path}")
+    expected_source = f"https://tabelog.com/{path}/"
+    if source != expected_source:
+        raise ValueError(f"area catalog source must match path URL: {expected_source}")
     try:
         date.fromisoformat(verified_at)
     except ValueError as exc:
@@ -197,11 +200,15 @@ def parse_area_catalog_rows(data: object) -> tuple[AreaCatalogEntry, ...]:
     entries = tuple(parsed_entries)
 
     seen_names: set[str] = set()
+    seen_paths: set[str] = set()
     lookup_keys: dict[str, str] = {}
     for entry in entries:
         if entry.name in seen_names:
             raise ValueError(f"duplicate area catalog name: {entry.name}")
         seen_names.add(entry.name)
+        if entry.path in seen_paths:
+            raise ValueError(f"duplicate area catalog path: {entry.path}")
+        seen_paths.add(entry.path)
 
         for lookup_key in (entry.name, *entry.aliases):
             if lookup_key in lookup_keys:
