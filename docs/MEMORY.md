@@ -26,6 +26,7 @@
 - Tabelog homepage, search paths, and suggestion API currently return Cloudflare headers (`server: cloudflare`, `cf-ray`) and set `__cf_bm`; keep `curl_cffi` as the scraping baseline, but do not assume it bypasses every Cloudflare challenge.
 - `skills/gurume-cli/` is the external installer source, while `.codex/skills/gurume-cli/` is the Codex CLI repo-local runtime mirror. Edit `skills/` first, then run `uv run python scripts/sync_skills.py` and verify with `uv run python scripts/sync_skills.py --check`.
 - Tabelog area suggestions expose names, datatypes, and IDs, but not reliable URL paths; expand `area_catalog.json` from verified Tabelog path URLs, not suggestion IDs alone.
+- Tabelog leaf subareas can be snapshotted from `#js-leftnavi-area-scroll`: prefecture pages expose parent paths and parent pages expose leaf paths. The leaf name `山形` is intentionally shadowed by the legacy prefecture-prefix lookup; use the `山形市` alias for the leaf path.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.
