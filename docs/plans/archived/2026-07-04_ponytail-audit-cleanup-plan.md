@@ -37,7 +37,7 @@ The audit identified duplicate docs and skill mirrors, stale packaging/deploy la
 - [x] Deduplicate area and keyword suggestion request handling behind one sync helper and one async helper; verified with `uv run pytest -q tests/test_suggest.py tests/test_server.py`.
 - [x] Resolve public API cleanup (`do`/`do_sync`, `types.py` aliases, `json-envelope`) only after the breaking-release unknown is answered; deferred because no explicit maintainer acceptance was given for public API removals.
 - [x] Regenerate dependency lock and run full validation after accepted cleanup; verified with `uv lock`, `uv run ruff check .`, `uv run ty check .`, and `uv run pytest -q tests` (`320 passed, 4 skipped`).
-- [x] Append one concise project log line for the cleanup implementation; verified with the last line of `docs/LOG.md`: `2026-07-04 | refactor(repo): remove ponytail audit cleanup bloat (#local)`.
+- [x] Append one concise project log line for the cleanup implementation; verified with the last line of `docs/LOG.md`: `2026-07-03 | refactor(repo): remove ponytail audit cleanup bloat (#87)`.
 
 ## Risks
 
