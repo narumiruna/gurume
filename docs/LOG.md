@@ -80,3 +80,5 @@
 2026-05-28 | fix(search): preserve under-range list-card prices (#84)
 2026-05-30 | docs(plans): add Tabelog leaf subarea coverage plan (#local)
 2026-05-30 | feat(search): expand Tabelog leaf subarea catalog coverage (#local)
+2026-07-04 | docs(plans): add ponytail audit cleanup plan (#local)
+2026-07-04 | refactor(repo): remove ponytail audit cleanup bloat (#local)

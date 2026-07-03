@@ -98,7 +98,7 @@ class RestaurantDetailRequest:
 
     def _parse_reviews(self, html: str) -> list[Review]:
         """Parse review information."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         reviews = []
 
         review_items = soup.find_all("div", class_="rvw-item")
@@ -115,7 +115,7 @@ class RestaurantDetailRequest:
 
     def _parse_menu_items(self, html: str) -> list[MenuItem]:
         """Parse menu items."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         menu_items = []
 
         # Find all menu categories.
@@ -133,7 +133,7 @@ class RestaurantDetailRequest:
 
     def _parse_courses(self, html: str) -> list[Course]:
         """Parse course information."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         courses = []
 
         course_items = soup.find_all("div", class_="rstdtl-course-list")
@@ -222,7 +222,7 @@ class RestaurantDetailRequest:
         return None
 
     def _parse_restaurant(self, html: str, base_url: str) -> Restaurant:
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         ld_data = self._extract_restaurant_json_ld(soup)
         info_map = self._extract_info_map(soup)
 

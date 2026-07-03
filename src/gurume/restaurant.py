@@ -252,7 +252,7 @@ class RestaurantSearchRequest:
 
     def _parse_restaurants(self, html: str) -> list[Restaurant]:
         """Parse restaurant information."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
         restaurants = []
 
         # Check for the upstream "area not found" error message.

@@ -371,7 +371,7 @@ The TUI includes:
 - automatic cuisine detection for direct cuisine-name input
 - visible sort controls and keyboard navigation
 
-Detailed TUI documentation lives in [`docs/TUI_USAGE.md`](docs/TUI_USAGE.md).
+Detailed TUI documentation lives in [`docs/site/usage/tui.md`](docs/site/usage/tui.md).
 
 ## 🧩 Agent Skill
 

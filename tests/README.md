@@ -7,11 +7,10 @@ This directory contains the test suite for `gurume`.
 Current test files:
 
 - `test_area_mapping.py`: area-name to Tabelog path mapping.
-- `test_cache.py`: in-memory and file cache helpers.
+- `test_cache.py`: in-memory cache helpers.
 - `test_cli.py`: Typer CLI commands and output behavior.
 - `test_detail.py`: restaurant detail parsing and fetch behavior.
 - `test_genre_mapping.py`: cuisine-name, genre-code, and path-segment mapping.
-- `test_hello.py`: minimal package smoke test.
 - `test_integration.py`: mocked end-to-end search flows.
 - `test_models.py`: dataclass and enum behavior.
 - `test_restaurant.py`: core restaurant search request and HTML parsing.

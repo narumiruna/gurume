@@ -1,34 +1,23 @@
-"""Retry and resilience mechanisms for robust HTTP requests
-
-This module provides retry logic with exponential backoff for handling
-transient failures when scraping Tabelog.
-
-Features:
-- Auto-retry on transient HTTP failures (5xx errors, connection errors)
-- Exponential backoff with jitter
-- Configurable retry attempts and delays
-- Logging of retry attempts
-"""
+"""Retry and HTTP error helpers for Tabelog requests."""
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import time
+
 from curl_cffi import requests
 from curl_cffi.requests import exceptions as request_errors
-from loguru import logger
-from tenacity import RetryCallState
-from tenacity import retry
-from tenacity import retry_if_exception_type
-from tenacity import stop_after_attempt
-from tenacity import wait_exponential
 
 from .exceptions import NetworkError
 from .exceptions import RateLimitError
 from .http_client import DEFAULT_IMPERSONATE
 
-# Default retry configuration
+logger = logging.getLogger(__name__)
+
 DEFAULT_MAX_ATTEMPTS = 3
-DEFAULT_MIN_WAIT = 1  # seconds
-DEFAULT_MAX_WAIT = 10  # seconds
+DEFAULT_MIN_WAIT = 1
+DEFAULT_MAX_WAIT = 10
 
 RETRYABLE_REQUEST_ERRORS = (
     request_errors.ConnectionError,
@@ -36,33 +25,11 @@ RETRYABLE_REQUEST_ERRORS = (
 )
 
 
-def _retry_exception_name(retry_state: RetryCallState) -> str:
-    """Return the retry exception name, if Tenacity has recorded one."""
-    outcome = retry_state.outcome
-    if outcome is None:
-        return "unknown error"
-
-    exception = outcome.exception()
-    if exception is None:
-        return "unknown error"
-
-    return exception.__class__.__name__
-
-
 def is_retryable_error(exception: BaseException) -> bool:
-    """Check if an exception is retryable
-
-    Args:
-        exception: Exception to check
-
-    Returns:
-        True if the exception should trigger a retry
-    """
-    # Retry on network errors
+    """Return whether an exception should trigger a retry."""
     if isinstance(exception, RETRYABLE_REQUEST_ERRORS):
         return True
 
-    # Retry on server errors (5xx)
     if isinstance(exception, request_errors.HTTPError):
         response = exception.response
         return response is not None and 500 <= response.status_code < 600
@@ -70,50 +37,12 @@ def is_retryable_error(exception: BaseException) -> bool:
     return False
 
 
-def create_retry_decorator(
-    max_attempts: int = DEFAULT_MAX_ATTEMPTS,
-    min_wait: float = DEFAULT_MIN_WAIT,
-    max_wait: float = DEFAULT_MAX_WAIT,
-):
-    """Create a retry decorator with custom configuration
-
-    Args:
-        max_attempts: Maximum number of retry attempts
-        min_wait: Minimum wait time between retries (seconds)
-        max_wait: Maximum wait time between retries (seconds)
-
-    Returns:
-        Retry decorator configured with exponential backoff
-    """
-
-    def log_before_sleep(retry_state: RetryCallState) -> None:
-        logger.warning(
-            f"Retry attempt {retry_state.attempt_number}/{max_attempts} after {_retry_exception_name(retry_state)}"
-        )
-
-    return retry(
-        retry=retry_if_exception_type(RETRYABLE_REQUEST_ERRORS),
-        stop=stop_after_attempt(max_attempts),
-        wait=wait_exponential(multiplier=1, min=min_wait, max=max_wait),
-        before_sleep=log_before_sleep,
-        reraise=True,
-    )
-
-
-# Default retry decorator for sync requests
-retry_on_failure = create_retry_decorator()
+def _wait_seconds(attempt: int, min_wait: float, max_wait: float) -> float:
+    return min(min_wait * (2 ** (attempt - 1)), max_wait)
 
 
 def handle_http_errors(response: requests.Response) -> None:
-    """Handle HTTP errors and raise appropriate exceptions
-
-    Args:
-        response: HTTP response to check
-
-    Raises:
-        RateLimitError: If rate limited (429)
-        NetworkError: For other HTTP errors
-    """
+    """Raise project exceptions for HTTP error responses."""
     try:
         response.raise_for_status()
     except request_errors.HTTPError as e:
@@ -129,57 +58,37 @@ def handle_http_errors(response: requests.Response) -> None:
         raise NetworkError(f"HTTP error: {status_code}") from e
 
 
-@retry_on_failure
-def _fetch_with_retry_impl(
-    url: str,
-    params: dict | None = None,
-    headers: dict | None = None,
-    timeout: float = 10.0,
-) -> requests.Response:
-    """Internal implementation of fetch with retry
-
-    This function is decorated with @retry_on_failure and will retry
-    on transient network errors.
-    """
-    response = requests.get(
-        url=url,
-        params=params,
-        headers=headers,
-        timeout=timeout,
-        allow_redirects=True,
-        impersonate=DEFAULT_IMPERSONATE,
-    )
-    handle_http_errors(response)
-    return response
-
-
 def fetch_with_retry(
     url: str,
     params: dict | None = None,
     headers: dict | None = None,
     timeout: float = 10.0,
 ) -> requests.Response:
-    """Fetch URL with automatic retry on transient failures
+    """Fetch URL with retry on transient connection failures."""
+    for attempt in range(1, DEFAULT_MAX_ATTEMPTS + 1):
+        try:
+            response = requests.get(
+                url=url,
+                params=params,
+                headers=headers,
+                timeout=timeout,
+                allow_redirects=True,
+                impersonate=DEFAULT_IMPERSONATE,
+            )
+            handle_http_errors(response)
+        except RETRYABLE_REQUEST_ERRORS as e:
+            if attempt == DEFAULT_MAX_ATTEMPTS:
+                logger.error("Failed to fetch %s after all retry attempts: %s", url, e)
+                raise NetworkError(f"Failed to fetch {url} after {DEFAULT_MAX_ATTEMPTS} attempts") from e
+            logger.warning("Retry attempt %s/%s after %s", attempt, DEFAULT_MAX_ATTEMPTS, e.__class__.__name__)
+            time.sleep(_wait_seconds(attempt, DEFAULT_MIN_WAIT, DEFAULT_MAX_WAIT))
+        except request_errors.RequestException as e:
+            logger.error("HTTP request failed: %s", e)
+            raise NetworkError(f"Failed to fetch {url}") from e
+        else:
+            return response
 
-    Args:
-        url: URL to fetch
-        params: Query parameters
-        headers: HTTP headers
-        timeout: Request timeout in seconds
-
-    Returns:
-        HTTP response
-
-    Raises:
-        RateLimitError: If rate limited
-        NetworkError: For persistent HTTP errors or if all retries failed
-    """
-    try:
-        return _fetch_with_retry_impl(url, params, headers, timeout)
-    except RETRYABLE_REQUEST_ERRORS as e:
-        # All retries failed
-        logger.error(f"Failed to fetch {url} after all retry attempts: {e}")
-        raise NetworkError(f"Failed to fetch {url} after {DEFAULT_MAX_ATTEMPTS} attempts") from e
+    raise NetworkError(f"Failed to fetch {url}")
 
 
 async def fetch_with_retry_async(
@@ -188,27 +97,8 @@ async def fetch_with_retry_async(
     headers: dict | None = None,
     request_timeout: float = 10.0,
 ) -> requests.Response:
-    """Fetch URL with automatic retry on transient failures (async version)
-
-    Args:
-        url: URL to fetch
-        params: Query parameters
-        headers: HTTP headers
-        request_timeout: Request timeout in seconds
-
-    Returns:
-        HTTP response
-
-    Raises:
-        RateLimitError: If rate limited
-        NetworkError: For persistent HTTP errors
-        RetryError: If all retry attempts failed
-    """
-    max_attempts = DEFAULT_MAX_ATTEMPTS
-    min_wait = DEFAULT_MIN_WAIT
-    max_wait = DEFAULT_MAX_WAIT
-
-    for attempt in range(1, max_attempts + 1):
+    """Fetch URL with retry on transient connection failures."""
+    for attempt in range(1, DEFAULT_MAX_ATTEMPTS + 1):
         try:
             async with requests.AsyncSession(
                 timeout=request_timeout,
@@ -217,20 +107,16 @@ async def fetch_with_retry_async(
             ) as client:
                 response = await client.get(url=url, params=params, headers=headers)
                 handle_http_errors(response)
-                return response
         except RETRYABLE_REQUEST_ERRORS as e:
-            if attempt < max_attempts:
-                wait_time = min(min_wait * (2 ** (attempt - 1)), max_wait)
-                logger.warning(f"Retry attempt {attempt}/{max_attempts} after {e.__class__.__name__}")
-                import asyncio
-
-                await asyncio.sleep(wait_time)
-            else:
-                logger.error(f"All {max_attempts} retry attempts failed")
-                raise NetworkError(f"Failed to fetch {url} after {max_attempts} attempts") from e
+            if attempt == DEFAULT_MAX_ATTEMPTS:
+                logger.error("All %s retry attempts failed", DEFAULT_MAX_ATTEMPTS)
+                raise NetworkError(f"Failed to fetch {url} after {DEFAULT_MAX_ATTEMPTS} attempts") from e
+            logger.warning("Retry attempt %s/%s after %s", attempt, DEFAULT_MAX_ATTEMPTS, e.__class__.__name__)
+            await asyncio.sleep(_wait_seconds(attempt, DEFAULT_MIN_WAIT, DEFAULT_MAX_WAIT))
         except request_errors.RequestException as e:
-            logger.error(f"HTTP request failed: {e}")
+            logger.error("HTTP request failed: %s", e)
             raise NetworkError(f"Failed to fetch {url}") from e
+        else:
+            return response
 
-    # Should never reach here, but mypy wants it
     raise NetworkError(f"Failed to fetch {url}")
