@@ -161,7 +161,7 @@ def _path_pattern(slug: str, *, leaf: bool) -> re.Pattern[str]:
 
 
 def _extract_named_paths(html: str, slug: str, *, leaf: bool) -> dict[str, str]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "html.parser")
     pattern = _path_pattern(slug, leaf=leaf)
     named_paths: dict[str, str] = {}
 
@@ -221,8 +221,7 @@ def _discover_prefecture(
         expected_prefix = f"{parent_path}/"
         leaf_names.update({path: name for path, name in parent_leaf_names.items() if path.startswith(expected_prefix)})
         reporter.maybe(
-            f"{slug}: processed {parent_index}/{len(parent_paths)} parent pages, "
-            f"{len(leaf_names)} leaf paths so far"
+            f"{slug}: processed {parent_index}/{len(parent_paths)} parent pages, {len(leaf_names)} leaf paths so far"
         )
 
     if not leaf_names:

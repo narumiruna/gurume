@@ -34,7 +34,7 @@ class AreaSuggestion:
     """Area suggestion."""
 
     name: str
-    datatype: str  # AddressMaster, RailroadStation, Prefecture, Town
+    datatype: str
     id_in_datatype: int
     lat: float | None = None
     lng: float | None = None
@@ -45,7 +45,7 @@ class KeywordSuggestion:
     """Keyword suggestion."""
 
     name: str
-    datatype: str  # Genre2, Restaurant, Genre2 DetailCondition
+    datatype: str
     id_in_datatype: int | str
     lat: float | None = None
     lng: float | None = None
@@ -55,9 +55,59 @@ def _build_headers() -> dict[str, str]:
     return {"User-Agent": USER_AGENT}
 
 
-def _parse_area_suggestions(data: list[dict[str, Any]]) -> list[AreaSuggestion]:
+def _suggest_data_from_response(response: requests.Response) -> list[Any]:
+    response.raise_for_status()
+    data = response.json()
+    if isinstance(data, dict) and data.get("suggest_empty"):
+        raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
+    return data if isinstance(data, list) else []
+
+
+def _fetch_suggestion_data(param_name: str, query: str, timeout: float) -> list[Any]:
+    query = query.strip()
+    if not query:
+        return []
+
+    try:
+        response = requests.get(
+            url=SUGGEST_URL,
+            params={param_name: query},
+            headers=_build_headers(),
+            timeout=timeout,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
+        return _suggest_data_from_response(response)
+    except TabelogSuggestUnavailableError:
+        raise
+    except (request_errors.RequestException, ValueError):
+        return []
+
+
+async def _fetch_suggestion_data_async(param_name: str, query: str, request_timeout: float) -> list[Any]:
+    query = query.strip()
+    if not query:
+        return []
+
+    try:
+        async with requests.AsyncSession(
+            timeout=request_timeout,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        ) as client:
+            response = await client.get(url=SUGGEST_URL, params={param_name: query}, headers=_build_headers())
+            return _suggest_data_from_response(response)
+    except TabelogSuggestUnavailableError:
+        raise
+    except (request_errors.RequestException, ValueError):
+        return []
+
+
+def _parse_area_suggestions(data: list[Any]) -> list[AreaSuggestion]:
     suggestions: list[AreaSuggestion] = []
     for item in data:
+        if not isinstance(item, dict):
+            continue
         try:
             suggestions.append(
                 AreaSuggestion(
@@ -73,9 +123,11 @@ def _parse_area_suggestions(data: list[dict[str, Any]]) -> list[AreaSuggestion]:
     return suggestions
 
 
-def _parse_keyword_suggestions(data: list[dict[str, Any]]) -> list[KeywordSuggestion]:
+def _parse_keyword_suggestions(data: list[Any]) -> list[KeywordSuggestion]:
     suggestions: list[KeywordSuggestion] = []
     for item in data:
+        if not isinstance(item, dict):
+            continue
         try:
             suggestions.append(
                 KeywordSuggestion(
@@ -92,148 +144,22 @@ def _parse_keyword_suggestions(data: list[dict[str, Any]]) -> list[KeywordSugges
 
 
 def get_area_suggestions(query: str, timeout: float = 10.0) -> list[AreaSuggestion]:
-    """Get area suggestions.
-
-    Args:
-        query: Search keyword.
-        timeout: Request timeout in seconds.
-
-    Returns:
-        List of area suggestions.
-    """
-    if not query or not query.strip():
-        return []
-
-    params = {"sa": query.strip()}
-
-    try:
-        resp = requests.get(
-            url=SUGGEST_URL,
-            params=params,
-            headers=_build_headers(),
-            timeout=timeout,
-            allow_redirects=True,
-            impersonate=DEFAULT_IMPERSONATE,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        if isinstance(data, dict) and data.get("suggest_empty"):
-            raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
-        if not isinstance(data, list):
-            return []
-    except TabelogSuggestUnavailableError:
-        raise
-    except (request_errors.RequestException, ValueError):
-        return []
-    else:
-        return _parse_area_suggestions(data)
+    """Get area suggestions."""
+    return _parse_area_suggestions(_fetch_suggestion_data("sa", query, timeout))
 
 
 async def get_area_suggestions_async(query: str, request_timeout: float = 10.0) -> list[AreaSuggestion]:
-    """Get area suggestions asynchronously.
-
-    Args:
-        query: Search keyword.
-        request_timeout: Request timeout in seconds.
-
-    Returns:
-        List of area suggestions.
-    """
-    if not query or not query.strip():
-        return []
-
-    params = {"sa": query.strip()}
-
-    try:
-        async with requests.AsyncSession(
-            timeout=request_timeout,
-            allow_redirects=True,
-            impersonate=DEFAULT_IMPERSONATE,
-        ) as client:
-            resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, dict) and data.get("suggest_empty"):
-                raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
-            if not isinstance(data, list):
-                return []
-    except TabelogSuggestUnavailableError:
-        raise
-    except (request_errors.RequestException, ValueError):
-        return []
-    else:
-        return _parse_area_suggestions(data)
+    """Get area suggestions asynchronously."""
+    data = await _fetch_suggestion_data_async("sa", query, request_timeout)
+    return _parse_area_suggestions(data)
 
 
 def get_keyword_suggestions(query: str, timeout: float = 10.0) -> list[KeywordSuggestion]:
-    """Get keyword suggestions.
-
-    Args:
-        query: Search keyword.
-        timeout: Request timeout in seconds.
-
-    Returns:
-        List of keyword suggestions.
-    """
-    if not query or not query.strip():
-        return []
-
-    params = {"sk": query.strip()}
-
-    try:
-        resp = requests.get(
-            url=SUGGEST_URL,
-            params=params,
-            headers=_build_headers(),
-            timeout=timeout,
-            allow_redirects=True,
-            impersonate=DEFAULT_IMPERSONATE,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        if isinstance(data, dict) and data.get("suggest_empty"):
-            raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
-        if not isinstance(data, list):
-            return []
-    except TabelogSuggestUnavailableError:
-        raise
-    except (request_errors.RequestException, ValueError):
-        return []
-    else:
-        return _parse_keyword_suggestions(data)
+    """Get keyword suggestions."""
+    return _parse_keyword_suggestions(_fetch_suggestion_data("sk", query, timeout))
 
 
 async def get_keyword_suggestions_async(query: str, request_timeout: float = 10.0) -> list[KeywordSuggestion]:
-    """Get keyword suggestions asynchronously.
-
-    Args:
-        query: Search keyword.
-        request_timeout: Request timeout in seconds.
-
-    Returns:
-        List of keyword suggestions.
-    """
-    if not query or not query.strip():
-        return []
-
-    params = {"sk": query.strip()}
-
-    try:
-        async with requests.AsyncSession(
-            timeout=request_timeout,
-            allow_redirects=True,
-            impersonate=DEFAULT_IMPERSONATE,
-        ) as client:
-            resp = await client.get(url=SUGGEST_URL, params=params, headers=_build_headers())
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, dict) and data.get("suggest_empty"):
-                raise TabelogSuggestUnavailableError(TabelogSuggestUnavailableError.HELP)
-            if not isinstance(data, list):
-                return []
-    except TabelogSuggestUnavailableError:
-        raise
-    except (request_errors.RequestException, ValueError):
-        return []
-    else:
-        return _parse_keyword_suggestions(data)
+    """Get keyword suggestions asynchronously."""
+    data = await _fetch_suggestion_data_async("sk", query, request_timeout)
+    return _parse_keyword_suggestions(data)

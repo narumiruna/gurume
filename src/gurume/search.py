@@ -227,7 +227,7 @@ class SearchRequest:
         source_params: dict[str, str] | None = None,
     ) -> SearchMeta:
         """Parse search metadata."""
-        soup = BeautifulSoup(html, "lxml")
+        soup = BeautifulSoup(html, "html.parser")
 
         # Results per page, usually 20.
         results_per_page = 20
