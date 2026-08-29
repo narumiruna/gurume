@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 from curl_cffi.requests import exceptions as request_errors
 
+from gurume.http_client import DEFAULT_IMPERSONATE
 from gurume.restaurant import PriceRange
 from gurume.restaurant import Restaurant
 from gurume.restaurant import RestaurantSearchRequest
@@ -217,7 +218,7 @@ class TestRestaurantSearchRequest:
         assert call_args[1]["params"]["sk"] == "寿司"
         assert int(call_args[1]["params"]["svps"]) == 2
         assert call_args[1]["allow_redirects"] is True
-        assert call_args[1]["impersonate"] == "safari"
+        assert call_args[1]["impersonate"] == DEFAULT_IMPERSONATE
         assert "headers" not in call_args[1]
 
     @pytest.mark.asyncio
@@ -249,7 +250,11 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].name == "テストレストラン1"
 
         # Check that AsyncSession was created with correct parameters
-        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
+        mock_client_class.assert_called_once_with(
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         mock_client.get.assert_called_once()
         assert "headers" not in mock_client.get.call_args.kwargs
 

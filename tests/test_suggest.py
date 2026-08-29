@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from curl_cffi.requests import exceptions as request_errors
 
+from gurume.http_client import DEFAULT_IMPERSONATE
 from gurume.suggest import AreaSuggestion
 from gurume.suggest import KeywordSuggestion
 from gurume.suggest import TabelogSuggestUnavailableError
@@ -123,7 +124,7 @@ def test_get_area_suggestions_success(sample_area_response):
         mock_get.assert_called_once()
         call_args = mock_get.call_args
         assert call_args.kwargs["params"] == {"sa": "東京"}
-        assert call_args.kwargs["impersonate"] == "safari"
+        assert call_args.kwargs["impersonate"] == DEFAULT_IMPERSONATE
         assert "headers" not in call_args.kwargs
 
 
@@ -241,7 +242,11 @@ async def test_get_area_suggestions_async_success(sample_area_response):
         assert results[2].name == "新宿区"
 
         # Verify API was called with profile-consistent generated headers.
-        mock_session.assert_called_once_with(timeout=10.0, allow_redirects=True, impersonate="safari")
+        mock_session.assert_called_once_with(
+            timeout=10.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         mock_client.get.assert_called_once()
         assert "headers" not in mock_client.get.call_args.kwargs
 
@@ -304,7 +309,7 @@ def test_get_keyword_suggestions_success(sample_keyword_response):
         mock_get.assert_called_once()
         call_args = mock_get.call_args
         assert call_args.kwargs["params"] == {"sk": "すき"}
-        assert call_args.kwargs["impersonate"] == "safari"
+        assert call_args.kwargs["impersonate"] == DEFAULT_IMPERSONATE
         assert "headers" not in call_args.kwargs
 
 
@@ -388,7 +393,11 @@ async def test_get_keyword_suggestions_async_success(sample_keyword_response):
         assert results[2].name == "すき焼き ランチ"
 
         # Verify API was called with profile-consistent generated headers.
-        mock_session.assert_called_once_with(timeout=10.0, allow_redirects=True, impersonate="safari")
+        mock_session.assert_called_once_with(
+            timeout=10.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         mock_client.get.assert_called_once()
         assert "headers" not in mock_client.get.call_args.kwargs
 

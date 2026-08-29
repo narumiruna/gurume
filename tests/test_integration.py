@@ -10,6 +10,7 @@ from gurume import RestaurantSearchRequest
 from gurume import SearchRequest
 from gurume import SortType
 from gurume import query_restaurants
+from gurume.http_client import DEFAULT_IMPERSONATE
 
 
 class TestIntegration:
@@ -264,7 +265,11 @@ class TestIntegration:
         assert restaurant.dinner_price == "ディナー ¥15,000～¥19,999"
 
         # Verify async session was used correctly
-        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
+        mock_client_class.assert_called_once_with(
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         mock_client.get.assert_called_once()
         assert "headers" not in mock_client.get.call_args.kwargs
 

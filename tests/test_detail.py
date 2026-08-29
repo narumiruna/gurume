@@ -13,6 +13,7 @@ from gurume import RestaurantDetail
 from gurume import RestaurantDetailRequest
 from gurume import Review
 from gurume.exceptions import InvalidParameterError
+from gurume.http_client import DEFAULT_IMPERSONATE
 
 
 def _http_error(status_code: int, message: str) -> request_errors.HTTPError:
@@ -338,7 +339,7 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.phone == "03-1111-2222"
         assert mock_get.call_count == 4
         for request_call in mock_get.call_args_list:
-            assert request_call.kwargs["impersonate"] == "safari"
+            assert request_call.kwargs["impersonate"] == DEFAULT_IMPERSONATE
             assert "headers" not in request_call.kwargs
 
     @patch("curl_cffi.requests.get")
@@ -456,7 +457,11 @@ class TestRestaurantDetailRequest:
         assert detail.restaurant.url == "https://tabelog.com/tokyo/A1307/A130704/13053564"
         assert detail.restaurant.business_hours == "17:00 - 23:00"
         assert mock_client_instance.get.call_count == 4
-        mock_client.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
+        mock_client.assert_called_once_with(
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         for request_call in mock_client_instance.get.call_args_list:
             assert "headers" not in request_call.kwargs
 

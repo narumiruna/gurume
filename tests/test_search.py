@@ -7,6 +7,7 @@ from unittest.mock import patch
 import pytest
 from curl_cffi.requests import exceptions as request_errors
 
+from gurume.http_client import DEFAULT_IMPERSONATE
 from gurume.restaurant import Restaurant
 from gurume.restaurant import SortType
 from gurume.search import SearchMeta
@@ -296,7 +297,7 @@ class TestSearchRequest:
 
         # Check that curl_cffi.get was called once with profile-consistent generated headers.
         mock_get.assert_called_once()
-        assert mock_get.call_args.kwargs["impersonate"] == "safari"
+        assert mock_get.call_args.kwargs["impersonate"] == DEFAULT_IMPERSONATE
         assert "headers" not in mock_get.call_args.kwargs
 
     @patch("curl_cffi.requests.get")
@@ -591,7 +592,11 @@ class TestSearchRequest:
         assert response.meta.total_count == 100
 
         # Check that AsyncSession was created with correct parameters
-        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
+        mock_client_class.assert_called_once_with(
+            timeout=30.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
         mock_client.get.assert_called_once()
         assert "headers" not in mock_client.get.call_args.kwargs
 
