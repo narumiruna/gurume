@@ -20,11 +20,6 @@ from .http_client import DEFAULT_IMPERSONATE
 from .retry import fetch_with_retry
 from .retry import fetch_with_retry_async
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/91.0.4472.124 Safari/537.36"
-)
 ITEM_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 PRICE_RANGE_RE = re.compile(r"[～〜~]?\s*[￥¥]\s*[0-9,]+(?:\s*[～〜~ー-]\s*[￥¥]?\s*[0-9,]+|[～〜~ー-])?")
 DISPLAYED_DINNER_MARKERS = ("ディナー", "夜")
@@ -498,7 +493,6 @@ class RestaurantSearchRequest:
             List of restaurants.
         """
         params = self._build_params()
-        headers = {"User-Agent": USER_AGENT}
 
         area_slug = get_area_slug(self.area) if self.area else None
         url, params = build_search_url_and_params(params, area_slug, self.genre_code)
@@ -511,12 +505,11 @@ class RestaurantSearchRequest:
 
         # Execute the request with or without retry handling.
         if use_retry:
-            resp = fetch_with_retry(url=url, params=params, headers=headers, timeout=30.0)
+            resp = fetch_with_retry(url=url, params=params, timeout=30.0)
         else:
             resp = requests.get(
                 url=url,
                 params=params,
-                headers=headers,
                 timeout=30.0,
                 allow_redirects=True,
                 impersonate=DEFAULT_IMPERSONATE,
@@ -540,7 +533,6 @@ class RestaurantSearchRequest:
             List of restaurants.
         """
         params = self._build_params()
-        headers = {"User-Agent": USER_AGENT}
 
         area_slug = get_area_slug(self.area) if self.area else None
         url, params = build_search_url_and_params(params, area_slug, self.genre_code)
@@ -553,7 +545,7 @@ class RestaurantSearchRequest:
 
         # Execute the request with or without retry handling.
         if use_retry:
-            resp = await fetch_with_retry_async(url=url, params=params, headers=headers, request_timeout=30.0)
+            resp = await fetch_with_retry_async(url=url, params=params, request_timeout=30.0)
         else:
             async with requests.AsyncSession(
                 timeout=30.0,
@@ -563,7 +555,6 @@ class RestaurantSearchRequest:
                 resp = await client.get(
                     url=url,
                     params=params,
-                    headers=headers,
                 )
                 resp.raise_for_status()
 

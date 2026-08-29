@@ -26,7 +26,6 @@ from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
 from .restaurant import build_search_url_and_params
 
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
 CuisineFilterConfidence = Literal["high", "low", "not_applicable"]
 AreaFilterConfidence = Literal["high", "low", "not_applicable"]
@@ -329,9 +328,6 @@ class SearchRequest:
             page=page,
         )
 
-    def _build_headers(self) -> dict[str, str]:
-        return {"User-Agent": USER_AGENT}
-
     def _build_url_and_params(self, request: RestaurantSearchRequest) -> tuple[str, dict[str, str]]:
         params = request._build_params()
         area_slug = get_area_slug(self.area) if self.area else None
@@ -370,7 +366,6 @@ class SearchRequest:
             resp = requests.get(
                 url=url,
                 params=params,
-                headers=self._build_headers(),
                 timeout=self.timeout,
                 allow_redirects=True,
                 impersonate=DEFAULT_IMPERSONATE,
@@ -395,7 +390,7 @@ class SearchRequest:
         url, params = self._build_url_and_params(request)
         source_params = self._stringify_params(params)
         try:
-            resp = await client.get(url=url, params=params, headers=self._build_headers())
+            resp = await client.get(url=url, params=params)
             resp.raise_for_status()
         except BaseException as e:
             _reraise_if_fatal(e)

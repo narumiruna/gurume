@@ -32,13 +32,6 @@ from gurume.http_client import DEFAULT_IMPERSONATE
 BASE_URL = "https://tabelog.com"
 DEFAULT_CACHE_DIR = Path(".cache/tabelog_area_catalog")
 DEFAULT_SNAPSHOT_PATH = Path("tests/fixtures/tabelog_leaf_subareas_snapshot.json")
-REQUEST_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/124.0.0.0 Safari/537.36"
-    ),
-}
 
 
 @dataclass(frozen=True)
@@ -136,7 +129,7 @@ def _fetch_html(
     last_error: Exception | None = None
     for attempt in range(1, 4):
         try:
-            response = session.get(url, headers=REQUEST_HEADERS, timeout=timeout)
+            response = session.get(url, timeout=timeout)
             if response.status_code != 200:
                 raise DiscoveryError(f"GET {url} returned HTTP {response.status_code}")
         except Exception as exc:  # noqa: BLE001 - CLI should retry and report the final failure.

@@ -8,6 +8,7 @@ from curl_cffi.requests import exceptions as request_errors
 
 from gurume.exceptions import NetworkError
 from gurume.exceptions import RateLimitError
+from gurume.http_client import DEFAULT_IMPERSONATE
 from gurume.retry import DEFAULT_MAX_ATTEMPTS
 from gurume.retry import fetch_with_retry
 from gurume.retry import handle_http_errors
@@ -86,6 +87,8 @@ class TestFetchWithRetry:
         result = fetch_with_retry("http://example.com")
         assert result == mock_response
         assert mock_get.call_count == 1
+        assert mock_get.call_args.kwargs["impersonate"] == DEFAULT_IMPERSONATE
+        assert mock_get.call_args.kwargs["headers"] is None
 
     @patch("curl_cffi.requests.get")
     def test_fetch_rate_limit_error(self, mock_get):
@@ -149,3 +152,9 @@ class TestFetchWithRetryAsync:
 
         result = await fetch_with_retry_async("http://example.com")
         assert result == mock_response
+        mock_async_client.assert_called_once_with(
+            timeout=10.0,
+            allow_redirects=True,
+            impersonate=DEFAULT_IMPERSONATE,
+        )
+        assert mock_client_instance.get.call_args.kwargs["headers"] is None

@@ -16,11 +16,6 @@ from .exceptions import InvalidParameterError
 from .http_client import DEFAULT_IMPERSONATE
 from .restaurant import Restaurant
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/91.0.4472.124 Safari/537.36"
-)
 DETAIL_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 PHONE_PATTERN = re.compile(r"0\d{1,4}-\d{1,4}-\d{3,4}|0\d{9,10}")
 STATION_PATTERN = re.compile(r"([^\s、,，]+駅)")
@@ -488,10 +483,9 @@ class RestaurantDetailRequest:
     def _is_not_found_error(self, error: request_errors.HTTPError) -> bool:
         return error.response is not None and error.response.status_code == 404
 
-    def _fetch_optional_sync(self, url: str, headers: dict[str, str]) -> str | None:
+    def _fetch_optional_sync(self, url: str) -> str | None:
         resp = requests.get(
             url,
-            headers=headers,
             timeout=30.0,
             allow_redirects=True,
             impersonate=DEFAULT_IMPERSONATE,
@@ -508,9 +502,8 @@ class RestaurantDetailRequest:
         self,
         client: requests.AsyncSession,
         url: str,
-        headers: dict[str, str],
     ) -> str | None:
-        resp = await client.get(url, headers=headers)
+        resp = await client.get(url)
         try:
             resp.raise_for_status()
         except request_errors.HTTPError as e:
@@ -521,13 +514,10 @@ class RestaurantDetailRequest:
 
     def fetch_sync(self) -> RestaurantDetail:
         """Fetch restaurant details synchronously."""
-        headers = {"User-Agent": USER_AGENT}
-
         base_url = self._get_base_url()
 
         main_resp = requests.get(
             base_url,
-            headers=headers,
             timeout=30.0,
             allow_redirects=True,
             impersonate=DEFAULT_IMPERSONATE,
@@ -548,7 +538,6 @@ class RestaurantDetailRequest:
 
                 resp = requests.get(
                     review_url,
-                    headers=headers,
                     timeout=30.0,
                     allow_redirects=True,
                     impersonate=DEFAULT_IMPERSONATE,
@@ -559,13 +548,13 @@ class RestaurantDetailRequest:
         # Fetch menu items.
         if self.fetch_menu:
             menu_url = f"{base_url}/dtlmenu/"
-            if menu_html := self._fetch_optional_sync(menu_url, headers):
+            if menu_html := self._fetch_optional_sync(menu_url):
                 menu_items = self._parse_menu_items(menu_html)
 
         # Fetch courses.
         if self.fetch_courses:
             course_url = f"{base_url}/party/"
-            if course_html := self._fetch_optional_sync(course_url, headers):
+            if course_html := self._fetch_optional_sync(course_url):
                 courses = self._parse_courses(course_html)
 
         return RestaurantDetail(
@@ -577,8 +566,6 @@ class RestaurantDetailRequest:
 
     async def fetch(self) -> RestaurantDetail:
         """Fetch restaurant details asynchronously."""
-        headers = {"User-Agent": USER_AGENT}
-
         base_url = self._get_base_url()
 
         reviews = []
@@ -590,7 +577,7 @@ class RestaurantDetailRequest:
             allow_redirects=True,
             impersonate=DEFAULT_IMPERSONATE,
         ) as client:
-            main_resp = await client.get(base_url, headers=headers)
+            main_resp = await client.get(base_url)
             main_resp.raise_for_status()
             restaurant = self._parse_restaurant(main_resp.text, base_url)
 
@@ -601,20 +588,20 @@ class RestaurantDetailRequest:
                     if page > 1:
                         review_url += f"?PG={page}"
 
-                    resp = await client.get(review_url, headers=headers)
+                    resp = await client.get(review_url)
                     resp.raise_for_status()
                     reviews.extend(self._parse_reviews(resp.text))
 
             # Fetch menu items.
             if self.fetch_menu:
                 menu_url = f"{base_url}/dtlmenu/"
-                if menu_html := await self._fetch_optional_async(client, menu_url, headers):
+                if menu_html := await self._fetch_optional_async(client, menu_url):
                     menu_items = self._parse_menu_items(menu_html)
 
             # Fetch courses.
             if self.fetch_courses:
                 course_url = f"{base_url}/party/"
-                if course_html := await self._fetch_optional_async(client, course_url, headers):
+                if course_html := await self._fetch_optional_async(client, course_url):
                     courses = self._parse_courses(course_html)
 
         return RestaurantDetail(

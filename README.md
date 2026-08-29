@@ -39,6 +39,27 @@ For local development:
 uv sync --dev
 ```
 
+## 🌐 HTTP Configuration
+
+No additional HTTP setup is required for normal use.
+Gurume uses `curl_cffi` with Safari impersonation by default so its TLS fingerprint and generated browser headers remain consistent.
+
+If Tabelog starts returning HTTP 403 for the default profile, set `GURUME_IMPERSONATE` before starting the CLI, TUI, MCP server, or Python process:
+
+```bash
+GURUME_IMPERSONATE=firefox gurume search --area 三重 --cuisine すき焼き
+```
+
+PowerShell users can set the same process environment variable before running Gurume:
+
+```powershell
+$env:GURUME_IMPERSONATE = "firefox"
+gurume search --area 三重 --cuisine すき焼き
+```
+
+The value must be an impersonation profile supported by the installed `curl_cffi` version.
+An unsupported value is rejected by `curl_cffi`.
+
 ## 🚀 Quick Start
 
 ### 💻 CLI
