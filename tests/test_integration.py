@@ -264,8 +264,9 @@ class TestIntegration:
         assert restaurant.dinner_price == "ディナー ¥15,000～¥19,999"
 
         # Verify async session was used correctly
-        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="chrome")
+        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
         mock_client.get.assert_called_once()
+        assert "headers" not in mock_client.get.call_args.kwargs
 
     @patch("curl_cffi.requests.get")
     def test_error_handling_integration(self, mock_get):

@@ -2,4 +2,9 @@
 
 from __future__ import annotations
 
-DEFAULT_IMPERSONATE = "chrome"
+import os
+from typing import cast
+
+from curl_cffi.requests import BrowserTypeLiteral
+
+DEFAULT_IMPERSONATE = cast(BrowserTypeLiteral, os.getenv("GURUME_IMPERSONATE") or "safari")

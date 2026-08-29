@@ -123,7 +123,8 @@ def test_get_area_suggestions_success(sample_area_response):
         mock_get.assert_called_once()
         call_args = mock_get.call_args
         assert call_args.kwargs["params"] == {"sa": "東京"}
-        assert "User-Agent" in call_args.kwargs["headers"]
+        assert call_args.kwargs["impersonate"] == "safari"
+        assert "headers" not in call_args.kwargs
 
 
 def test_get_area_suggestions_empty_query():
@@ -228,7 +229,7 @@ async def test_get_area_suggestions_async_success(sample_area_response):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client) as mock_session:
         results = await get_area_suggestions_async(query="東京")
 
         # Verify results
@@ -239,8 +240,10 @@ async def test_get_area_suggestions_async_success(sample_area_response):
         assert results[1].name == "渋谷駅"
         assert results[2].name == "新宿区"
 
-        # Verify API was called
+        # Verify API was called with profile-consistent generated headers.
+        mock_session.assert_called_once_with(timeout=10.0, allow_redirects=True, impersonate="safari")
         mock_client.get.assert_called_once()
+        assert "headers" not in mock_client.get.call_args.kwargs
 
 
 @pytest.mark.asyncio
@@ -301,7 +304,8 @@ def test_get_keyword_suggestions_success(sample_keyword_response):
         mock_get.assert_called_once()
         call_args = mock_get.call_args
         assert call_args.kwargs["params"] == {"sk": "すき"}
-        assert "User-Agent" in call_args.kwargs["headers"]
+        assert call_args.kwargs["impersonate"] == "safari"
+        assert "headers" not in call_args.kwargs
 
 
 def test_get_keyword_suggestions_empty_query():
@@ -371,7 +375,7 @@ async def test_get_keyword_suggestions_async_success(sample_keyword_response):
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=None)
 
-    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
+    with patch("curl_cffi.requests.AsyncSession", return_value=mock_client) as mock_session:
         results = await get_keyword_suggestions_async(query="すき")
 
         # Verify results
@@ -383,8 +387,10 @@ async def test_get_keyword_suggestions_async_success(sample_keyword_response):
         assert results[1].datatype == "Restaurant"
         assert results[2].name == "すき焼き ランチ"
 
-        # Verify API was called
+        # Verify API was called with profile-consistent generated headers.
+        mock_session.assert_called_once_with(timeout=10.0, allow_redirects=True, impersonate="safari")
         mock_client.get.assert_called_once()
+        assert "headers" not in mock_client.get.call_args.kwargs
 
 
 @pytest.mark.asyncio

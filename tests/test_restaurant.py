@@ -217,7 +217,8 @@ class TestRestaurantSearchRequest:
         assert call_args[1]["params"]["sk"] == "寿司"
         assert int(call_args[1]["params"]["svps"]) == 2
         assert call_args[1]["allow_redirects"] is True
-        assert call_args[1]["impersonate"] == "chrome"
+        assert call_args[1]["impersonate"] == "safari"
+        assert "headers" not in call_args[1]
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
@@ -248,8 +249,9 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].name == "テストレストラン1"
 
         # Check that AsyncSession was created with correct parameters
-        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="chrome")
+        mock_client_class.assert_called_once_with(timeout=30.0, allow_redirects=True, impersonate="safari")
         mock_client.get.assert_called_once()
+        assert "headers" not in mock_client.get.call_args.kwargs
 
     @patch("curl_cffi.requests.get")
     def test_do_sync_http_error(self, mock_get):

@@ -10,11 +10,6 @@ from curl_cffi.requests import exceptions as request_errors
 
 from .http_client import DEFAULT_IMPERSONATE
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/91.0.4472.124 Safari/537.36"
-)
 SUGGEST_URL = "https://tabelog.com/internal_api/suggest_form_words"
 SUGGEST_PARSE_EXCEPTIONS = (AttributeError, TypeError, ValueError)
 
@@ -51,10 +46,6 @@ class KeywordSuggestion:
     lng: float | None = None
 
 
-def _build_headers() -> dict[str, str]:
-    return {"User-Agent": USER_AGENT}
-
-
 def _suggest_data_from_response(response: requests.Response) -> list[Any]:
     response.raise_for_status()
     data = response.json()
@@ -72,7 +63,6 @@ def _fetch_suggestion_data(param_name: str, query: str, timeout: float) -> list[
         response = requests.get(
             url=SUGGEST_URL,
             params={param_name: query},
-            headers=_build_headers(),
             timeout=timeout,
             allow_redirects=True,
             impersonate=DEFAULT_IMPERSONATE,
@@ -95,7 +85,7 @@ async def _fetch_suggestion_data_async(param_name: str, query: str, request_time
             allow_redirects=True,
             impersonate=DEFAULT_IMPERSONATE,
         ) as client:
-            response = await client.get(url=SUGGEST_URL, params={param_name: query}, headers=_build_headers())
+            response = await client.get(url=SUGGEST_URL, params={param_name: query})
             return _suggest_data_from_response(response)
     except TabelogSuggestUnavailableError:
         raise

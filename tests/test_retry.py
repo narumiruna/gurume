@@ -86,6 +86,8 @@ class TestFetchWithRetry:
         result = fetch_with_retry("http://example.com")
         assert result == mock_response
         assert mock_get.call_count == 1
+        assert mock_get.call_args.kwargs["impersonate"] == "safari"
+        assert mock_get.call_args.kwargs["headers"] is None
 
     @patch("curl_cffi.requests.get")
     def test_fetch_rate_limit_error(self, mock_get):
@@ -149,3 +151,5 @@ class TestFetchWithRetryAsync:
 
         result = await fetch_with_retry_async("http://example.com")
         assert result == mock_response
+        mock_async_client.assert_called_once_with(timeout=10.0, allow_redirects=True, impersonate="safari")
+        assert mock_client_instance.get.call_args.kwargs["headers"] is None
