@@ -344,6 +344,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#http-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -785,6 +796,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#http-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -830,6 +852,18 @@
 <span class="c1"># or</span>
 pip<span class="w"> </span>install<span class="w"> </span>gurume
 </code></pre></div>
+<h2 id="http-configuration">HTTP Configuration<a class="headerlink" href="#http-configuration" title="Permanent link">&para;</a></h2>
+<p>No additional HTTP setup is required for normal use.
+Gurume uses <code>curl_cffi</code> with Safari impersonation by default so its TLS fingerprint and generated browser headers remain consistent.</p>
+<p>If Tabelog starts returning HTTP 403 for the default profile, set <code>GURUME_IMPERSONATE</code> before starting the CLI, TUI, MCP server, or Python process:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">GURUME_IMPERSONATE</span><span class="o">=</span>firefox<span class="w"> </span>gurume<span class="w"> </span>search<span class="w"> </span>--area<span class="w"> </span>三重<span class="w"> </span>--cuisine<span class="w"> </span>すき焼き
+</code></pre></div>
+<p>PowerShell users can set the same process environment variable before running Gurume:</p>
+<div class="highlight"><pre><span></span><code><span class="nv">$env:GURUME_IMPERSONATE</span> <span class="p">=</span> <span class="s2">&quot;firefox&quot;</span>
+<span class="n">gurume</span> <span class="n">search</span> <span class="p">-</span><span class="n">-area</span> <span class="n">三重</span> <span class="p">-</span><span class="n">-cuisine</span> <span class="n">すき焼き</span>
+</code></pre></div>
+<p>The value must be an impersonation profile supported by the installed <code>curl_cffi</code> version.
+An unsupported value is rejected by <code>curl_cffi</code>.</p>
 <h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
 <ul>
 <li>🔍 Search restaurants by area, keyword, cuisine, date, time, and party size</li>
