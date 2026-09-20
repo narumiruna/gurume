@@ -2,81 +2,52 @@
 
 from __future__ import annotations
 
-# Tabelog cuisine genre codes (RC = Restaurant Category).
-# Format: cuisine name -> URL code.
-GENRE_CODE_MAPPING = {
+# Tabelog cuisine metadata: cuisine name -> (legacy RC code, current search path segment).
+# Current search pages encode cuisine filters in URL paths. Most cuisines use SEO slugs, while some still use
+# category-code path segments such as RC0107 or MC0101.
+_CUISINE_DEFINITIONS: dict[str, tuple[str, str]] = {
     # Japanese cuisine.
-    "すき焼き": "RC0107",
-    "しゃぶしゃぶ": "RC0106",
-    "寿司": "RC0201",
-    "天ぷら": "RC0301",
-    "とんかつ": "RC0302",
-    "焼き鳥": "RC0401",
-    "ラーメン": "RC0501",
-    "うどん": "RC0601",
-    "そば": "RC0602",
-    "うなぎ": "RC0701",
-    "日本料理": "RC0801",
-    "海鮮": "RC0901",
+    "すき焼き": ("RC0107", "RC0107"),
+    "しゃぶしゃぶ": ("RC0106", "syabusyabu"),
+    "寿司": ("RC0201", "sushi"),
+    "天ぷら": ("RC0301", "tempura"),
+    "とんかつ": ("RC0302", "tonkatsu"),
+    "焼き鳥": ("RC0401", "yakitori"),
+    "ラーメン": ("RC0501", "MC0101"),
+    "うどん": ("RC0601", "udon"),
+    "そば": ("RC0602", "soba"),
+    "うなぎ": ("RC0701", "unagi"),
+    "日本料理": ("RC0801", "japanese"),
+    "海鮮": ("RC0901", "seafood"),
     # Western-style cuisine.
-    "フレンチ": "RC1001",
-    "イタリアン": "RC1101",
-    "ステーキ": "RC1201",
-    "ハンバーグ": "RC1202",
-    "ハンバーガー": "RC1203",
-    "洋食": "RC1301",
+    "フレンチ": ("RC1001", "french"),
+    "イタリアン": ("RC1101", "italian"),
+    "ステーキ": ("RC1201", "steak"),
+    "ハンバーグ": ("RC1202", "hamburgersteak"),
+    "ハンバーガー": ("RC1203", "hamburger"),
+    "洋食": ("RC1301", "yoshoku"),
     # Chinese cuisine.
-    "中華料理": "RC1401",
-    "餃子": "RC1402",
+    "中華料理": ("RC1401", "chinese"),
+    "餃子": ("RC1402", "gyouza"),
     # Yakiniku.
-    "焼肉": "RC1501",
-    "ホルモン": "RC1502",
+    "焼肉": ("RC1501", "yakiniku"),
+    "ホルモン": ("RC1502", "horumon"),
     # Hot pot.
-    "鍋": "RC1601",
-    "もつ鍋": "RC1602",
+    "鍋": ("RC1601", "nabe"),
+    "もつ鍋": ("RC1602", "motsu"),
     # Izakaya.
-    "居酒屋": "RC1701",
+    "居酒屋": ("RC1701", "izakaya"),
     # Curry.
-    "カレー": "RC1801",
+    "カレー": ("RC1801", "curry"),
     # Other.
-    "カフェ": "RC1901",
-    "パン": "RC2001",
-    "スイーツ": "RC2101",
+    "カフェ": ("RC1901", "cafe"),
+    "パン": ("RC2001", "pan"),
+    "スイーツ": ("RC2101", "sweets"),
 }
 
-# Current Tabelog search pages encode cuisine filters in URL path segments instead of the legacy LstG query.
-# Most cuisines use SEO slugs, but some live search pages still use category-code path segments.
-CUISINE_SLUG_MAPPING = {
-    "すき焼き": "RC0107",
-    "しゃぶしゃぶ": "syabusyabu",
-    "寿司": "sushi",
-    "天ぷら": "tempura",
-    "とんかつ": "tonkatsu",
-    "焼き鳥": "yakitori",
-    "ラーメン": "MC0101",
-    "うどん": "udon",
-    "そば": "soba",
-    "うなぎ": "unagi",
-    "日本料理": "japanese",
-    "海鮮": "seafood",
-    "フレンチ": "french",
-    "イタリアン": "italian",
-    "ステーキ": "steak",
-    "ハンバーグ": "hamburgersteak",
-    "ハンバーガー": "hamburger",
-    "洋食": "yoshoku",
-    "中華料理": "chinese",
-    "餃子": "gyouza",
-    "焼肉": "yakiniku",
-    "ホルモン": "horumon",
-    "鍋": "nabe",
-    "もつ鍋": "motsu",
-    "居酒屋": "izakaya",
-    "カレー": "curry",
-    "カフェ": "cafe",
-    "パン": "pan",
-    "スイーツ": "sweets",
-}
+# Public dictionaries remain independent mutable objects for compatibility.
+GENRE_CODE_MAPPING = {name: code for name, (code, _) in _CUISINE_DEFINITIONS.items()}
+CUISINE_SLUG_MAPPING = {name: slug for name, (_, slug) in _CUISINE_DEFINITIONS.items()}
 
 
 def get_genre_code(genre_name: str) -> str | None:

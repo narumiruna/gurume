@@ -55,7 +55,7 @@ class TestCLISearch:
     """Test CLI search functionality"""
 
     @pytest.mark.asyncio
-    @patch("gurume.search.SearchRequest.do")
+    @patch("gurume.search.SearchRequest.search")
     async def test_search_restaurants_success(self, mock_do):
         """Test successful CLI search"""
         # Mock successful response
@@ -111,7 +111,7 @@ class TestCLISearch:
         mock_do.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("examples.cli_example.SearchRequest.do")
+    @patch("examples.cli_example.SearchRequest.search")
     async def test_search_restaurants_no_results(self, mock_do):
         """Test CLI search with no results"""
         mock_response = SearchResponse(
@@ -142,7 +142,7 @@ class TestCLISearch:
         mock_do.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("examples.cli_example.SearchRequest.do")
+    @patch("examples.cli_example.SearchRequest.search")
     async def test_search_restaurants_error(self, mock_do):
         """Test CLI search with error"""
         mock_response = SearchResponse(
@@ -173,7 +173,7 @@ class TestCLISearch:
         mock_do.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("gurume.search.SearchRequest.do")
+    @patch("gurume.search.SearchRequest.search")
     async def test_search_restaurants_with_all_params(self, mock_do):
         """Test CLI search with all parameters"""
         mock_restaurants = [
@@ -286,26 +286,11 @@ class TestCLISearch:
 class TestCLIArguments:
     """Test CLI argument handling"""
 
-    @patch("sys.argv", ["cli_example.py", "-a", "銀座", "-k", "寿司"])
     def test_basic_args(self):
         """Test basic CLI arguments"""
-        import argparse
+        from examples.cli_example import _build_parser
 
-        # Create parser like in main function
-        parser = argparse.ArgumentParser(description="Tabelog 餐廳搜尋工具")
-
-        # Add arguments like in main function
-        parser.add_argument("-a", "--area", help="地區或車站")
-        parser.add_argument("-k", "--keyword", help="關鍵字")
-        parser.add_argument("-d", "--date", help="預約日期 (YYYYMMDD, today, tomorrow)")
-        parser.add_argument("-t", "--time", help="預約時間 (HHMM)")
-        parser.add_argument("-p", "--party-size", type=int, help="預約人數")
-        parser.add_argument("--max-pages", type=int, default=1, help="最大頁數")
-        parser.add_argument("--sort", choices=["trend", "rt", "rvcn", "nod"], help="排序方式")
-        parser.add_argument("--price-range", help="價格範圍")
-
-        # Parse test arguments
-        args = parser.parse_args(["-a", "銀座", "-k", "寿司"])
+        args = _build_parser().parse_args(["-a", "銀座", "-k", "寿司"])
 
         assert args.area == "銀座"
         assert args.keyword == "寿司"
@@ -316,45 +301,11 @@ class TestCLIArguments:
         assert args.sort is None
         assert args.price_range is None
 
-    @patch(
-        "sys.argv",
-        [
-            "cli_example.py",
-            "-a",
-            "渋谷",
-            "-k",
-            "焼肉",
-            "-d",
-            "today",
-            "-t",
-            "1900",
-            "-p",
-            "4",
-            "--max-pages",
-            "2",
-            "--sort",
-            "rt",
-        ],
-    )
     def test_full_args(self):
         """Test full CLI arguments"""
-        import argparse
+        from examples.cli_example import _build_parser
 
-        # Create parser like in main function
-        parser = argparse.ArgumentParser(description="Tabelog 餐廳搜尋工具")
-
-        # Add arguments like in main function
-        parser.add_argument("-a", "--area", help="地區或車站")
-        parser.add_argument("-k", "--keyword", help="關鍵字")
-        parser.add_argument("-d", "--date", help="預約日期 (YYYYMMDD, today, tomorrow)")
-        parser.add_argument("-t", "--time", help="預約時間 (HHMM)")
-        parser.add_argument("-p", "--party-size", type=int, help="預約人數")
-        parser.add_argument("--max-pages", type=int, default=1, help="最大頁數")
-        parser.add_argument("--sort", choices=["trend", "rt", "rvcn", "nod"], help="排序方式")
-        parser.add_argument("--price-range", help="價格範圍")
-
-        # Parse test arguments
-        args = parser.parse_args(
+        args = _build_parser().parse_args(
             ["-a", "渋谷", "-k", "焼肉", "-d", "today", "-t", "1900", "-p", "4", "--max-pages", "2", "--sort", "rt"]
         )
 
@@ -366,6 +317,30 @@ class TestCLIArguments:
         assert args.max_pages == 2
         assert args.sort == "rt"
         assert args.price_range is None
+
+    @pytest.mark.parametrize("arguments", [["--sort", "invalid"], ["--party-size", "not-an-integer"]])
+    def test_invalid_args_exit_with_parser_error(self, arguments: list[str]):
+        from examples.cli_example import _build_parser
+
+        with pytest.raises(SystemExit) as error:
+            _build_parser().parse_args(arguments)
+
+        assert error.value.code == 2
+
+    @patch("sys.argv", ["cli_example.py", "-a", "銀座", "--sort", "rt", "--price-range", "C003"])
+    def test_main_uses_real_parser(self):
+        from unittest.mock import AsyncMock
+
+        from examples.cli_example import main
+
+        with patch("examples.cli_example.search_restaurants", new_callable=AsyncMock) as mock_search:
+            main()
+
+        mock_search.assert_awaited_once()
+        args = mock_search.call_args.args[0]
+        assert args.area == "銀座"
+        assert args.sort == "rt"
+        assert args.price_range == "C003"
 
 
 # ============================================================================
@@ -610,6 +585,28 @@ class TestSearchCommand:
 
         assert result.exit_code == 0
         assert "無法精準映射地區" not in result.output
+
+    @pytest.mark.parametrize(
+        ("sort_option", "expected_sort_type"),
+        [
+            ("ranking", SortType.RANKING),
+            ("review-count", SortType.REVIEW_COUNT),
+            ("new-open", SortType.NEW_OPEN),
+            ("standard", SortType.STANDARD),
+        ],
+    )
+    def test_all_sort_options_use_shared_mapping(self, sort_option: str, expected_sort_type: SortType):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        runner = CliRunner()
+        with patch("gurume.cli.SearchRequest") as mock_request_class:
+            mock_request_class.return_value.search_sync.return_value = SearchResponse(status=SearchStatus.NO_RESULTS)
+            result = runner.invoke(app, ["search", "--area", "東京", "--sort", sort_option])
+
+        assert result.exit_code == 0
+        assert mock_request_class.call_args.kwargs["sort_type"] == expected_sort_type
 
     def test_keyword_matching_cuisine_uses_cuisine_filter_without_keyword(self):
         from typer.testing import CliRunner

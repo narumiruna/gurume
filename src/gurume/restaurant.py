@@ -88,6 +88,19 @@ class SortType(StrEnum):
     NEW_OPEN = "nod"  # New open.
 
 
+SORT_TYPE_BY_OPTION = {
+    "ranking": SortType.RANKING,
+    "review-count": SortType.REVIEW_COUNT,
+    "new-open": SortType.NEW_OPEN,
+    "standard": SortType.STANDARD,
+}
+
+
+def resolve_sort_type(sort: str) -> SortType:
+    """Resolve a user-facing sort option to its Tabelog sort value."""
+    return SORT_TYPE_BY_OPTION[sort]
+
+
 class PriceRange(StrEnum):
     """Budget range."""
 

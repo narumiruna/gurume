@@ -12,8 +12,10 @@ from pydantic import TypeAdapter
 from .area_mapping import get_area_slug
 from .detail import RestaurantDetail
 from .genre_mapping import get_genre_code
+from .restaurant import SORT_TYPE_BY_OPTION
 from .restaurant import Restaurant
 from .restaurant import SortType
+from .restaurant import resolve_sort_type
 from .search import SearchMeta
 from .server_models import CourseOutput
 from .server_models import CuisineListOutput
@@ -31,13 +33,6 @@ from .server_models import SuggestionOutput
 from .server_models import ToolErrorOutput
 from .suggest import AreaSuggestion
 from .suggest import KeywordSuggestion
-
-SORT_MAP = {
-    "ranking": SortType.RANKING,
-    "review-count": SortType.REVIEW_COUNT,
-    "new-open": SortType.NEW_OPEN,
-    "standard": SortType.STANDARD,
-}
 
 HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
 
@@ -108,7 +103,7 @@ def _validate_search_params(
     _validate_pagination_params(limit, page, sort)
     _validate_keyword_params(keyword, cuisine)
     _validate_reservation_params(reservation_date, reservation_time, party_size)
-    return SORT_MAP[sort]
+    return resolve_sort_type(sort)
 
 
 def _validate_pagination_params(limit: int, page: int, sort: SortOption) -> None:
@@ -118,8 +113,8 @@ def _validate_pagination_params(limit: int, page: int, sort: SortOption) -> None
     if page < 1:
         raise ValueError("page must be greater than or equal to 1")
 
-    if sort not in SORT_MAP:
-        raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(SORT_MAP)}")
+    if sort not in SORT_TYPE_BY_OPTION:
+        raise ValueError(f"Invalid sort type: {sort}. Must be one of: {', '.join(SORT_TYPE_BY_OPTION)}")
 
 
 def _validate_keyword_params(keyword: str | None, cuisine: str | None) -> None:
@@ -171,20 +166,27 @@ def _resolve_genre_code(cuisine: str | None) -> str | None:
     return genre_code
 
 
+def _restaurant_output_data(restaurant: Restaurant) -> dict[str, object]:
+    return {
+        "name": restaurant.name,
+        "rating": restaurant.rating,
+        "review_count": restaurant.review_count,
+        "area": restaurant.area,
+        "genres": restaurant.genres,
+        "url": restaurant.url,
+        "lunch_price": restaurant.lunch_price,
+        "dinner_price": restaurant.dinner_price,
+    }
+
+
+def _to_restaurant_output(restaurant: Restaurant) -> RestaurantOutput:
+    data = _restaurant_output_data(restaurant)
+    data["url"] = _as_http_url(restaurant.url)
+    return RestaurantOutput.model_validate(data)
+
+
 def _to_restaurant_outputs(response: list[Restaurant], limit: int) -> list[RestaurantOutput]:
-    return [
-        RestaurantOutput(
-            name=restaurant.name,
-            rating=restaurant.rating,
-            review_count=restaurant.review_count,
-            area=restaurant.area,
-            genres=restaurant.genres,
-            url=_as_http_url(restaurant.url),
-            lunch_price=restaurant.lunch_price,
-            dinner_price=restaurant.dinner_price,
-        )
-        for restaurant in response[:limit]
-    ]
+    return [_to_restaurant_output(restaurant) for restaurant in response[:limit]]
 
 
 def _as_http_url(url: str) -> HttpUrl:
@@ -383,16 +385,7 @@ def _to_detail_output(
 ) -> RestaurantDetailOutput:
     return RestaurantDetailOutput(
         status="success",
-        restaurant=RestaurantOutput(
-            name=detail.restaurant.name,
-            rating=detail.restaurant.rating,
-            review_count=detail.restaurant.review_count,
-            area=detail.restaurant.area,
-            genres=detail.restaurant.genres,
-            url=_as_http_url(detail.restaurant.url),
-            lunch_price=detail.restaurant.lunch_price,
-            dinner_price=detail.restaurant.dinner_price,
-        ),
+        restaurant=_to_restaurant_output(detail.restaurant),
         restaurant_url=detail.restaurant.url,
         address=detail.restaurant.address,
         station=detail.restaurant.station,

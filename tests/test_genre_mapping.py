@@ -1,5 +1,7 @@
 """Tests for genre mapping (cuisine type to genre code conversion)"""
 
+from pathlib import Path
+
 from gurume.genre_mapping import CUISINE_SLUG_MAPPING
 from gurume.genre_mapping import GENRE_CODE_MAPPING
 from gurume.genre_mapping import get_all_genres
@@ -7,6 +9,39 @@ from gurume.genre_mapping import get_cuisine_slug
 from gurume.genre_mapping import get_cuisine_slug_by_code
 from gurume.genre_mapping import get_genre_code
 from gurume.genre_mapping import get_genre_name_by_code
+
+EXPECTED_CUISINE_DEFINITIONS = [
+    ("すき焼き", "RC0107", "RC0107"),
+    ("しゃぶしゃぶ", "RC0106", "syabusyabu"),
+    ("寿司", "RC0201", "sushi"),
+    ("天ぷら", "RC0301", "tempura"),
+    ("とんかつ", "RC0302", "tonkatsu"),
+    ("焼き鳥", "RC0401", "yakitori"),
+    ("ラーメン", "RC0501", "MC0101"),
+    ("うどん", "RC0601", "udon"),
+    ("そば", "RC0602", "soba"),
+    ("うなぎ", "RC0701", "unagi"),
+    ("日本料理", "RC0801", "japanese"),
+    ("海鮮", "RC0901", "seafood"),
+    ("フレンチ", "RC1001", "french"),
+    ("イタリアン", "RC1101", "italian"),
+    ("ステーキ", "RC1201", "steak"),
+    ("ハンバーグ", "RC1202", "hamburgersteak"),
+    ("ハンバーガー", "RC1203", "hamburger"),
+    ("洋食", "RC1301", "yoshoku"),
+    ("中華料理", "RC1401", "chinese"),
+    ("餃子", "RC1402", "gyouza"),
+    ("焼肉", "RC1501", "yakiniku"),
+    ("ホルモン", "RC1502", "horumon"),
+    ("鍋", "RC1601", "nabe"),
+    ("もつ鍋", "RC1602", "motsu"),
+    ("居酒屋", "RC1701", "izakaya"),
+    ("カレー", "RC1801", "curry"),
+    ("カフェ", "RC1901", "cafe"),
+    ("パン", "RC2001", "pan"),
+    ("スイーツ", "RC2101", "sweets"),
+]
+
 
 # ============================================================================
 # Test get_genre_code (cuisine name -> code)
@@ -235,6 +270,39 @@ def test_get_all_genres_all_in_mapping():
 # ============================================================================
 # Integration Tests
 # ============================================================================
+
+
+def test_cuisine_mappings_preserve_ordered_definitions():
+    """Public mappings preserve the complete ordered cuisine contract."""
+    expected_codes = [(name, code) for name, code, _ in EXPECTED_CUISINE_DEFINITIONS]
+    expected_slugs = [(name, slug) for name, _, slug in EXPECTED_CUISINE_DEFINITIONS]
+
+    assert list(GENRE_CODE_MAPPING.items()) == expected_codes
+    assert list(CUISINE_SLUG_MAPPING.items()) == expected_slugs
+
+
+def test_public_cuisine_mappings_remain_independent_and_mutable(monkeypatch):
+    """Derived dictionaries retain the existing lookup behavior when callers update them."""
+    monkeypatch.setitem(GENRE_CODE_MAPPING, "寿司", "RC9999")
+    assert get_genre_code("寿司") == "RC9999"
+    assert get_genre_name_by_code("RC9999") == "寿司"
+    assert get_cuisine_slug_by_code("RC9999") == "sushi"
+    assert get_genre_name_by_code("RC0201") is None
+    monkeypatch.setitem(CUISINE_SLUG_MAPPING, "寿司", "updated-sushi")
+    assert get_cuisine_slug_by_code("RC9999") == "updated-sushi"
+    assert get_genre_code("寿司") == "RC9999"
+
+
+def test_skill_cuisine_reference_matches_runtime_mapping():
+    """The distributable skill reference contains every supported cuisine and code."""
+    reference_path = Path(__file__).parents[1] / "skills" / "gurume-cli" / "references" / "cuisines.md"
+    rows: list[tuple[str, str]] = []
+    for line in reference_path.read_text(encoding="utf-8").splitlines():
+        columns = [column.strip() for column in line.strip().strip("|").split("|")]
+        if len(columns) == 3 and columns[2].startswith("RC"):
+            rows.append((columns[0], columns[2]))
+
+    assert rows == sorted(GENRE_CODE_MAPPING.items())
 
 
 def test_roundtrip_all_genres():
