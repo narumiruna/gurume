@@ -1970,31 +1970,31 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
-<span class="normal">679</span>
-<span class="normal">680</span>
-<span class="normal">681</span>
-<span class="normal">682</span>
-<span class="normal">683</span>
-<span class="normal">684</span>
-<span class="normal">685</span>
-<span class="normal">686</span>
-<span class="normal">687</span>
-<span class="normal">688</span>
-<span class="normal">689</span>
-<span class="normal">690</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span>
+<span class="normal">617</span>
+<span class="normal">618</span>
+<span class="normal">619</span>
+<span class="normal">620</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
@@ -2055,7 +2055,51 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">529</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span>
+<span class="normal">524</span>
+<span class="normal">525</span>
+<span class="normal">526</span>
+<span class="normal">527</span>
+<span class="normal">528</span>
+<span class="normal">529</span>
 <span class="normal">530</span>
 <span class="normal">531</span>
 <span class="normal">532</span>
@@ -2065,10 +2109,98 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">536</span>
 <span class="normal">537</span>
 <span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
+<span class="normal">539</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
+        <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">openWorldHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">structured_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tabelog_get_area_suggestions</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span>
+        <span class="n">Field</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous.&quot;</span>
+            <span class="p">),</span>
+            <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get area and station suggestions for validating user-provided locations.&quot;&quot;&quot;</span>
+    <span class="n">normalized_query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized_query</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;query parameter cannot be empty&quot;</span><span class="p">)</span>
+
+        <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_area_suggestions_async</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty area query string before calling this tool again.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a broader area query.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_build_suggestion_list_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">_to_suggestion_outputs</span><span class="p">(</span><span class="n">suggestions</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="gurume.server.tabelog_get_keyword_suggestions" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">tabelog_get_keyword_suggestions</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#gurume.server.tabelog_get_keyword_suggestions" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="doc-signature highlight"><pre><span></span><code><span class="nf">tabelog_get_keyword_suggestions</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="nb">str</span><span class="p">,</span>
+        <span class="n">Field</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or restaurant-name suggestions before searching.&quot;</span><span class="p">,</span>
+            <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get keyword suggestions for cuisine names, restaurant names, and popular search variants.</p>
+
+
+            <details class="mkdocstrings-source">
+              <summary>Source code in <code>src/gurume/server.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">542</span>
 <span class="normal">543</span>
 <span class="normal">544</span>
 <span class="normal">545</span>
@@ -2116,167 +2248,14 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">587</span>
 <span class="normal">588</span>
 <span class="normal">589</span>
-<span class="normal">590</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
-    <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
-        <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">openWorldHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">),</span>
-    <span class="n">structured_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tabelog_get_area_suggestions</span><span class="p">(</span>
-    <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">str</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous.&quot;</span>
-            <span class="p">),</span>
-            <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get area and station suggestions for validating user-provided locations.&quot;&quot;&quot;</span>
-    <span class="n">normalized_query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized_query</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;query parameter cannot be empty&quot;</span><span class="p">)</span>
-
-        <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_area_suggestions_async</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty area query string before calling this tool again.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a broader area query.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">_build_suggestion_list_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">_to_suggestion_outputs</span><span class="p">(</span><span class="n">suggestions</span><span class="p">))</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="gurume.server.tabelog_get_keyword_suggestions" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">tabelog_get_keyword_suggestions</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-<a href="#gurume.server.tabelog_get_keyword_suggestions" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="doc-signature highlight"><pre><span></span><code><span class="nf">tabelog_get_keyword_suggestions</span><span class="p">(</span>
-    <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">str</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or restaurant-name suggestions before searching.&quot;</span><span class="p">,</span>
-            <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">],</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span>
-</code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Get keyword suggestions for cuisine names, restaurant names, and popular search variants.</p>
-
-
-            <details class="mkdocstrings-source">
-              <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">593</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
 <span class="normal">594</span>
 <span class="normal">595</span>
 <span class="normal">596</span>
-<span class="normal">597</span>
-<span class="normal">598</span>
-<span class="normal">599</span>
-<span class="normal">600</span>
-<span class="normal">601</span>
-<span class="normal">602</span>
-<span class="normal">603</span>
-<span class="normal">604</span>
-<span class="normal">605</span>
-<span class="normal">606</span>
-<span class="normal">607</span>
-<span class="normal">608</span>
-<span class="normal">609</span>
-<span class="normal">610</span>
-<span class="normal">611</span>
-<span class="normal">612</span>
-<span class="normal">613</span>
-<span class="normal">614</span>
-<span class="normal">615</span>
-<span class="normal">616</span>
-<span class="normal">617</span>
-<span class="normal">618</span>
-<span class="normal">619</span>
-<span class="normal">620</span>
-<span class="normal">621</span>
-<span class="normal">622</span>
-<span class="normal">623</span>
-<span class="normal">624</span>
-<span class="normal">625</span>
-<span class="normal">626</span>
-<span class="normal">627</span>
-<span class="normal">628</span>
-<span class="normal">629</span>
-<span class="normal">630</span>
-<span class="normal">631</span>
-<span class="normal">632</span>
-<span class="normal">633</span>
-<span class="normal">634</span>
-<span class="normal">635</span>
-<span class="normal">636</span>
-<span class="normal">637</span>
-<span class="normal">638</span>
-<span class="normal">639</span>
-<span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span>
-<span class="normal">646</span>
-<span class="normal">647</span>
-<span class="normal">648</span>
-<span class="normal">649</span>
-<span class="normal">650</span>
-<span class="normal">651</span>
-<span class="normal">652</span>
-<span class="normal">653</span>
-<span class="normal">654</span>
-<span class="normal">655</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">597</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2305,40 +2284,33 @@ delegating response schemas and helper logic to focused modules.</p>
 
         <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_keyword_suggestions_async</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty keyword query string before calling this tool again.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty keyword query string before calling this tool again.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a shorter keyword query.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a shorter keyword query.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-        <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span>
-            <span class="n">normalized_query</span><span class="p">,</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_build_suggestion_list_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">_to_suggestion_outputs</span><span class="p">(</span><span class="n">suggestions</span><span class="p">))</span>
 
-    <span class="k">return</span> <span class="n">_build_suggestion_list_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">_to_suggestion_outputs</span><span class="p">(</span><span class="n">suggestions</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">_build_suggestion_list_error_output</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -2404,7 +2376,39 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">352</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span>
+<span class="normal">347</span>
+<span class="normal">348</span>
+<span class="normal">349</span>
+<span class="normal">350</span>
+<span class="normal">351</span>
+<span class="normal">352</span>
 <span class="normal">353</span>
 <span class="normal">354</span>
 <span class="normal">355</span>
@@ -2463,51 +2467,7 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">408</span>
 <span class="normal">409</span>
 <span class="normal">410</span>
-<span class="normal">411</span>
-<span class="normal">412</span>
-<span class="normal">413</span>
-<span class="normal">414</span>
-<span class="normal">415</span>
-<span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span>
-<span class="normal">429</span>
-<span class="normal">430</span>
-<span class="normal">431</span>
-<span class="normal">432</span>
-<span class="normal">433</span>
-<span class="normal">434</span>
-<span class="normal">435</span>
-<span class="normal">436</span>
-<span class="normal">437</span>
-<span class="normal">438</span>
-<span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
-<span class="normal">442</span>
-<span class="normal">443</span>
-<span class="normal">444</span>
-<span class="normal">445</span>
-<span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">411</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2556,60 +2516,48 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="p">)</span>
         <span class="n">detail</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_detail_error_output</span><span class="p">(</span>
-            <span class="n">restaurant_url</span><span class="o">=</span><span class="n">restaurant_url</span><span class="p">,</span>
-            <span class="n">fetch_reviews</span><span class="o">=</span><span class="n">fetch_reviews</span><span class="p">,</span>
-            <span class="n">fetch_menu</span><span class="o">=</span><span class="n">fetch_menu</span><span class="p">,</span>
-            <span class="n">fetch_courses</span><span class="o">=</span><span class="n">fetch_courses</span><span class="p">,</span>
-            <span class="n">max_review_pages</span><span class="o">=</span><span class="n">max_review_pages</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid detail request parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when &quot;</span>
-                    <span class="s2">&quot;only basic restaurant information is needed.&quot;</span>
-                <span class="p">),</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid detail request parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when &quot;</span>
+                <span class="s2">&quot;only basic restaurant information is needed.&quot;</span>
             <span class="p">),</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_detail_error_output</span><span class="p">(</span>
-            <span class="n">restaurant_url</span><span class="o">=</span><span class="n">restaurant_url</span><span class="p">,</span>
-            <span class="n">fetch_reviews</span><span class="o">=</span><span class="n">fetch_reviews</span><span class="p">,</span>
-            <span class="n">fetch_menu</span><span class="o">=</span><span class="n">fetch_menu</span><span class="p">,</span>
-            <span class="n">fetch_courses</span><span class="o">=</span><span class="n">fetch_courses</span><span class="p">,</span>
-            <span class="n">max_review_pages</span><span class="o">=</span><span class="n">max_review_pages</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed because the upstream service did not return usable data.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Verify the restaurant URL from search results and retry later.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed because the upstream service did not return usable data.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Verify the restaurant URL from search results and retry later.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-        <span class="k">return</span> <span class="n">_build_detail_error_output</span><span class="p">(</span>
-            <span class="n">restaurant_url</span><span class="o">=</span><span class="n">restaurant_url</span><span class="p">,</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_to_detail_output</span><span class="p">(</span>
+            <span class="n">detail</span><span class="p">,</span>
             <span class="n">fetch_reviews</span><span class="o">=</span><span class="n">fetch_reviews</span><span class="p">,</span>
             <span class="n">fetch_menu</span><span class="o">=</span><span class="n">fetch_menu</span><span class="p">,</span>
             <span class="n">fetch_courses</span><span class="o">=</span><span class="n">fetch_courses</span><span class="p">,</span>
             <span class="n">max_review_pages</span><span class="o">=</span><span class="n">max_review_pages</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed unexpectedly.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">_to_detail_output</span><span class="p">(</span>
-        <span class="n">detail</span><span class="p">,</span>
+    <span class="k">return</span> <span class="n">_build_detail_error_output</span><span class="p">(</span>
+        <span class="n">restaurant_url</span><span class="o">=</span><span class="n">restaurant_url</span><span class="p">,</span>
         <span class="n">fetch_reviews</span><span class="o">=</span><span class="n">fetch_reviews</span><span class="p">,</span>
         <span class="n">fetch_menu</span><span class="o">=</span><span class="n">fetch_menu</span><span class="p">,</span>
         <span class="n">fetch_courses</span><span class="o">=</span><span class="n">fetch_courses</span><span class="p">,</span>
         <span class="n">max_review_pages</span><span class="o">=</span><span class="n">max_review_pages</span><span class="p">,</span>
+        <span class="n">error</span><span class="o">=</span><span class="n">error</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2707,7 +2655,51 @@ Returns list of all supported cuisines:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">458</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
 <span class="normal">461</span>
@@ -2731,51 +2723,7 @@ Returns list of all supported cuisines:
 <span class="normal">479</span>
 <span class="normal">480</span>
 <span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">482</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2822,7 +2770,7 @@ Returns list of all supported cuisines:
         <span class="n">cuisines</span> <span class="o">=</span> <span class="n">get_all_genres</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_build_cuisine_list_error_output</span><span class="p">(</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
+            <span class="n">ToolErrorOutput</span><span class="p">(</span>
                 <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Cuisine list retrieval failed unexpectedly.&quot;</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2832,7 +2780,7 @@ Returns list of all supported cuisines:
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="k">return</span> <span class="n">_build_cuisine_list_error_output</span><span class="p">(</span>
-            <span class="n">_build_tool_error</span><span class="p">(</span>
+            <span class="n">ToolErrorOutput</span><span class="p">(</span>
                 <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
                 <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Cuisine list retrieval failed unexpectedly.&quot;</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2952,7 +2900,8 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">127</span>
+<span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
 <span class="normal">131</span>
@@ -3141,39 +3090,7 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 <span class="normal">314</span>
 <span class="normal">315</span>
 <span class="normal">316</span>
-<span class="normal">317</span>
-<span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span>
-<span class="normal">330</span>
-<span class="normal">331</span>
-<span class="normal">332</span>
-<span class="normal">333</span>
-<span class="normal">334</span>
-<span class="normal">335</span>
-<span class="normal">336</span>
-<span class="normal">337</span>
-<span class="normal">338</span>
-<span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span>
-<span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span>
-<span class="normal">349</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">317</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -3295,105 +3212,74 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">detail</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;unsupported_cuisine&quot;</span> <span class="k">if</span> <span class="n">cuisine</span> <span class="ow">and</span> <span class="s2">&quot;Unknown cuisine type&quot;</span> <span class="ow">in</span> <span class="n">detail</span> <span class="k">else</span> <span class="s2">&quot;invalid_parameters&quot;</span>
-        <span class="k">return</span> <span class="n">_build_search_error_output</span><span class="p">(</span>
-            <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-            <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
-            <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
-            <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
-            <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
-            <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
-            <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
-            <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid search parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="n">_search_validation_suggested_action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span> <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">),</span>
-                <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid search parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="n">_search_validation_suggested_action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span> <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">),</span>
+            <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_search_error_output</span><span class="p">(</span>
-            <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-            <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
-            <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
-            <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
-            <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
-            <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
-            <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
-            <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because the upstream service did not return usable results.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;Retry later, or validate the area and cuisine with suggestion tools before searching again.&quot;</span>
-                <span class="p">),</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because the upstream service did not return usable results.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;Retry later, or validate the area and cuisine with suggestion tools before searching again.&quot;</span>
             <span class="p">),</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-        <span class="k">return</span> <span class="n">_build_search_error_output</span><span class="p">(</span>
-            <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-            <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
-            <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
-            <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
-            <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
-            <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
-            <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
-            <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed unexpectedly.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
-            <span class="p">),</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="n">_to_restaurant_outputs</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">restaurants</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+            <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;no_results&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
+            <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">NO_RESULTS</span><span class="p">:</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;no_results&quot;</span>
+
+            <span class="k">return</span> <span class="n">_build_search_output</span><span class="p">(</span>
+                <span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
+                <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
+                <span class="n">meta</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
+                <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
+                <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
+                <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
+                <span class="n">genre_code</span><span class="o">=</span><span class="n">genre_code</span><span class="p">,</span>
+                <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
+                <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
+                <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
+                <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
+                <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
+                <span class="n">extra_warnings</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">warnings</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because Tabelog returned an error response.&quot;</span><span class="p">,</span>
+            <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Validate the area or cuisine first, then retry the search.&quot;</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">_build_search_error_output</span><span class="p">(</span>
-            <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-            <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
-            <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
-            <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
-            <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
-            <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
-            <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
-            <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
-            <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
-            <span class="n">error</span><span class="o">=</span><span class="n">_build_tool_error</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because Tabelog returned an error response.&quot;</span><span class="p">,</span>
-                <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Validate the area or cuisine first, then retry the search.&quot;</span><span class="p">,</span>
-                <span class="n">detail</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">)</span>
-
-    <span class="n">items</span> <span class="o">=</span> <span class="n">_to_restaurant_outputs</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">restaurants</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;no_results&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
-    <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">NO_RESULTS</span><span class="p">:</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;no_results&quot;</span>
-
-    <span class="k">return</span> <span class="n">_build_search_output</span><span class="p">(</span>
-        <span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
+    <span class="k">return</span> <span class="n">_build_search_error_output</span><span class="p">(</span>
         <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
-        <span class="n">meta</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span>
         <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
         <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
         <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span>
-        <span class="n">genre_code</span><span class="o">=</span><span class="n">genre_code</span><span class="p">,</span>
         <span class="n">sort</span><span class="o">=</span><span class="n">sort</span><span class="p">,</span>
         <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
         <span class="n">reservation_date</span><span class="o">=</span><span class="n">reservation_date</span><span class="p">,</span>
         <span class="n">reservation_time</span><span class="o">=</span><span class="n">reservation_time</span><span class="p">,</span>
         <span class="n">party_size</span><span class="o">=</span><span class="n">party_size</span><span class="p">,</span>
-        <span class="n">status</span><span class="o">=</span><span class="n">status</span><span class="p">,</span>
-        <span class="n">extra_warnings</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">warnings</span><span class="p">,</span>
+        <span class="n">error</span><span class="o">=</span><span class="n">error</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
