@@ -1,5 +1,8 @@
 """Tests for MCP server tools (FastMCP implementation)"""
 
+from asyncio import CancelledError
+from collections.abc import Awaitable
+from collections.abc import Callable
 from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
@@ -1306,6 +1309,301 @@ async def test_mcp_call_area_suggestions_returns_structured_error_for_empty_quer
 # ============================================================================
 # Test run() transport switching (issue #39)
 # ============================================================================
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("failure", "code", "message", "retryable", "action"),
+    [
+        (
+            ValueError("bad input"),
+            "invalid_parameters",
+            "Invalid search parameters: bad input",
+            False,
+            "Check the input fields against the tool schema; validate ambiguous areas with "
+            "`tabelog_get_area_suggestions` and cuisine names with `tabelog_get_keyword_suggestions` before retrying.",
+        ),
+        (
+            RuntimeError("unavailable"),
+            "upstream_unavailable",
+            "Restaurant search failed because the upstream service did not return usable results.",
+            True,
+            "Retry later, or validate the area and cuisine with suggestion tools before searching again.",
+        ),
+        (
+            LookupError("unexpected"),
+            "internal_error",
+            "Restaurant search failed unexpectedly.",
+            True,
+            "Retry the tool call. If the same error repeats, inspect the server logs.",
+        ),
+        (
+            None,
+            "upstream_unavailable",
+            "Restaurant search failed because Tabelog returned an error response.",
+            True,
+            "Validate the area or cuisine first, then retry the search.",
+        ),
+    ],
+)
+async def test_search_failure_preserves_complete_envelope(
+    failure: Exception | None,
+    code: str,
+    message: str,
+    retryable: bool,
+    action: str,
+) -> None:
+    response = SearchResponse(status=SearchStatus.ERROR, error_message="upstream error")
+    with patch("gurume.server.SearchRequest.search", side_effect=failure, return_value=response):
+        result = await tabelog_search_restaurants(
+            area="東京",
+            cuisine="寿司",
+            sort="review-count",
+            limit=2,
+            page=3,
+            reservation_date="20260921",
+            reservation_time="1900",
+            party_size=4,
+        )
+
+    assert result.model_dump(mode="json") == {
+        "status": "error",
+        "items": [],
+        "returned_count": 0,
+        "limit": 2,
+        "has_more": False,
+        "meta": None,
+        "applied_filters": {
+            "area": "東京",
+            "keyword": None,
+            "cuisine": "寿司",
+            "genre_code": "RC0201",
+            "sort": "review-count",
+            "page": 3,
+            "reservation_date": "20260921",
+            "reservation_time": "1900",
+            "party_size": 4,
+        },
+        "warnings": ["Reservation filters reflect Tabelog availability data and may change over time."],
+        "error": {
+            "error_code": code,
+            "message": message,
+            "retryable": retryable,
+            "suggested_action": action,
+            "detail": str(failure) if failure is not None else "upstream error",
+        },
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("failure", "code", "message", "retryable", "action"),
+    [
+        (
+            ValueError("bad input"),
+            "invalid_parameters",
+            "Invalid detail request parameters: bad input",
+            False,
+            "Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when "
+            "only basic restaurant information is needed.",
+        ),
+        (
+            RuntimeError("unavailable"),
+            "upstream_unavailable",
+            "Restaurant detail request failed because the upstream service did not return usable data.",
+            True,
+            "Verify the restaurant URL from search results and retry later.",
+        ),
+        (
+            LookupError("unexpected"),
+            "internal_error",
+            "Restaurant detail request failed unexpectedly.",
+            True,
+            "Retry the tool call. If the same error repeats, inspect the server logs.",
+        ),
+    ],
+)
+async def test_detail_failure_preserves_complete_envelope(
+    failure: Exception,
+    code: str,
+    message: str,
+    retryable: bool,
+    action: str,
+) -> None:
+    url = "https://tabelog.com/tokyo/A1301/A130101/13000001/"
+    with patch("gurume.server.RestaurantDetailRequest.fetch", side_effect=failure):
+        result = await tabelog_get_restaurant_details(
+            url,
+            fetch_reviews=False,
+            fetch_menu=True,
+            fetch_courses=False,
+            max_review_pages=3,
+        )
+
+    assert result.model_dump(mode="json") == {
+        "status": "error",
+        "restaurant": None,
+        "restaurant_url": url,
+        "address": None,
+        "station": None,
+        "phone": None,
+        "business_hours": None,
+        "closed_days": None,
+        "reservation_url": None,
+        "review_count": 0,
+        "menu_item_count": 0,
+        "course_count": 0,
+        "fetch_reviews": False,
+        "fetch_menu": True,
+        "fetch_courses": False,
+        "max_review_pages": 3,
+        "reviews": [],
+        "menu_items": [],
+        "courses": [],
+        "error": {
+            "error_code": code,
+            "message": message,
+            "retryable": retryable,
+            "suggested_action": action,
+            "detail": str(failure),
+        },
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool", "getter", "kind", "retry_action"),
+    [
+        (
+            tabelog_get_area_suggestions,
+            "get_area_suggestions_async",
+            "area",
+            "Retry later, or try a broader area query.",
+        ),
+        (
+            tabelog_get_keyword_suggestions,
+            "get_keyword_suggestions_async",
+            "keyword",
+            "Retry later, or try a shorter keyword query.",
+        ),
+    ],
+)
+@pytest.mark.parametrize("failure_type", [ValueError, RuntimeError, LookupError])
+async def test_suggestion_failure_preserves_complete_envelope(
+    tool: Callable[..., Awaitable[SuggestionListOutput]],
+    getter: str,
+    kind: str,
+    retry_action: str,
+    failure_type: type[Exception],
+) -> None:
+    expected_errors: dict[type[Exception], tuple[str, str, bool, str]] = {
+        ValueError: (
+            "invalid_parameters",
+            "Invalid suggestion query: failure",
+            False,
+            f"Pass a non-empty {kind} query string before calling this tool again.",
+        ),
+        RuntimeError: (
+            "upstream_unavailable",
+            f"{kind.title()} suggestion request failed because the upstream service was unavailable.",
+            True,
+            retry_action,
+        ),
+        LookupError: (
+            "internal_error",
+            f"{kind.title()} suggestion request failed unexpectedly.",
+            True,
+            "Retry the tool call. If the same error repeats, inspect the server logs.",
+        ),
+    }
+    code, message, retryable, action = expected_errors[failure_type]
+    with patch(f"gurume.server.{getter}", side_effect=failure_type("failure")) as fetch:
+        result = await tool("  日本  ")
+
+    fetch.assert_awaited_once_with("日本")
+    assert result.model_dump(mode="json") == {
+        "status": "error",
+        "query": "日本",
+        "items": [],
+        "returned_count": 0,
+        "error": {
+            "error_code": code,
+            "message": message,
+            "retryable": retryable,
+            "suggested_action": action,
+            "detail": "failure",
+        },
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool", "kwargs", "operation", "response", "projection"),
+    [
+        (
+            tabelog_search_restaurants,
+            {"area": "東京"},
+            "SearchRequest.search",
+            SearchResponse(status=SearchStatus.SUCCESS),
+            "_to_restaurant_outputs",
+        ),
+        (
+            tabelog_get_restaurant_details,
+            {"restaurant_url": "https://tabelog.com/test/"},
+            "RestaurantDetailRequest.fetch",
+            None,
+            "_to_detail_output",
+        ),
+        (tabelog_get_area_suggestions, {"query": "東京"}, "get_area_suggestions_async", [], "_to_suggestion_outputs"),
+        (
+            tabelog_get_keyword_suggestions,
+            {"query": "寿司"},
+            "get_keyword_suggestions_async",
+            [],
+            "_to_suggestion_outputs",
+        ),
+    ],
+)
+async def test_tool_output_conversion_errors_propagate(
+    tool: Callable[..., Awaitable[object]],
+    kwargs: dict[str, str],
+    operation: str,
+    response: object,
+    projection: str,
+) -> None:
+    error = ValueError("invalid output")
+    with (
+        patch(f"gurume.server.{operation}", return_value=response),
+        patch(f"gurume.server.{projection}", side_effect=error),
+        pytest.raises(ValueError) as raised,
+    ):
+        await tool(**kwargs)
+    assert raised.value is error
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("tool", "kwargs", "operation"),
+    [
+        (tabelog_search_restaurants, {"area": "東京"}, "SearchRequest.search"),
+        (
+            tabelog_get_restaurant_details,
+            {"restaurant_url": "https://tabelog.com/test/"},
+            "RestaurantDetailRequest.fetch",
+        ),
+        (tabelog_get_area_suggestions, {"query": "東京"}, "get_area_suggestions_async"),
+        (tabelog_get_keyword_suggestions, {"query": "寿司"}, "get_keyword_suggestions_async"),
+    ],
+)
+async def test_tool_cancellation_propagates(
+    tool: Callable[..., Awaitable[object]],
+    kwargs: dict[str, str],
+    operation: str,
+) -> None:
+    error = CancelledError()
+    with patch(f"gurume.server.{operation}", side_effect=error), pytest.raises(CancelledError) as raised:
+        await tool(**kwargs)
+    assert raised.value is error
 
 
 class TestRunTransport:

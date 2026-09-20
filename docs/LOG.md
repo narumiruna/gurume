@@ -83,3 +83,5 @@
 2026-07-03 | refactor(repo): remove ponytail audit cleanup bloat (#87)
 2026-08-29 | fix(http): restore Tabelog requests with Safari impersonation (#88)
 2026-09-21 | refactor(core): unify cuisine metadata, output projection, sort conversion, and example parser tests without changing public behavior (#local)
+2026-09-21 | docs(plans): record behavior-preserving repository simplification plan (#local)
+2026-09-21 | refactor(core): simplify error envelopes, card selection, serialization, test fixtures, and catalog validation without changing behavior (#local)

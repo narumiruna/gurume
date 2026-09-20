@@ -25,7 +25,6 @@ from .server_helpers import _build_search_error_output
 from .server_helpers import _build_search_output
 from .server_helpers import _build_suggestion_list_error_output
 from .server_helpers import _build_suggestion_list_output
-from .server_helpers import _build_tool_error
 from .server_helpers import _resolve_genre_code
 from .server_helpers import _search_validation_suggested_action
 from .server_helpers import _to_detail_output
@@ -247,105 +246,74 @@ async def tabelog_search_restaurants(
     except ValueError as e:
         detail = str(e)
         error_code = "unsupported_cuisine" if cuisine and "Unknown cuisine type" in detail else "invalid_parameters"
-        return _build_search_error_output(
-            limit=limit,
-            area=area,
-            keyword=keyword,
-            cuisine=cuisine,
-            sort=sort,
-            page=page,
-            reservation_date=reservation_date,
-            reservation_time=reservation_time,
-            party_size=party_size,
-            error=_build_tool_error(
-                error_code=error_code,
-                message=f"Invalid search parameters: {e}",
-                retryable=False,
-                suggested_action=_search_validation_suggested_action(detail=detail, error_code=error_code),
-                detail=detail,
-            ),
+        error = ToolErrorOutput(
+            error_code=error_code,
+            message=f"Invalid search parameters: {e}",
+            retryable=False,
+            suggested_action=_search_validation_suggested_action(detail=detail, error_code=error_code),
+            detail=detail,
         )
     except RuntimeError as e:
-        return _build_search_error_output(
-            limit=limit,
-            area=area,
-            keyword=keyword,
-            cuisine=cuisine,
-            sort=sort,
-            page=page,
-            reservation_date=reservation_date,
-            reservation_time=reservation_time,
-            party_size=party_size,
-            error=_build_tool_error(
-                error_code="upstream_unavailable",
-                message="Restaurant search failed because the upstream service did not return usable results.",
-                retryable=True,
-                suggested_action=(
-                    "Retry later, or validate the area and cuisine with suggestion tools before searching again."
-                ),
-                detail=str(e),
+        error = ToolErrorOutput(
+            error_code="upstream_unavailable",
+            message="Restaurant search failed because the upstream service did not return usable results.",
+            retryable=True,
+            suggested_action=(
+                "Retry later, or validate the area and cuisine with suggestion tools before searching again."
             ),
+            detail=str(e),
         )
     except Exception as e:  # noqa: BLE001
-        return _build_search_error_output(
-            limit=limit,
-            area=area,
-            keyword=keyword,
-            cuisine=cuisine,
-            sort=sort,
-            page=page,
-            reservation_date=reservation_date,
-            reservation_time=reservation_time,
-            party_size=party_size,
-            error=_build_tool_error(
-                error_code="internal_error",
-                message="Restaurant search failed unexpectedly.",
-                retryable=True,
-                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="internal_error",
+            message="Restaurant search failed unexpectedly.",
+            retryable=True,
+            suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+            detail=str(e),
+        )
+    else:
+        if response.status != SearchStatus.ERROR:
+            items = _to_restaurant_outputs(response.restaurants, limit)
+            status: Literal["success", "no_results"] = "success"
+            if response.status == SearchStatus.NO_RESULTS:
+                status = "no_results"
+
+            return _build_search_output(
+                items=items,
+                limit=limit,
+                meta=response.meta,
+                area=area,
+                keyword=keyword,
+                cuisine=cuisine,
+                genre_code=genre_code,
+                sort=sort,
+                page=page,
+                reservation_date=reservation_date,
+                reservation_time=reservation_time,
+                party_size=party_size,
+                status=status,
+                extra_warnings=response.warnings,
+            )
+
+        error = ToolErrorOutput(
+            error_code="upstream_unavailable",
+            message="Restaurant search failed because Tabelog returned an error response.",
+            retryable=True,
+            suggested_action="Validate the area or cuisine first, then retry the search.",
+            detail=response.error_message,
         )
 
-    if response.status == SearchStatus.ERROR:
-        return _build_search_error_output(
-            limit=limit,
-            area=area,
-            keyword=keyword,
-            cuisine=cuisine,
-            sort=sort,
-            page=page,
-            reservation_date=reservation_date,
-            reservation_time=reservation_time,
-            party_size=party_size,
-            error=_build_tool_error(
-                error_code="upstream_unavailable",
-                message="Restaurant search failed because Tabelog returned an error response.",
-                retryable=True,
-                suggested_action="Validate the area or cuisine first, then retry the search.",
-                detail=response.error_message,
-            ),
-        )
-
-    items = _to_restaurant_outputs(response.restaurants, limit)
-    status: Literal["success", "no_results"] = "success"
-    if response.status == SearchStatus.NO_RESULTS:
-        status = "no_results"
-
-    return _build_search_output(
-        items=items,
+    return _build_search_error_output(
         limit=limit,
-        meta=response.meta,
         area=area,
         keyword=keyword,
         cuisine=cuisine,
-        genre_code=genre_code,
         sort=sort,
         page=page,
         reservation_date=reservation_date,
         reservation_time=reservation_time,
         party_size=party_size,
-        status=status,
-        extra_warnings=response.warnings,
+        error=error,
     )
 
 
@@ -398,60 +366,48 @@ async def tabelog_get_restaurant_details(
         )
         detail = await request.fetch()
     except ValueError as e:
-        return _build_detail_error_output(
-            restaurant_url=restaurant_url,
-            fetch_reviews=fetch_reviews,
-            fetch_menu=fetch_menu,
-            fetch_courses=fetch_courses,
-            max_review_pages=max_review_pages,
-            error=_build_tool_error(
-                error_code="invalid_parameters",
-                message=f"Invalid detail request parameters: {e}",
-                retryable=False,
-                suggested_action=(
-                    "Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when "
-                    "only basic restaurant information is needed."
-                ),
-                detail=str(e),
+        error = ToolErrorOutput(
+            error_code="invalid_parameters",
+            message=f"Invalid detail request parameters: {e}",
+            retryable=False,
+            suggested_action=(
+                "Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when "
+                "only basic restaurant information is needed."
             ),
+            detail=str(e),
         )
     except RuntimeError as e:
-        return _build_detail_error_output(
-            restaurant_url=restaurant_url,
-            fetch_reviews=fetch_reviews,
-            fetch_menu=fetch_menu,
-            fetch_courses=fetch_courses,
-            max_review_pages=max_review_pages,
-            error=_build_tool_error(
-                error_code="upstream_unavailable",
-                message="Restaurant detail request failed because the upstream service did not return usable data.",
-                retryable=True,
-                suggested_action="Verify the restaurant URL from search results and retry later.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="upstream_unavailable",
+            message="Restaurant detail request failed because the upstream service did not return usable data.",
+            retryable=True,
+            suggested_action="Verify the restaurant URL from search results and retry later.",
+            detail=str(e),
         )
     except Exception as e:  # noqa: BLE001
-        return _build_detail_error_output(
-            restaurant_url=restaurant_url,
+        error = ToolErrorOutput(
+            error_code="internal_error",
+            message="Restaurant detail request failed unexpectedly.",
+            retryable=True,
+            suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+            detail=str(e),
+        )
+    else:
+        return _to_detail_output(
+            detail,
             fetch_reviews=fetch_reviews,
             fetch_menu=fetch_menu,
             fetch_courses=fetch_courses,
             max_review_pages=max_review_pages,
-            error=_build_tool_error(
-                error_code="internal_error",
-                message="Restaurant detail request failed unexpectedly.",
-                retryable=True,
-                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
-                detail=str(e),
-            ),
         )
 
-    return _to_detail_output(
-        detail,
+    return _build_detail_error_output(
+        restaurant_url=restaurant_url,
         fetch_reviews=fetch_reviews,
         fetch_menu=fetch_menu,
         fetch_courses=fetch_courses,
         max_review_pages=max_review_pages,
+        error=error,
     )
 
 
@@ -502,7 +458,7 @@ async def tabelog_list_cuisines() -> CuisineListOutput:
         cuisines = get_all_genres()
     except ValueError as e:
         return _build_cuisine_list_error_output(
-            _build_tool_error(
+            ToolErrorOutput(
                 error_code="internal_error",
                 message="Cuisine list retrieval failed unexpectedly.",
                 retryable=True,
@@ -512,7 +468,7 @@ async def tabelog_list_cuisines() -> CuisineListOutput:
         )
     except Exception as e:  # noqa: BLE001
         return _build_cuisine_list_error_output(
-            _build_tool_error(
+            ToolErrorOutput(
                 error_code="internal_error",
                 message="Cuisine list retrieval failed unexpectedly.",
                 retryable=True,
@@ -554,40 +510,33 @@ async def tabelog_get_area_suggestions(
 
         suggestions = await get_area_suggestions_async(normalized_query)
     except ValueError as e:
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="invalid_parameters",
-                message=f"Invalid suggestion query: {e}",
-                retryable=False,
-                suggested_action="Pass a non-empty area query string before calling this tool again.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="invalid_parameters",
+            message=f"Invalid suggestion query: {e}",
+            retryable=False,
+            suggested_action="Pass a non-empty area query string before calling this tool again.",
+            detail=str(e),
         )
     except RuntimeError as e:
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="upstream_unavailable",
-                message="Area suggestion request failed because the upstream service was unavailable.",
-                retryable=True,
-                suggested_action="Retry later, or try a broader area query.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="upstream_unavailable",
+            message="Area suggestion request failed because the upstream service was unavailable.",
+            retryable=True,
+            suggested_action="Retry later, or try a broader area query.",
+            detail=str(e),
         )
     except Exception as e:  # noqa: BLE001
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="internal_error",
-                message="Area suggestion request failed unexpectedly.",
-                retryable=True,
-                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="internal_error",
+            message="Area suggestion request failed unexpectedly.",
+            retryable=True,
+            suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+            detail=str(e),
         )
+    else:
+        return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
 
-    return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
+    return _build_suggestion_list_error_output(normalized_query, error)
 
 
 @mcp.tool(
@@ -619,40 +568,33 @@ async def tabelog_get_keyword_suggestions(
 
         suggestions = await get_keyword_suggestions_async(normalized_query)
     except ValueError as e:
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="invalid_parameters",
-                message=f"Invalid suggestion query: {e}",
-                retryable=False,
-                suggested_action="Pass a non-empty keyword query string before calling this tool again.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="invalid_parameters",
+            message=f"Invalid suggestion query: {e}",
+            retryable=False,
+            suggested_action="Pass a non-empty keyword query string before calling this tool again.",
+            detail=str(e),
         )
     except RuntimeError as e:
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="upstream_unavailable",
-                message="Keyword suggestion request failed because the upstream service was unavailable.",
-                retryable=True,
-                suggested_action="Retry later, or try a shorter keyword query.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="upstream_unavailable",
+            message="Keyword suggestion request failed because the upstream service was unavailable.",
+            retryable=True,
+            suggested_action="Retry later, or try a shorter keyword query.",
+            detail=str(e),
         )
     except Exception as e:  # noqa: BLE001
-        return _build_suggestion_list_error_output(
-            normalized_query,
-            _build_tool_error(
-                error_code="internal_error",
-                message="Keyword suggestion request failed unexpectedly.",
-                retryable=True,
-                suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
-                detail=str(e),
-            ),
+        error = ToolErrorOutput(
+            error_code="internal_error",
+            message="Keyword suggestion request failed unexpectedly.",
+            retryable=True,
+            suggested_action="Retry the tool call. If the same error repeats, inspect the server logs.",
+            detail=str(e),
         )
+    else:
+        return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
 
-    return _build_suggestion_list_output(normalized_query, _to_suggestion_outputs(suggestions))
+    return _build_suggestion_list_error_output(normalized_query, error)
 
 
 # ============================================================================

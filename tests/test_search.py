@@ -1,6 +1,10 @@
 """Test search functionality"""
 
+import json
+from dataclasses import asdict
+from datetime import UTC
 from datetime import datetime
+from typing import cast
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -98,6 +102,51 @@ class TestSearchResponse:
         assert response.error_message == "HTTP 404 Not Found"
 
 
+@pytest.mark.parametrize("status", list(SearchStatus))
+@pytest.mark.parametrize("include_meta", [False, True])
+@pytest.mark.parametrize("indent", [None, 0, 2])
+def test_response_serialization_contract(status: SearchStatus, include_meta: bool, indent: int | None) -> None:
+    restaurant = Restaurant(name="寿司", url="https://example.com", rating=0.0, genres=["寿司"])
+    meta = (
+        SearchMeta(
+            total_count=7,
+            current_page=1,
+            results_per_page=2,
+            total_pages=4,
+            has_next_page=True,
+            has_prev_page=False,
+            search_time=datetime(2026, 1, 1, tzinfo=UTC),
+            source_url="https://tabelog.com/tokyo/rstLst/",
+            source_params={"PG": "1"},
+            area_filter_confidence="high",
+            area_filter_reason="matched",
+            area_filter_applied=True,
+        )
+        if include_meta
+        else None
+    )
+    restaurants = [restaurant] if status == SearchStatus.SUCCESS else []
+    error = "問題" if status == SearchStatus.ERROR else None
+    response = SearchResponse(status=status, restaurants=restaurants, meta=meta, error_message=error, warnings=["注意"])
+    expected = {
+        "status": status.value,
+        "restaurants": [asdict(restaurant)] if restaurants else [],
+        "meta": asdict(meta) if meta else None,
+        "error_message": error,
+        "warnings": ["注意"],
+    }
+    # None is also accepted at runtime by json.dumps, despite the public int annotation.
+    encoded = response.to_json(indent=cast(int, indent))
+    assert encoded == json.dumps(expected, ensure_ascii=False, indent=indent, default=str)
+    assert list(json.loads(encoded)) == list(expected)
+    if include_meta:
+        assert "2026-01-01 00:00:00+00:00" in encoded
+    converted = response.to_dict()
+    assert converted == expected
+    converted["warnings"].append("copy-only")
+    assert response.warnings == ["注意"]
+
+
 class TestSearchRequest:
     """Test SearchRequest functionality"""
 
@@ -130,6 +179,10 @@ class TestSearchRequest:
         assert meta.total_pages == 50  # 100 / 2 = 50
         assert meta.has_next_page is True
         assert meta.has_prev_page is False
+
+    def test_metadata_counts_raw_cards(self, restaurant_cards_case: tuple[str, list[str], int]) -> None:
+        html, _, count = restaurant_cards_case
+        assert SearchRequest()._parse_meta(html, current_page=1).results_per_page == count
 
     def test_parse_meta_no_results(self):
         """Test parsing metadata when no results"""
@@ -243,12 +296,9 @@ class TestSearchRequest:
         assert restaurant_request.page == 2
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync_respects_start_page(self, mock_get, mock_html_response):
+    def test_search_sync_respects_start_page(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search starts from the requested page"""
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="銀座",
@@ -269,12 +319,9 @@ class TestSearchRequest:
         assert called_params["PG"] == "2"
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync_single_page(self, mock_get, mock_html_response):
+    def test_search_sync_single_page(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search for single page"""
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="銀座",
@@ -301,7 +348,7 @@ class TestSearchRequest:
         assert "headers" not in mock_get.call_args.kwargs
 
     @patch("curl_cffi.requests.get")
-    def test_cuisine_filter_mismatch_adds_machine_readable_warning(self, mock_get):
+    def test_cuisine_filter_mismatch_adds_machine_readable_warning(self, mock_get, mock_curl_cffi_response):
         """Supported cuisine searches must expose low-confidence mismatches."""
         html = """
         <html><body>
@@ -320,10 +367,8 @@ class TestSearchRequest:
             <span class="c-page-count__num">2</span>
         </body></html>
         """
-        mock_response = Mock()
-        mock_response.text = html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = html
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(genre_code="RC0107", sort_type=SortType.RANKING, max_pages=1, include_meta=True)
 
@@ -341,7 +386,7 @@ class TestSearchRequest:
         ]
 
     @patch("curl_cffi.requests.get")
-    def test_area_keyword_mismatch_adds_machine_readable_warning(self, mock_get):
+    def test_area_keyword_mismatch_adds_machine_readable_warning(self, mock_get, mock_curl_cffi_response):
         """Mapped area keyword searches must expose URL evidence when Tabelog returns other prefectures."""
         html = """
         <html><body>
@@ -366,10 +411,8 @@ class TestSearchRequest:
             <span class="c-page-count__num">3</span>
         </body></html>
         """
-        mock_response = Mock()
-        mock_response.text = html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = html
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
@@ -389,7 +432,7 @@ class TestSearchRequest:
         ]
 
     @patch("curl_cffi.requests.get")
-    def test_area_keyword_matching_urls_sets_high_confidence(self, mock_get):
+    def test_area_keyword_matching_urls_sets_high_confidence(self, mock_get, mock_curl_cffi_response):
         """Mapped area keyword searches can be high confidence when result URLs all match the area path."""
         html = """
         <html><body>
@@ -408,10 +451,8 @@ class TestSearchRequest:
             <span class="c-page-count__num">2</span>
         </body></html>
         """
-        mock_response = Mock()
-        mock_response.text = html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = html
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
@@ -425,7 +466,7 @@ class TestSearchRequest:
         assert response.warnings == []
 
     @patch("curl_cffi.requests.get")
-    def test_area_keyword_single_mismatched_url_keeps_low_confidence(self, mock_get):
+    def test_area_keyword_single_mismatched_url_keeps_low_confidence(self, mock_get, mock_curl_cffi_response):
         """Any out-of-area parsed URL keeps area confidence low."""
         html = """
         <html><body>
@@ -462,10 +503,8 @@ class TestSearchRequest:
             <span class="c-page-count__num">5</span>
         </body></html>
         """
-        mock_response = Mock()
-        mock_response.text = html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = html
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
@@ -482,12 +521,9 @@ class TestSearchRequest:
         ]
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync_multiple_pages(self, mock_get, mock_html_response):
+    def test_search_sync_multiple_pages(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search for multiple pages"""
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="銀座",
@@ -506,12 +542,10 @@ class TestSearchRequest:
         assert mock_get.call_count == 3
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync_no_results(self, mock_get):
+    def test_search_sync_no_results(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search with no results"""
-        mock_response = Mock()
-        mock_response.text = "<html><body><span class='c-page-count__num'>0</span></body></html>"
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = "<html><body><span class='c-page-count__num'>0</span></body></html>"
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="銀座",
@@ -540,12 +574,9 @@ class TestSearchRequest:
         assert len(response.restaurants) == 0
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync_without_meta(self, mock_get, mock_html_response):
+    def test_search_sync_without_meta(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search without metadata"""
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="銀座",
@@ -562,18 +593,9 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async_single_page(self, mock_client_class, mock_html_response):
+    async def test_search_async_single_page(self, mock_client_class, mock_curl_cffi_client):
         """Test asynchronous search for single page"""
-        from unittest.mock import AsyncMock
-
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client = mock_curl_cffi_client
 
         mock_client_class.return_value = mock_client
 
@@ -602,18 +624,9 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async_multiple_pages(self, mock_client_class, mock_html_response):
+    async def test_search_async_multiple_pages(self, mock_client_class, mock_curl_cffi_client):
         """Test asynchronous search for multiple pages"""
-        from unittest.mock import AsyncMock
-
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client = mock_curl_cffi_client
 
         mock_client_class.return_value = mock_client
 
@@ -635,14 +648,10 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async_http_error(self, mock_client_class):
+    async def test_search_async_http_error(self, mock_client_class, mock_curl_cffi_client):
         """Test asynchronous search with HTTP error"""
-        from unittest.mock import AsyncMock
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(side_effect=request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404)))
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client = mock_curl_cffi_client
+        mock_client.get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
         mock_client_class.return_value = mock_client
 
@@ -655,18 +664,10 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async_no_results(self, mock_client_class):
+    async def test_search_async_no_results(self, mock_client_class, mock_curl_cffi_client, mock_curl_cffi_response):
         """Test asynchronous search with no results"""
-        from unittest.mock import AsyncMock
-
-        mock_response = Mock()
-        mock_response.text = "<html><body><span class='c-page-count__num'>0</span></body></html>"
-        mock_response.raise_for_status = Mock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_curl_cffi_response.text = "<html><body><span class='c-page-count__num'>0</span></body></html>"
+        mock_client = mock_curl_cffi_client
 
         mock_client_class.return_value = mock_client
 

@@ -24,6 +24,7 @@ from .http_client import DEFAULT_IMPERSONATE
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
+from .restaurant import _find_restaurant_cards
 from .restaurant import build_search_url_and_params
 
 SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
@@ -174,14 +175,7 @@ class SearchResponse:
         Returns:
             JSON string.
         """
-        data = {
-            "status": self.status.value,
-            "restaurants": [asdict(r) for r in self.restaurants],
-            "meta": asdict(self.meta) if self.meta else None,
-            "error_message": self.error_message,
-            "warnings": self.warnings,
-        }
-        return json.dumps(data, ensure_ascii=False, indent=indent, default=str)
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent, default=str)
 
     def to_dict(self) -> dict:
         """Convert to a dictionary.
@@ -230,9 +224,7 @@ class SearchRequest:
 
         # Results per page, usually 20.
         results_per_page = 20
-        restaurant_items = soup.find_all("div", class_="list-rst")
-        if not restaurant_items:
-            restaurant_items = soup.find_all("li", class_="list-rst")
+        restaurant_items = _find_restaurant_cards(soup)
         if restaurant_items:
             results_per_page = len(restaurant_items)
 

@@ -43,6 +43,29 @@ def mock_html_response():
     """
 
 
+@pytest.fixture(params=["div", "li", "mixed", "malformed", "empty", "not-found", "not-found-text"])
+def restaurant_cards_case(request: pytest.FixtureRequest) -> tuple[str, list[str], int]:
+    """Shared markup cases for restaurant parsing and raw-card metadata counts."""
+
+    def card(tag: str, name: str) -> str:
+        return (
+            f'<{tag} class="list-rst"><a class="list-rst__rst-name-target" '
+            f'href="/tokyo/A1301/A130101/13000001/">{name}</a></{tag}>'
+        )
+
+    div_cards = card("div", "first") + card("div", "second")
+    cases = {
+        "div": (div_cards, ["first", "second"], 2),
+        "li": (card("li", "first") + card("li", "second"), ["first", "second"], 2),
+        "mixed": (card("li", "ignored") + div_cards, ["first", "second"], 2),
+        "malformed": ('<div class="list-rst"></div>' + div_cards, ["first", "second"], 3),
+        "empty": ("<html></html>", [], 20),
+        "not-found": ('<div class="rstlist-notfound"></div>' + div_cards, [], 2),
+        "not-found-text": ("該当のエリア・駅が見つかりませんでした" + div_cards, [], 2),
+    }
+    return cases[request.param]
+
+
 @pytest.fixture
 def mock_curl_cffi_response(mock_html_response):
     """Mock curl_cffi response"""

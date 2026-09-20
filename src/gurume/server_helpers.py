@@ -37,23 +37,6 @@ from .suggest import KeywordSuggestion
 HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
 
 
-def _build_tool_error(
-    *,
-    error_code: Literal["invalid_parameters", "unsupported_cuisine", "upstream_unavailable", "internal_error"],
-    message: str,
-    retryable: bool,
-    suggested_action: str,
-    detail: str | None = None,
-) -> ToolErrorOutput:
-    return ToolErrorOutput(
-        error_code=error_code,
-        message=message,
-        retryable=retryable,
-        suggested_action=suggested_action,
-        detail=detail,
-    )
-
-
 def _search_validation_suggested_action(
     *,
     detail: str,
@@ -255,31 +238,6 @@ def _build_search_warnings(
     return warnings
 
 
-def _build_search_filters_output(
-    *,
-    area: str | None,
-    keyword: str | None,
-    cuisine: str | None,
-    genre_code: str | None,
-    sort: SortOption,
-    page: int,
-    reservation_date: str | None,
-    reservation_time: str | None,
-    party_size: int | None,
-) -> SearchFiltersOutput:
-    return SearchFiltersOutput(
-        area=area,
-        keyword=keyword,
-        cuisine=cuisine,
-        genre_code=genre_code,
-        sort=sort,
-        page=page,
-        reservation_date=reservation_date,
-        reservation_time=reservation_time,
-        party_size=party_size,
-    )
-
-
 def _build_search_output(
     *,
     items: list[RestaurantOutput],
@@ -311,7 +269,7 @@ def _build_search_output(
         limit=limit,
         has_more=meta.has_next_page if meta is not None else False,
         meta=meta_output,
-        applied_filters=_build_search_filters_output(
+        applied_filters=SearchFiltersOutput(
             area=area,
             keyword=keyword,
             cuisine=cuisine,
@@ -342,7 +300,7 @@ def _build_search_error_output(
     return RestaurantSearchOutput(
         status="error",
         limit=limit,
-        applied_filters=_build_search_filters_output(
+        applied_filters=SearchFiltersOutput(
             area=area,
             keyword=keyword,
             cuisine=cuisine,

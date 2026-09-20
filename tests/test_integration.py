@@ -17,7 +17,7 @@ class TestIntegration:
     """Integration tests using real-like scenarios"""
 
     @patch("curl_cffi.requests.get")
-    def test_basic_search_integration(self, mock_get):
+    def test_basic_search_integration(self, mock_get, mock_curl_cffi_response):
         """Test basic search integration"""
         mock_html = """
         <html>
@@ -36,10 +36,8 @@ class TestIntegration:
         </html>
         """
 
-        mock_response = Mock()
-        mock_response.text = mock_html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = mock_html
+        mock_get.return_value = mock_curl_cffi_response
 
         # Test using quick search function
         restaurants = query_restaurants(
@@ -71,7 +69,7 @@ class TestIntegration:
         assert call_args[1]["params"]["SrtT"] == "rt"
 
     @patch("curl_cffi.requests.get")
-    def test_advanced_search_integration(self, mock_get):
+    def test_advanced_search_integration(self, mock_get, mock_curl_cffi_response):
         """Test advanced search with filters integration"""
         mock_html = """
         <html>
@@ -90,10 +88,8 @@ class TestIntegration:
         </html>
         """
 
-        mock_response = Mock()
-        mock_response.text = mock_html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = mock_html
+        mock_get.return_value = mock_curl_cffi_response
 
         # Test using detailed search request
         request = RestaurantSearchRequest(
@@ -207,9 +203,8 @@ class TestIntegration:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_async_search_integration(self, mock_client_class):
+    async def test_async_search_integration(self, mock_client_class, mock_curl_cffi_client, mock_curl_cffi_response):
         """Test async search integration"""
-        from unittest.mock import AsyncMock
 
         mock_html = """
         <html>
@@ -228,14 +223,8 @@ class TestIntegration:
         </html>
         """
 
-        mock_response = Mock()
-        mock_response.text = mock_html
-        mock_response.raise_for_status = Mock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_curl_cffi_response.text = mock_html
+        mock_client = mock_curl_cffi_client
 
         mock_client_class.return_value = mock_client
 
@@ -288,7 +277,7 @@ class TestIntegration:
         assert response.meta is None
 
     @patch("curl_cffi.requests.get")
-    def test_no_results_integration(self, mock_get):
+    def test_no_results_integration(self, mock_get, mock_curl_cffi_response):
         """Test no results integration"""
         mock_html = """
         <html>
@@ -301,10 +290,8 @@ class TestIntegration:
         </html>
         """
 
-        mock_response = Mock()
-        mock_response.text = mock_html
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_curl_cffi_response.text = mock_html
+        mock_get.return_value = mock_curl_cffi_response
 
         request = SearchRequest(
             area="存在しない場所",
