@@ -7,6 +7,7 @@ This directory contains the test suite for `gurume`.
 Current test files:
 
 - `test_area_mapping.py`: area-name to Tabelog path mapping.
+- `test_area_catalog_coverage.py`: offline catalog coverage CLI success, mismatch, and invalid-input contracts.
 - `test_cache.py`: in-memory cache helpers.
 - `test_cli.py`: Typer CLI commands and output behavior.
 - `test_detail.py`: restaurant detail parsing and fetch behavior.

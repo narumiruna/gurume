@@ -1,6 +1,5 @@
 """Tests for suggestion API (area and keyword suggestions)"""
 
-from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
 
@@ -93,11 +92,10 @@ def sample_keyword_response():
 # ============================================================================
 
 
-def test_get_area_suggestions_success(sample_area_response):
+def test_get_area_suggestions_success(sample_area_response, mock_curl_cffi_response):
     """Test successful area suggestions retrieval"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = sample_area_response
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         results = get_area_suggestions(query="東京")
@@ -134,11 +132,10 @@ def test_get_area_suggestions_empty_query():
     assert get_area_suggestions(query="   ") == []
 
 
-def test_get_area_suggestions_strips_whitespace(sample_area_response):
+def test_get_area_suggestions_strips_whitespace(sample_area_response, mock_curl_cffi_response):
     """Test that query whitespace is stripped"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = sample_area_response
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         get_area_suggestions(query="  東京  ")
@@ -167,11 +164,10 @@ def test_get_area_suggestions_network_error():
         assert results == []
 
 
-def test_get_area_suggestions_json_error():
+def test_get_area_suggestions_json_error(mock_curl_cffi_response):
     """Test handling JSON parsing errors"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.side_effect = ValueError("Invalid JSON")
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         # Should return empty list on JSON error
@@ -179,27 +175,25 @@ def test_get_area_suggestions_json_error():
         assert results == []
 
 
-def test_get_area_suggestions_empty_response():
+def test_get_area_suggestions_empty_response(mock_curl_cffi_response):
     """Test with empty API response"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = []
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
         assert results == []
 
 
-def test_get_area_suggestions_missing_fields():
+def test_get_area_suggestions_missing_fields(mock_curl_cffi_response):
     """Test handling responses with missing fields"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = [
         {
             "name": "東京都",
             # Missing datatype, id_in_datatype, lat, lng
         }
     ]
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
@@ -219,16 +213,10 @@ def test_get_area_suggestions_missing_fields():
 
 
 @pytest.mark.asyncio
-async def test_get_area_suggestions_async_success(sample_area_response):
+async def test_get_area_suggestions_async_success(sample_area_response, mock_curl_cffi_client, mock_curl_cffi_response):
     """Test successful async area suggestions retrieval"""
-    mock_response = Mock()
-    mock_response.json.return_value = sample_area_response
-    mock_response.raise_for_status = Mock()
-
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_curl_cffi_response.json.return_value = sample_area_response
+    mock_client = mock_curl_cffi_client
 
     with patch("curl_cffi.requests.AsyncSession", return_value=mock_client) as mock_session:
         results = await get_area_suggestions_async(query="東京")
@@ -259,12 +247,10 @@ async def test_get_area_suggestions_async_empty_query():
 
 
 @pytest.mark.asyncio
-async def test_get_area_suggestions_async_http_error():
+async def test_get_area_suggestions_async_http_error(mock_curl_cffi_client):
     """Test async handling HTTP errors"""
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(side_effect=_http_error(404, "404"))
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client = mock_curl_cffi_client
+    mock_client.get.side_effect = _http_error(404, "404")
 
     with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_area_suggestions_async(query="東京")
@@ -276,11 +262,10 @@ async def test_get_area_suggestions_async_http_error():
 # ============================================================================
 
 
-def test_get_keyword_suggestions_success(sample_keyword_response):
+def test_get_keyword_suggestions_success(sample_keyword_response, mock_curl_cffi_response):
     """Test successful keyword suggestions retrieval"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = sample_keyword_response
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         results = get_keyword_suggestions(query="すき")
@@ -319,11 +304,10 @@ def test_get_keyword_suggestions_empty_query():
     assert get_keyword_suggestions(query="   ") == []
 
 
-def test_get_keyword_suggestions_strips_whitespace(sample_keyword_response):
+def test_get_keyword_suggestions_strips_whitespace(sample_keyword_response, mock_curl_cffi_response):
     """Test that query whitespace is stripped"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = sample_keyword_response
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response) as mock_get:
         get_keyword_suggestions(query="  すき  ")
@@ -352,11 +336,10 @@ def test_get_keyword_suggestions_network_error():
         assert results == []
 
 
-def test_get_keyword_suggestions_empty_response():
+def test_get_keyword_suggestions_empty_response(mock_curl_cffi_response):
     """Test with empty API response"""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = []
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_keyword_suggestions(query="すき")
@@ -369,16 +352,14 @@ def test_get_keyword_suggestions_empty_response():
 
 
 @pytest.mark.asyncio
-async def test_get_keyword_suggestions_async_success(sample_keyword_response):
+async def test_get_keyword_suggestions_async_success(
+    sample_keyword_response,
+    mock_curl_cffi_client,
+    mock_curl_cffi_response,
+):
     """Test successful async keyword suggestions retrieval"""
-    mock_response = Mock()
-    mock_response.json.return_value = sample_keyword_response
-    mock_response.raise_for_status = Mock()
-
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_curl_cffi_response.json.return_value = sample_keyword_response
+    mock_client = mock_curl_cffi_client
 
     with patch("curl_cffi.requests.AsyncSession", return_value=mock_client) as mock_session:
         results = await get_keyword_suggestions_async(query="すき")
@@ -410,12 +391,10 @@ async def test_get_keyword_suggestions_async_empty_query():
 
 
 @pytest.mark.asyncio
-async def test_get_keyword_suggestions_async_http_error():
+async def test_get_keyword_suggestions_async_http_error(mock_curl_cffi_client):
     """Test async handling HTTP errors"""
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(side_effect=_http_error(500, "500"))
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_client = mock_curl_cffi_client
+    mock_client.get.side_effect = _http_error(500, "500")
 
     with patch("curl_cffi.requests.AsyncSession", return_value=mock_client):
         results = await get_keyword_suggestions_async(query="すき")
@@ -473,37 +452,29 @@ def test_area_and_keyword_dataclass_compatibility():
 # ============================================================================
 
 
-def test_get_area_suggestions_raises_on_suggest_empty():
+def test_get_area_suggestions_raises_on_suggest_empty(mock_curl_cffi_response):
     """When Tabelog returns {'suggest_empty': true} the function must raise."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = {"suggest_empty": True}
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
         get_area_suggestions(query="東京")
 
 
-def test_get_keyword_suggestions_raises_on_suggest_empty():
+def test_get_keyword_suggestions_raises_on_suggest_empty(mock_curl_cffi_response):
     """Keyword endpoint must also raise on suggest_empty."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = {"suggest_empty": True}
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response), pytest.raises(TabelogSuggestUnavailableError):
         get_keyword_suggestions(query="すき")
 
 
 @pytest.mark.asyncio
-async def test_get_area_suggestions_async_raises_on_suggest_empty():
+async def test_get_area_suggestions_async_raises_on_suggest_empty(mock_curl_cffi_client, mock_curl_cffi_response):
     """Async area endpoint must propagate TabelogSuggestUnavailableError."""
-    mock_response = Mock()
-    mock_response.json.return_value = {"suggest_empty": True}
-    mock_response.raise_for_status = Mock()
-
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_curl_cffi_response.json.return_value = {"suggest_empty": True}
+    mock_client = mock_curl_cffi_client
 
     with (
         patch("curl_cffi.requests.AsyncSession", return_value=mock_client),
@@ -513,16 +484,10 @@ async def test_get_area_suggestions_async_raises_on_suggest_empty():
 
 
 @pytest.mark.asyncio
-async def test_get_keyword_suggestions_async_raises_on_suggest_empty():
+async def test_get_keyword_suggestions_async_raises_on_suggest_empty(mock_curl_cffi_client, mock_curl_cffi_response):
     """Async keyword endpoint must propagate TabelogSuggestUnavailableError."""
-    mock_response = Mock()
-    mock_response.json.return_value = {"suggest_empty": True}
-    mock_response.raise_for_status = Mock()
-
-    mock_client = AsyncMock()
-    mock_client.get = AsyncMock(return_value=mock_response)
-    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-    mock_client.__aexit__ = AsyncMock(return_value=None)
+    mock_curl_cffi_response.json.return_value = {"suggest_empty": True}
+    mock_client = mock_curl_cffi_client
 
     with (
         patch("curl_cffi.requests.AsyncSession", return_value=mock_client),
@@ -531,9 +496,9 @@ async def test_get_keyword_suggestions_async_raises_on_suggest_empty():
         await get_keyword_suggestions_async(query="すき")
 
 
-def test_get_area_suggestions_parses_prefecture_datatype():
+def test_get_area_suggestions_parses_prefecture_datatype(mock_curl_cffi_response):
     """Prefecture datatype responses must parse without error."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = [
         {
             "name": "東京都",
@@ -543,7 +508,6 @@ def test_get_area_suggestions_parses_prefecture_datatype():
             "lng": 139.6917,
         }
     ]
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="東京")
@@ -552,9 +516,9 @@ def test_get_area_suggestions_parses_prefecture_datatype():
         assert results[0].datatype == "Prefecture"
 
 
-def test_get_area_suggestions_parses_town_datatype():
+def test_get_area_suggestions_parses_town_datatype(mock_curl_cffi_response):
     """Town datatype responses must parse without error."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = [
         {
             "name": "三重町",
@@ -564,7 +528,6 @@ def test_get_area_suggestions_parses_town_datatype():
             "lng": 131.5,
         }
     ]
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="三重")
@@ -573,9 +536,9 @@ def test_get_area_suggestions_parses_town_datatype():
         assert results[0].datatype == "Town"
 
 
-def test_get_area_suggestions_preserves_unlisted_datatype():
+def test_get_area_suggestions_preserves_unlisted_datatype(mock_curl_cffi_response):
     """Area parser preserves upstream datatype strings that are not locally enumerated."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = [
         {
             "name": "大阪市",
@@ -585,7 +548,6 @@ def test_get_area_suggestions_preserves_unlisted_datatype():
             "lng": 135.5023,
         }
     ]
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_area_suggestions(query="大阪")
@@ -594,9 +556,9 @@ def test_get_area_suggestions_preserves_unlisted_datatype():
         assert results[0].datatype == "MajorMunicipal"
 
 
-def test_get_keyword_suggestions_preserves_unlisted_datatype():
+def test_get_keyword_suggestions_preserves_unlisted_datatype(mock_curl_cffi_response):
     """Keyword parser preserves upstream datatype strings that are not locally enumerated."""
-    mock_response = Mock()
+    mock_response = mock_curl_cffi_response
     mock_response.json.return_value = [
         {
             "name": "お好み焼き",
@@ -604,7 +566,6 @@ def test_get_keyword_suggestions_preserves_unlisted_datatype():
             "id_in_datatype": 301,
         }
     ]
-    mock_response.raise_for_status = Mock()
 
     with patch("curl_cffi.requests.get", return_value=mock_response):
         results = get_keyword_suggestions(query="お好み焼き")

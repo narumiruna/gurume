@@ -23,7 +23,6 @@ from .search import SearchResponse
 from .search import SearchStatus
 from .server_helpers import _build_search_error_output
 from .server_helpers import _build_search_output
-from .server_helpers import _build_tool_error
 from .server_helpers import _restaurant_output_data
 from .server_helpers import _to_restaurant_outputs
 from .server_models import RestaurantSearchOutput
@@ -172,7 +171,7 @@ def _build_error_json_envelope(
 
 
 def _invalid_search_error(detail: str) -> ToolErrorOutput:
-    return _build_tool_error(
+    return ToolErrorOutput(
         error_code="invalid_parameters",
         message=f"Invalid search parameters: {detail}",
         retryable=False,
@@ -182,7 +181,7 @@ def _invalid_search_error(detail: str) -> ToolErrorOutput:
 
 
 def _upstream_search_error(detail: str | None) -> ToolErrorOutput:
-    return _build_tool_error(
+    return ToolErrorOutput(
         error_code="upstream_unavailable",
         message="Restaurant search failed because Tabelog returned an error response.",
         retryable=True,

@@ -60,6 +60,14 @@ class TestRestaurantSearchRequest:
         assert restaurant2.has_reservation is False
         assert restaurant2.image_urls == ["https://example.com/image2.jpg"]
 
+    def test_card_selection_preserves_fallback_and_order(
+        self,
+        restaurant_cards_case: tuple[str, list[str], int],
+    ) -> None:
+        html, names, _ = restaurant_cards_case
+        restaurants = RestaurantSearchRequest()._parse_restaurants(html)
+        assert [restaurant.name for restaurant in restaurants] == names
+
     def test_parse_restaurants_empty(self):
         """Test parsing empty HTML"""
         request = RestaurantSearchRequest()
@@ -194,12 +202,9 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].dinner_price == "￥1,000～￥1,999"
 
     @patch("curl_cffi.requests.get")
-    def test_search_sync(self, mock_get, mock_html_response):
+    def test_search_sync(self, mock_get, mock_curl_cffi_response):
         """Test synchronous search"""
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
+        mock_get.return_value = mock_curl_cffi_response
 
         request = RestaurantSearchRequest(
             area="銀座",
@@ -225,18 +230,9 @@ class TestRestaurantSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async(self, mock_client_class, mock_html_response):
+    async def test_search_async(self, mock_client_class, mock_curl_cffi_client):
         """Test asynchronous search"""
-        from unittest.mock import AsyncMock
-
-        mock_response = Mock()
-        mock_response.text = mock_html_response
-        mock_response.raise_for_status = Mock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client = mock_curl_cffi_client
 
         mock_client_class.return_value = mock_client
 
@@ -272,14 +268,10 @@ class TestRestaurantSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_search_async_http_error(self, mock_client_class):
+    async def test_search_async_http_error(self, mock_client_class, mock_curl_cffi_client):
         """Test handling HTTP errors in asynchronous search"""
-        from unittest.mock import AsyncMock
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(side_effect=request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404)))
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=None)
+        mock_client = mock_curl_cffi_client
+        mock_client.get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
         mock_client_class.return_value = mock_client
 

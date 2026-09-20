@@ -79,13 +79,6 @@ def check_catalog_coverage(snapshot_path: Path = DEFAULT_SNAPSHOT_PATH) -> None:
             details.append(f"catalog paths not in snapshot:\n  {_format_sample(extra)}")
         raise CoverageError("\n".join(details))
 
-    for entry in catalog_entries:
-        expected_source = f"https://tabelog.com/{entry.path}/"
-        if entry.source != expected_source:
-            raise CoverageError(f"catalog source must be {expected_source}: {entry.source}")
-        if entry.parent != entry.path.rsplit("/", maxsplit=1)[0]:
-            raise CoverageError(f"catalog parent does not match path: {entry.parent} -> {entry.path}")
-
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)

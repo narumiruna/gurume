@@ -9,6 +9,7 @@ from functools import cache
 from typing import Any
 
 from bs4 import BeautifulSoup
+from bs4 import Tag
 from curl_cffi import requests
 
 from .area_mapping import get_area_slug
@@ -30,6 +31,11 @@ CLASS_LUNCH_MARKERS = ("lunch",)
 # Tabelog restaurant detail URLs follow `/{area}/A{area_code}/A{subarea_code}/{rst_id}/`.
 # This pattern excludes magazine articles, promotional pages, and other non-restaurant links.
 _RESTAURANT_URL_RE = re.compile(r"/A\d+/A\d+/\d+")
+
+
+def _find_restaurant_cards(soup: BeautifulSoup) -> list[Tag]:
+    """Select list cards, using legacy li markup only when no div cards exist."""
+    return soup.find_all("div", class_="list-rst") or soup.find_all("li", class_="list-rst")
 
 
 def build_search_url_and_params(
@@ -269,11 +275,7 @@ class RestaurantSearchRequest:
             # Invalid areas otherwise fall back to national ranking; return no results instead.
             return []
 
-        # Find restaurant list items using current and fallback selectors.
-        restaurant_items = soup.find_all("div", class_="list-rst")
-        if not restaurant_items:
-            # Fallback selector.
-            restaurant_items = soup.find_all("li", class_="list-rst")
+        restaurant_items = _find_restaurant_cards(soup)
 
         for item in restaurant_items:
             try:
