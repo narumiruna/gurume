@@ -47,7 +47,7 @@ async def search_restaurants(args) -> None:
 
     request = _build_request(args, reservation_date)
     _print_search_params(args, reservation_date)
-    response = await request.do()
+    response = await request.search()
     _handle_response(response)
 
 
@@ -116,18 +116,13 @@ def _print_restaurants(response) -> None:
         print()
 
 
-def main() -> None:
-    """主函數"""
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Tabelog 餐廳搜尋工具")
-
-    # 基本搜尋參數
     parser.add_argument("-a", "--area", help="地區或車站")
     parser.add_argument("-k", "--keyword", help="關鍵字")
     parser.add_argument("-d", "--date", help="預約日期 (YYYYMMDD, today, tomorrow)")
     parser.add_argument("-t", "--time", help="預約時間 (HHMM)")
     parser.add_argument("-p", "--party-size", type=int, help="預約人數")
-
-    # 搜尋選項
     parser.add_argument("--max-pages", type=int, default=1, help="最大頁數")
     parser.add_argument(
         "--sort",
@@ -135,11 +130,12 @@ def main() -> None:
         help="排序方式: trend(標準), rt(評分), rvcn(評論數), nod(新開)",
     )
     parser.add_argument("--price-range", help="價格範圍 (例: C003 代表晚餐2000-3000)")
+    return parser
 
-    # 解析參數
-    args = parser.parse_args()
 
-    # 執行搜尋
+def main() -> None:
+    """主函數"""
+    args = _build_parser().parse_args()
     asyncio.run(search_restaurants(args))
 
 

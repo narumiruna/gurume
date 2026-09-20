@@ -16,13 +16,15 @@ from rich.table import Table
 from .area_mapping import get_area_slug
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
-from .restaurant import SortType
+from .restaurant import Restaurant
+from .restaurant import resolve_sort_type
 from .search import SearchRequest
 from .search import SearchResponse
 from .search import SearchStatus
 from .server_helpers import _build_search_error_output
 from .server_helpers import _build_search_output
 from .server_helpers import _build_tool_error
+from .server_helpers import _restaurant_output_data
 from .server_helpers import _to_restaurant_outputs
 from .server_models import RestaurantSearchOutput
 from .server_models import SortOption as ServerSortOption
@@ -56,13 +58,6 @@ class SortOption(StrEnum):
     NEW_OPEN = "new-open"
     STANDARD = "standard"
 
-
-SORT_TYPE_MAP = {
-    SortOption.RANKING: SortType.RANKING,
-    SortOption.REVIEW_COUNT: SortType.REVIEW_COUNT,
-    SortOption.NEW_OPEN: SortType.NEW_OPEN,
-    SortOption.STANDARD: SortType.STANDARD,
-}
 
 NATIONAL_AREAS = {"全国"}
 
@@ -99,20 +94,8 @@ def _resolve_search_filters(
     return ResolvedSearchFilters(keyword=keyword, cuisine=None, genre_code=None)
 
 
-def _build_json_data(restaurants: Sequence) -> list[dict[str, object]]:
-    return [
-        {
-            "name": r.name,
-            "rating": r.rating,
-            "review_count": r.review_count,
-            "area": r.area,
-            "genres": r.genres,
-            "url": r.url,
-            "lunch_price": r.lunch_price,
-            "dinner_price": r.dinner_price,
-        }
-        for r in restaurants
-    ]
+def _build_json_data(restaurants: Sequence[Restaurant]) -> list[dict[str, object]]:
+    return [_restaurant_output_data(restaurant) for restaurant in restaurants]
 
 
 def _server_sort_option(sort: SortOption) -> ServerSortOption:
@@ -292,7 +275,7 @@ def search(
     filters = _resolve_search_filters(cuisine, keyword, status_console)
     if _unmapped_area_warning(area, filters.genre_code):
         status_console.print(f"[yellow]警告：無法精準映射地區「{area}」，搜尋結果可能包含其他地區[/yellow]")
-    sort_type = SORT_TYPE_MAP[sort]
+    sort_type = resolve_sort_type(sort)
 
     # Execute search.
     status_console.print("[green]搜尋中...[/green]")

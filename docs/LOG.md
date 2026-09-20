@@ -82,3 +82,4 @@
 2026-05-30 | feat(search): expand Tabelog leaf subarea catalog coverage (#local)
 2026-07-03 | refactor(repo): remove ponytail audit cleanup bloat (#87)
 2026-08-29 | fix(http): restore Tabelog requests with Safari impersonation (#88)
+2026-09-21 | refactor(core): unify cuisine metadata, output projection, sort conversion, and example parser tests without changing public behavior (#local)

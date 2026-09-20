@@ -10,13 +10,14 @@ Current test files:
 - `test_cache.py`: in-memory cache helpers.
 - `test_cli.py`: Typer CLI commands and output behavior.
 - `test_detail.py`: restaurant detail parsing and fetch behavior.
-- `test_genre_mapping.py`: cuisine-name, genre-code, and path-segment mapping.
+- `test_genre_mapping.py`: ordered cuisine mappings, mutable lookup compatibility, and skill-reference consistency.
 - `test_integration.py`: mocked end-to-end search flows.
 - `test_models.py`: dataclass and enum behavior.
 - `test_restaurant.py`: core restaurant search request and HTML parsing.
 - `test_retry.py`: retry and HTTP error handling helpers.
 - `test_search.py`: higher-level search response, metadata, pagination, and URL construction.
 - `test_server.py`: FastMCP tool wrappers, structured outputs, and transport options.
+- `test_server_helpers.py`: shared restaurant output fields, raw CLI URLs, and MCP URL validation.
 - `test_suggest.py`: area and keyword suggestion parsing.
 - `integration/test_cuisine_filter.py`: opt-in live Tabelog cuisine-filter checks.
 
@@ -61,3 +62,5 @@ Only the `integration` marker is currently declared. Live integration tests are 
 - When changing CLI, TUI-adjacent behavior, MCP tools, search metadata, parsing, or mappings, update the corresponding
   focused test file.
 - Avoid relying on exact live Tabelog counts in default tests; upstream markup and data can change without warning.
+- Exercise `search()` and `search_sync()` in workflow tests; reserve `do()` and `do_sync()` for compatibility tests.
+- Test the example CLI arguments through `examples.cli_example._build_parser()` rather than copying its options.

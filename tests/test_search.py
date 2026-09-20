@@ -243,7 +243,7 @@ class TestSearchRequest:
         assert restaurant_request.page == 2
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_respects_start_page(self, mock_get, mock_html_response):
+    def test_search_sync_respects_start_page(self, mock_get, mock_html_response):
         """Test synchronous search starts from the requested page"""
         mock_response = Mock()
         mock_response.text = mock_html_response
@@ -258,7 +258,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert response.meta is not None
@@ -269,7 +269,7 @@ class TestSearchRequest:
         assert called_params["PG"] == "2"
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_single_page(self, mock_get, mock_html_response):
+    def test_search_sync_single_page(self, mock_get, mock_html_response):
         """Test synchronous search for single page"""
         mock_response = Mock()
         mock_response.text = mock_html_response
@@ -283,7 +283,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 2
@@ -327,7 +327,7 @@ class TestSearchRequest:
 
         request = SearchRequest(genre_code="RC0107", sort_type=SortType.RANKING, max_pages=1, include_meta=True)
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert response.meta is not None
@@ -373,7 +373,7 @@ class TestSearchRequest:
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert response.meta is not None
@@ -415,7 +415,7 @@ class TestSearchRequest:
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert response.meta is not None
@@ -469,7 +469,7 @@ class TestSearchRequest:
 
         request = SearchRequest(area="大阪", keyword="お好み焼き", sort_type=SortType.RANKING, max_pages=1)
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert response.meta is not None
@@ -482,7 +482,7 @@ class TestSearchRequest:
         ]
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_multiple_pages(self, mock_get, mock_html_response):
+    def test_search_sync_multiple_pages(self, mock_get, mock_html_response):
         """Test synchronous search for multiple pages"""
         mock_response = Mock()
         mock_response.text = mock_html_response
@@ -496,7 +496,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 6  # 2 restaurants per page * 3 pages
@@ -506,7 +506,7 @@ class TestSearchRequest:
         assert mock_get.call_count == 3
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_no_results(self, mock_get):
+    def test_search_sync_no_results(self, mock_get):
         """Test synchronous search with no results"""
         mock_response = Mock()
         mock_response.text = "<html><body><span class='c-page-count__num'>0</span></body></html>"
@@ -520,7 +520,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.NO_RESULTS
         assert len(response.restaurants) == 0
@@ -528,19 +528,19 @@ class TestSearchRequest:
         assert response.meta.total_count == 0
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_http_error(self, mock_get):
+    def test_search_sync_http_error(self, mock_get):
         """Test synchronous search with HTTP error"""
         mock_get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
         request = SearchRequest(area="銀座", keyword="寿司")
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.ERROR
         assert response.error_message is not None and "404 Not Found" in response.error_message
         assert len(response.restaurants) == 0
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_without_meta(self, mock_get, mock_html_response):
+    def test_search_sync_without_meta(self, mock_get, mock_html_response):
         """Test synchronous search without metadata"""
         mock_response = Mock()
         mock_response.text = mock_html_response
@@ -554,7 +554,7 @@ class TestSearchRequest:
             include_meta=False,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 2
@@ -562,7 +562,7 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async_single_page(self, mock_client_class, mock_html_response):
+    async def test_search_async_single_page(self, mock_client_class, mock_html_response):
         """Test asynchronous search for single page"""
         from unittest.mock import AsyncMock
 
@@ -584,7 +584,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = await request.do()
+        response = await request.search()
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 2
@@ -602,7 +602,7 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async_multiple_pages(self, mock_client_class, mock_html_response):
+    async def test_search_async_multiple_pages(self, mock_client_class, mock_html_response):
         """Test asynchronous search for multiple pages"""
         from unittest.mock import AsyncMock
 
@@ -624,7 +624,7 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = await request.do()
+        response = await request.search()
 
         assert response.status == SearchStatus.SUCCESS
         assert len(response.restaurants) == 4  # 2 restaurants per page * 2 pages
@@ -635,7 +635,7 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async_http_error(self, mock_client_class):
+    async def test_search_async_http_error(self, mock_client_class):
         """Test asynchronous search with HTTP error"""
         from unittest.mock import AsyncMock
 
@@ -647,7 +647,7 @@ class TestSearchRequest:
         mock_client_class.return_value = mock_client
 
         request = SearchRequest(area="銀座", keyword="寿司")
-        response = await request.do()
+        response = await request.search()
 
         assert response.status == SearchStatus.ERROR
         assert response.error_message is not None and "404 Not Found" in response.error_message
@@ -655,7 +655,7 @@ class TestSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async_no_results(self, mock_client_class):
+    async def test_search_async_no_results(self, mock_client_class):
         """Test asynchronous search with no results"""
         from unittest.mock import AsyncMock
 
@@ -677,12 +677,35 @@ class TestSearchRequest:
             include_meta=True,
         )
 
-        response = await request.do()
+        response = await request.search()
 
         assert response.status == SearchStatus.NO_RESULTS
         assert len(response.restaurants) == 0
         assert response.meta is not None
         assert response.meta.total_count == 0
+
+    def test_do_sync_alias_delegates_to_search_sync(self):
+        request = SearchRequest(area="銀座")
+        expected = SearchResponse(status=SearchStatus.NO_RESULTS)
+
+        with patch.object(request, "search_sync", return_value=expected) as mock_search_sync:
+            result = request.do_sync()
+
+        assert result is expected
+        mock_search_sync.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_do_alias_delegates_to_search(self):
+        from unittest.mock import AsyncMock
+
+        request = SearchRequest(area="銀座")
+        expected = SearchResponse(status=SearchStatus.NO_RESULTS)
+
+        with patch.object(request, "search", new_callable=AsyncMock, return_value=expected) as mock_search:
+            result = await request.do()
+
+        assert result is expected
+        mock_search.assert_awaited_once_with()
 
 
 # ============================================================================

@@ -7,11 +7,13 @@ import pytest
 from curl_cffi.requests import exceptions as request_errors
 
 from gurume.http_client import DEFAULT_IMPERSONATE
+from gurume.restaurant import SORT_TYPE_BY_OPTION
 from gurume.restaurant import PriceRange
 from gurume.restaurant import Restaurant
 from gurume.restaurant import RestaurantSearchRequest
 from gurume.restaurant import SortType
 from gurume.restaurant import query_restaurants
+from gurume.restaurant import resolve_sort_type
 
 
 class TestRestaurantSearchRequest:
@@ -192,7 +194,7 @@ class TestRestaurantSearchRequest:
         assert restaurants[0].dinner_price == "￥1,000～￥1,999"
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync(self, mock_get, mock_html_response):
+    def test_search_sync(self, mock_get, mock_html_response):
         """Test synchronous search"""
         mock_response = Mock()
         mock_response.text = mock_html_response
@@ -223,7 +225,7 @@ class TestRestaurantSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async(self, mock_client_class, mock_html_response):
+    async def test_search_async(self, mock_client_class, mock_html_response):
         """Test asynchronous search"""
         from unittest.mock import AsyncMock
 
@@ -259,7 +261,7 @@ class TestRestaurantSearchRequest:
         assert "headers" not in mock_client.get.call_args.kwargs
 
     @patch("curl_cffi.requests.get")
-    def test_do_sync_http_error(self, mock_get):
+    def test_search_sync_http_error(self, mock_get):
         """Test handling HTTP errors in synchronous search"""
         mock_get.side_effect = request_errors.HTTPError("404 Not Found", 0, Mock(status_code=404))
 
@@ -270,7 +272,7 @@ class TestRestaurantSearchRequest:
 
     @pytest.mark.asyncio
     @patch("curl_cffi.requests.AsyncSession")
-    async def test_do_async_http_error(self, mock_client_class):
+    async def test_search_async_http_error(self, mock_client_class):
         """Test handling HTTP errors in asynchronous search"""
         from unittest.mock import AsyncMock
 
@@ -285,6 +287,42 @@ class TestRestaurantSearchRequest:
 
         with pytest.raises(request_errors.HTTPError):
             await request.search(use_cache=False, use_retry=False)
+
+    def test_do_sync_alias_delegates_to_search_sync(self):
+        request = RestaurantSearchRequest(area="銀座")
+        expected = [Restaurant(name="テスト", url="https://tabelog.com/test/")]
+
+        with patch.object(request, "search_sync", return_value=expected) as mock_search_sync:
+            result = request.do_sync()
+
+        assert result is expected
+        mock_search_sync.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_do_alias_delegates_to_search(self):
+        from unittest.mock import AsyncMock
+
+        request = RestaurantSearchRequest(area="銀座")
+        expected = [Restaurant(name="テスト", url="https://tabelog.com/test/")]
+
+        with patch.object(request, "search", new_callable=AsyncMock, return_value=expected) as mock_search:
+            result = await request.do()
+
+        assert result is expected
+        mock_search.assert_awaited_once_with()
+
+
+def test_external_sort_options_resolve_to_tabelog_sort_types():
+    """External CLI and MCP sort names share one stable mapping."""
+    expected = {
+        "ranking": SortType.RANKING,
+        "review-count": SortType.REVIEW_COUNT,
+        "new-open": SortType.NEW_OPEN,
+        "standard": SortType.STANDARD,
+    }
+
+    assert expected == SORT_TYPE_BY_OPTION
+    assert {option: resolve_sort_type(option) for option in expected} == expected
 
 
 class TestQueryRestaurants:
@@ -310,7 +348,7 @@ class TestQueryRestaurants:
         assert restaurants[0].name == "テスト1"
         assert restaurants[1].name == "テスト2"
 
-        # Check that do_sync was called
+        # Check that search_sync was called.
         mock_search_sync.assert_called_once()
 
     @patch("gurume.restaurant.RestaurantSearchRequest.search_sync")
@@ -353,7 +391,7 @@ class TestQueryRestaurants:
         assert len(restaurants2) == 1
         assert restaurants1[0].name == restaurants2[0].name
 
-        # do_sync should only be called once due to caching
+        # search_sync should only be called once due to caching.
         mock_search_sync.assert_called_once()
 
     @patch("gurume.restaurant.RestaurantSearchRequest.search_sync")
@@ -371,7 +409,7 @@ class TestQueryRestaurants:
         # Second call with different parameters should not use cache
         query_restaurants(area="渋谷", keyword="焼肉")
 
-        # do_sync should be called twice
+        # search_sync should be called twice.
         assert mock_search_sync.call_count == 2
 
 

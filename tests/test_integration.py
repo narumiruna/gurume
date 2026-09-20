@@ -108,7 +108,7 @@ class TestIntegration:
             has_private_room=True,
         )
 
-        restaurants = request.do_sync()
+        restaurants = request.search_sync()
 
         assert len(restaurants) == 1
         restaurant = restaurants[0]
@@ -184,7 +184,7 @@ class TestIntegration:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status.value == "success"
         assert len(response.restaurants) == 2
@@ -247,7 +247,7 @@ class TestIntegration:
             include_meta=True,
         )
 
-        response = await request.do()
+        response = await request.search()
 
         assert response.status.value == "success"
         assert len(response.restaurants) == 1
@@ -280,7 +280,7 @@ class TestIntegration:
         mock_get.side_effect = Exception("Network error")
 
         request = SearchRequest(area="銀座", keyword="寿司")
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status.value == "error"
         assert response.error_message is not None and "Network error" in response.error_message
@@ -312,7 +312,7 @@ class TestIntegration:
             include_meta=True,
         )
 
-        response = request.do_sync()
+        response = request.search_sync()
 
         assert response.status.value == "no_results"
         assert len(response.restaurants) == 0
