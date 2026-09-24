@@ -37,12 +37,12 @@ classifiers     = [
   "Typing :: Typed",
 ]
 dependencies    = [
-  "beautifulsoup4>=4.14.3",
-  "curl-cffi>=0.15.0",
-  "mcp[cli]>=1.27.1",
-  "pydantic>=2.13.4",
-  "textual>=8.2.6",
-  "typer>=0.25.1",
+  "beautifulsoup4>=4.15.0",
+  "curl-cffi>=0.16.3",
+  "mcp[cli]>=1.27.1,<2",
+  "pydantic>=2.13.5",
+  "textual>=8.2.8",
+  "typer>=0.27.2",
 ]
 
 [project.urls]
@@ -56,16 +56,16 @@ gurume = "gurume.cli:main"
 
 [dependency-groups]
 dev  = [
-  "pytest>=9.0.3",
-  "pytest-asyncio>=1.3.0",
+  "pytest>=9.1.1",
+  "pytest-asyncio>=1.4.0",
   "pytest-cov>=7.1.0",
-  "ruff>=0.15.13",
-  "ty>=0.0.37",
+  "ruff>=0.16.8",
+  "ty>=0.0.83",
 ]
 docs = [
   "mkdocs>=1.6.1",
-  "mkdocs-material>=9.7.6",
-  "mkdocstrings[python]>=1.0.4",
+  "mkdocs-material>=9.7.7",
+  "mkdocstrings[python]>=1.0.6",
 ]
 
 [build-system]
