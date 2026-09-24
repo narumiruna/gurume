@@ -30,6 +30,7 @@
 - Tabelog leaf subareas can be snapshotted from `#js-leftnavi-area-scroll`: prefecture pages expose parent paths and parent pages expose leaf paths. The leaf name `山形` is intentionally shadowed by the legacy prefecture-prefix lookup; use the `山形市` alias for the leaf path.
 - Restaurant output projection must keep CLI `json-list` URLs raw while MCP uses `_as_http_url`; validating the URL before the Pydantic restaurant model also preserves existing invalid-URL error text.
 - MCP output conversion intentionally runs outside the caught request operation; keep malformed-output errors and cancellation propagating rather than converting them into request-error envelopes.
+- `mcp` 2.x removes `mcp.server.fastmcp.FastMCP`; keep the 1.x upper bound until the server and MCP tests migrate to `MCPServer`.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.
