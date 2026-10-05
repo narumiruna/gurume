@@ -525,6 +525,22 @@ class TestSearchCommand:
         assert payload["applied_filters"]["genre_code"] == "RC0201"
         assert "搜尋錯誤" in result.stderr
 
+    def test_json_envelope_403_explains_access_denial(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ", http_status=403)
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = CliRunner().invoke(app, ["search", "--area", "東京", "--output", "json-envelope"])
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 1
+        assert payload["error"]["error_code"] == "upstream_unavailable"
+        assert payload["error"]["retryable"] is False
+        assert "HTTP 403" in payload["error"]["message"]
+        assert "重試相同請求通常無效" in result.stderr
+
     def test_search_help_lists_json_envelope_outputs(self):
         import re
 

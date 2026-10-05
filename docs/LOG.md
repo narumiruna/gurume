@@ -87,3 +87,5 @@
 2026-09-21 | refactor(core): simplify error envelopes, card selection, serialization, test fixtures, and catalog validation without changing behavior (#local)
 2026-09-24 | chore(deps): update Python packages while retaining MCP 1.x compatibility (#local)
 2026-10-05 | chore(mcp): configure the project-local Pi Gurume server (#local)
+2026-10-05 | research(mcp): verify live tool scenarios and identify Cloudflare 403 search and detail failures (#local)
+2026-10-05 | fix(mcp): classify upstream 403 as non-retryable and add opt-in stdio live health checks (#local)

@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Annotated
 from typing import Literal
 
+from curl_cffi.requests import exceptions as request_errors
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 from pydantic import Field
@@ -16,6 +17,7 @@ from pydantic import Field
 from .detail import RestaurantDetailRequest
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
+from .http_client import http_status_code
 from .search import SearchRequest
 from .search import SearchStatus
 from .server_helpers import _build_cuisine_list_error_output
@@ -30,6 +32,7 @@ from .server_helpers import _search_validation_suggested_action
 from .server_helpers import _to_detail_output
 from .server_helpers import _to_restaurant_outputs
 from .server_helpers import _to_suggestion_outputs
+from .server_helpers import _upstream_access_denied_error
 from .server_helpers import _validate_detail_params
 from .server_helpers import _validate_search_params
 from .server_models import CourseOutput
@@ -254,14 +257,18 @@ async def tabelog_search_restaurants(
             detail=detail,
         )
     except RuntimeError as e:
-        error = ToolErrorOutput(
-            error_code="upstream_unavailable",
-            message="Restaurant search failed because the upstream service did not return usable results.",
-            retryable=True,
-            suggested_action=(
-                "Retry later, or validate the area and cuisine with suggestion tools before searching again."
-            ),
-            detail=str(e),
+        error = (
+            _upstream_access_denied_error("Restaurant search", str(e))
+            if http_status_code(e) == 403
+            else ToolErrorOutput(
+                error_code="upstream_unavailable",
+                message="Restaurant search failed because the upstream service did not return usable results.",
+                retryable=True,
+                suggested_action=(
+                    "Retry later, or validate the area and cuisine with suggestion tools before searching again."
+                ),
+                detail=str(e),
+            )
         )
     except Exception as e:  # noqa: BLE001
         error = ToolErrorOutput(
@@ -295,12 +302,16 @@ async def tabelog_search_restaurants(
                 extra_warnings=response.warnings,
             )
 
-        error = ToolErrorOutput(
-            error_code="upstream_unavailable",
-            message="Restaurant search failed because Tabelog returned an error response.",
-            retryable=True,
-            suggested_action="Validate the area or cuisine first, then retry the search.",
-            detail=response.error_message,
+        error = (
+            _upstream_access_denied_error("Restaurant search", response.error_message)
+            if response.http_status == 403
+            else ToolErrorOutput(
+                error_code="upstream_unavailable",
+                message="Restaurant search failed because Tabelog returned an error response.",
+                retryable=True,
+                suggested_action="Validate the area or cuisine first, then retry the search.",
+                detail=response.error_message,
+            )
         )
 
     return _build_search_error_output(
@@ -375,6 +386,18 @@ async def tabelog_get_restaurant_details(
                 "only basic restaurant information is needed."
             ),
             detail=str(e),
+        )
+    except request_errors.HTTPError as e:
+        error = (
+            _upstream_access_denied_error("Restaurant detail request", str(e))
+            if http_status_code(e) == 403
+            else ToolErrorOutput(
+                error_code="upstream_unavailable",
+                message="Restaurant detail request failed because Tabelog returned an HTTP error.",
+                retryable=True,
+                suggested_action="Verify the restaurant URL from search results and retry later.",
+                detail=str(e),
+            )
         )
     except RuntimeError as e:
         error = ToolErrorOutput(

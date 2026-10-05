@@ -25,6 +25,7 @@ from .server_helpers import _build_search_error_output
 from .server_helpers import _build_search_output
 from .server_helpers import _restaurant_output_data
 from .server_helpers import _to_restaurant_outputs
+from .server_helpers import _upstream_access_denied_error
 from .server_models import RestaurantSearchOutput
 from .server_models import SortOption as ServerSortOption
 from .server_models import ToolErrorOutput
@@ -180,7 +181,9 @@ def _invalid_search_error(detail: str) -> ToolErrorOutput:
     )
 
 
-def _upstream_search_error(detail: str | None) -> ToolErrorOutput:
+def _upstream_search_error(detail: str | None, http_status: int | None = None) -> ToolErrorOutput:
+    if http_status == 403:
+        return _upstream_access_denied_error("Restaurant search", detail)
     return ToolErrorOutput(
         error_code="upstream_unavailable",
         message="Restaurant search failed because Tabelog returned an error response.",
@@ -290,13 +293,15 @@ def search(
 
     if response.status.value == "error":
         status_console.print(f"[red]搜尋錯誤：{response.error_message}[/red]")
+        if response.http_status == 403:
+            status_console.print("[yellow]Tabelog 拒絕存取 (HTTP 403)；重試相同請求通常無效。[/yellow]")
         _output_error_envelope_if_requested(
             output,
             area=area,
             filters=filters,
             sort=sort,
             limit=limit,
-            error=_upstream_search_error(response.error_message),
+            error=_upstream_search_error(response.error_message, response.http_status),
         )
         raise typer.Exit(1)
 

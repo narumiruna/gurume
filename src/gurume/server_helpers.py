@@ -37,6 +37,19 @@ from .suggest import KeywordSuggestion
 HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
 
 
+def _upstream_access_denied_error(operation: str, detail: str | None) -> ToolErrorOutput:
+    return ToolErrorOutput(
+        error_code="upstream_unavailable",
+        message=f"{operation} failed because Tabelog denied access (HTTP 403).",
+        retryable=False,
+        suggested_action=(
+            "Do not repeatedly retry the same request. Check Tabelog access from an authorized network "
+            "or use a permitted alternative data source."
+        ),
+        detail=detail,
+    )
+
+
 def _search_validation_suggested_action(
     *,
     detail: str,
