@@ -109,6 +109,13 @@ class TestSearchResponse:
         assert response.sort_by("rating").http_status == 403
         assert response.top(1).http_status == 403
 
+    def test_http_error_status_is_serialized_when_available(self):
+        response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ", http_status=403)
+
+        assert response.to_dict()["http_status"] == 403
+        assert json.loads(response.to_json())["http_status"] == 403
+        assert "http_status" not in SearchResponse(status=SearchStatus.SUCCESS).to_dict()
+
 
 @pytest.mark.parametrize("status", list(SearchStatus))
 @pytest.mark.parametrize("include_meta", [False, True])

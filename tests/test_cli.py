@@ -569,6 +569,8 @@ class TestSearchCommand:
         plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
         assert "json-envelope" in plain
         assert "json-list" in plain
+        assert "Cuisine name in Japanese" in plain
+        assert "list-cuisines" in plain
 
     def test_limit_must_be_positive(self):
         import re

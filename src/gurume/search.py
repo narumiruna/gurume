@@ -188,13 +188,16 @@ class SearchResponse:
         Returns:
             Dictionary containing all response data.
         """
-        return {
+        data = {
             "status": self.status.value,
             "restaurants": [asdict(r) for r in self.restaurants],
             "meta": asdict(self.meta) if self.meta else None,
             "error_message": self.error_message,
             "warnings": list(self.warnings),
         }
+        if self.http_status is not None:
+            data["http_status"] = self.http_status
+        return data
 
 
 @dataclass

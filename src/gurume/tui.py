@@ -566,12 +566,16 @@ class TabelogApp(App):
             return
 
         self.restaurants = []
+        self.selected_restaurant = None
         self.query_one("#results-table", ResultsTable).clear()
         detail_content.update("No restaurants found.")
 
     def _update_search_error(self, error: BaseException) -> None:
+        self.restaurants = []
+        self.selected_restaurant = None
         message = "Search cancelled." if isinstance(error, WorkerCancelled) else f"Search failed: {error!s}"
         with contextlib.suppress(*TUI_UPDATE_EXCEPTIONS):
+            self.query_one("#results-table", ResultsTable).clear()
             self.query_one("#detail-content", Static).update(message)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:

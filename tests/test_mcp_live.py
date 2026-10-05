@@ -23,6 +23,20 @@ def test_summarize_preserves_errors_and_requires_results() -> None:
     assert summarize(CallToolResult(content=[], isError=True))["status"] == "error"
 
 
+def test_summarize_requires_usable_restaurant_details() -> None:
+    url = "https://tabelog.com/tokyo/A1301/A130101/13000001/"
+    assert summarize(_response("success"), require_restaurant=True)["status"] == "error"
+    assert summarize(_response("success", restaurant={"name": " ", "url": url}), require_restaurant=True)[
+        "status"
+    ] == "error"
+    assert summarize(_response("success", restaurant={"name": "Sushi", "url": ""}), require_restaurant=True)[
+        "status"
+    ] == "error"
+    assert summarize(_response("success", restaurant={"name": "Sushi", "url": url}), require_restaurant=True) == {
+        "status": "success"
+    }
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("search_available", [False, True])
 async def test_check_live_reports_upstream_state(search_available: bool) -> None:
@@ -37,7 +51,9 @@ async def test_check_live_reports_upstream_state(search_available: bool) -> None
         _response("success", returned_count=29),
         _response("success", returned_count=10),
         search,
-        _response("success") if search_available else _response("error", error={"error_code": "upstream_unavailable"}),
+        _response("success", restaurant={"name": "Sushi", "url": url})
+        if search_available
+        else _response("error", error={"error_code": "upstream_unavailable"}),
     ]
 
     @asynccontextmanager
@@ -55,6 +71,31 @@ async def test_check_live_reports_upstream_state(search_available: bool) -> None
     assert result["checks"]["search"]["status"] == ("success" if search_available else "error")
     assert result["checks"]["details"]["status"] == ("success" if search_available else "error")
     assert session.call_tool.call_args.args[1]["restaurant_url"] == url
+
+
+@pytest.mark.asyncio
+async def test_check_live_rejects_empty_detail_after_successful_search() -> None:
+    url = "https://tabelog.com/tokyo/A1301/A130101/13000001/"
+    session = AsyncMock()
+    session.call_tool.side_effect = [
+        _response("success", returned_count=29),
+        _response("success", returned_count=10),
+        _response("success", returned_count=1, items=[{"url": url}]),
+        _response("success", restaurant=None),
+    ]
+
+    @asynccontextmanager
+    async def fake_stdio(_server):
+        yield None, None
+
+    with patch("scripts.check_mcp_live.stdio_client", fake_stdio), patch(
+        "scripts.check_mcp_live.ClientSession"
+    ) as client:
+        client.return_value.__aenter__.return_value = session
+        result = await check_live()
+
+    assert result["status"] == "degraded"
+    assert result["checks"]["details"]["message"] == "Detail response is missing a restaurant name or URL"
 
 
 @pytest.mark.asyncio

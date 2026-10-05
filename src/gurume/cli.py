@@ -245,7 +245,10 @@ def _output_search_results(
 def search(
     area: Annotated[str | None, typer.Option("--area", "-a", help="Search area (e.g. Tokyo, Osaka).")] = None,
     keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Search keyword (e.g. sushi).")] = None,
-    cuisine: Annotated[str | None, typer.Option("--cuisine", "-c", help="Cuisine type (e.g. sushi).")] = None,
+    cuisine: Annotated[
+        str | None,
+        typer.Option("--cuisine", "-c", help="Cuisine name in Japanese (see 'gurume list-cuisines')."),
+    ] = None,
     sort: Annotated[SortOption, typer.Option("--sort", "-s", help="Sort order.")] = SortOption.RANKING,
     limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="Number of results to display.")] = 20,
     output: Annotated[OutputFormat, typer.Option("--output", "-o", help="Output format.")] = OutputFormat.TABLE,

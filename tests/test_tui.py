@@ -4,9 +4,11 @@ from unittest.mock import AsyncMock
 from unittest.mock import patch
 
 import pytest
+from textual.widgets import DataTable
 from textual.widgets import Input
 from textual.widgets import Static
 
+from gurume.restaurant import Restaurant
 from gurume.search import SearchResponse
 from gurume.search import SearchStatus
 from gurume.suggest import TabelogSuggestUnavailableError
@@ -33,6 +35,34 @@ async def test_tui_search_failures_are_english(response: SearchResponse, expecte
             await app.perform_search()
 
         assert str(app.query_one("#detail-content", Static).content) == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure_status", [SearchStatus.ERROR, SearchStatus.NO_RESULTS])
+async def test_tui_clears_old_results_after_failed_search(failure_status: SearchStatus) -> None:
+    restaurant = Restaurant(name="Old result", url="https://tabelog.com/tokyo/A1301/A130101/13000001/")
+    app = TabelogApp()
+    async with app.run_test():
+        app.query_one("#area-input", Input).value = "Tokyo"
+        with patch(
+            "gurume.tui.SearchRequest.search",
+            new_callable=AsyncMock,
+            side_effect=[
+                SearchResponse(status=SearchStatus.SUCCESS, restaurants=[restaurant]),
+                SearchResponse(status=failure_status, error_message="HTTP Error 403: ", http_status=403),
+            ],
+        ):
+            await app.perform_search()
+            assert app.query_one("#results-table", DataTable).row_count == 1
+            app.selected_restaurant = restaurant
+            app.query_one("#area-input", Input).value = "Osaka"
+            await app.perform_search()
+
+        assert app.restaurants == []
+        assert app.selected_restaurant is None
+        assert app.query_one("#results-table", DataTable).row_count == 0
+        expected = "Search failed:" if failure_status == SearchStatus.ERROR else "No restaurants found."
+        assert str(app.query_one("#detail-content", Static).content).startswith(expected)
 
 
 @pytest.mark.asyncio

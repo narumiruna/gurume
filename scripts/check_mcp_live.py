@@ -13,7 +13,9 @@ from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult
 
 
-def summarize(result: CallToolResult, *, require_items: bool = False) -> dict[str, Any]:
+def summarize(
+    result: CallToolResult, *, require_items: bool = False, require_restaurant: bool = False
+) -> dict[str, Any]:
     """Keep live check output small while preserving structured failure guidance."""
     data = result.structuredContent
     if result.isError or not isinstance(data, dict):
@@ -22,6 +24,12 @@ def summarize(result: CallToolResult, *, require_items: bool = False) -> dict[st
     status = data.get("status")
     if status != "success":
         return {"status": status, "error": data.get("error")}
+    if require_restaurant:
+        restaurant = data.get("restaurant")
+        if not isinstance(restaurant, dict) or any(
+            not isinstance(restaurant.get(key), str) or not restaurant[key].strip() for key in ("name", "url")
+        ):
+            return {"status": "error", "message": "Detail response is missing a restaurant name or URL"}
     count = data.get("returned_count")
     if require_items and (not isinstance(count, int) or count < 1):
         return {"status": "no_results", "message": "Expected at least one result"}
@@ -58,7 +66,7 @@ async def check_live(restaurant_url: str | None = None) -> dict[str, Any]:
                     "fetch_courses": False,
                 },
             )
-            checks["details"] = summarize(response)
+            checks["details"] = summarize(response, require_restaurant=True)
         else:
             checks["details"] = {
                 "status": "skipped",
