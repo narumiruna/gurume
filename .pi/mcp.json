@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "gurume": {
+      "command": "uv",
+      "args": [
+        "run",
+        "gurume",
+        "mcp"
+      ],
+      "description": "Search Japanese restaurants on Tabelog with structured Gurume tools"
+    }
+  }
+}
