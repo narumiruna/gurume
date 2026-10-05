@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 
 from gurume.exceptions import InvalidParameterError
@@ -132,6 +134,27 @@ class TestRestaurantSearchRequest:
 
         with pytest.raises(InvalidParameterError):
             RestaurantSearchRequest(reservation_time="invalid")
+
+    @pytest.mark.parametrize(
+        ("make_request", "expected"),
+        [
+            (
+                lambda: RestaurantSearchRequest(reservation_date="invalid"),
+                "reservation_date must be in YYYYMMDD format",
+            ),
+            (lambda: RestaurantSearchRequest(reservation_time="invalid"), "reservation_time must be in HHMM format"),
+            (lambda: RestaurantSearchRequest(party_size=0), "party_size must be between 1 and 100"),
+            (lambda: RestaurantSearchRequest(page=0), "page must be at least 1"),
+        ],
+    )
+    def test_validation_error_text_is_english(
+        self, make_request: Callable[[], RestaurantSearchRequest], expected: str
+    ) -> None:
+        with pytest.raises(InvalidParameterError) as error:
+            make_request()
+
+        assert expected in str(error.value)
+        assert str(error.value).isascii()
 
     def test_build_params(self):
         """Test building search parameters"""

@@ -89,3 +89,4 @@
 2026-10-05 | chore(mcp): configure the project-local Pi Gurume server (#local)
 2026-10-05 | research(mcp): verify live tool scenarios and identify Cloudflare 403 search and detail failures (#local)
 2026-10-05 | fix(mcp): classify upstream 403 as non-retryable and add opt-in stdio live health checks (#local)
+2026-10-05 | fix(ui): use English diagnostics across CLI, TUI, examples, and request validation (#local)

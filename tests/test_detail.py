@@ -124,15 +124,15 @@ class TestRestaurantDetailRequest:
         assert request.restaurant_url == "https://tabelog.com/tokyo/A1307/A130704/13053564/"
 
     def test_empty_url_raises_error(self):
-        with pytest.raises(InvalidParameterError, match="restaurant_url 不能為空"):
+        with pytest.raises(InvalidParameterError, match="restaurant_url cannot be empty"):
             RestaurantDetailRequest(restaurant_url="")
 
     def test_invalid_url_raises_error(self):
-        with pytest.raises(InvalidParameterError, match="restaurant_url 必須是 Tabelog URL"):
+        with pytest.raises(InvalidParameterError, match="restaurant_url must be a Tabelog URL"):
             RestaurantDetailRequest(restaurant_url="https://example.com/restaurant/")
 
     def test_invalid_max_review_pages(self):
-        with pytest.raises(InvalidParameterError, match="max_review_pages 必須 >= 1"):
+        with pytest.raises(InvalidParameterError, match="max_review_pages must be at least 1"):
             RestaurantDetailRequest(
                 restaurant_url="https://tabelog.com/tokyo/A1307/A130704/13053564/",
                 max_review_pages=0,

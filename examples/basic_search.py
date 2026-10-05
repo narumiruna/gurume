@@ -73,7 +73,7 @@ async def async_search():
 
     response = await request.search()
 
-    print(f"搜尋狀態: {response.status}")
+    print(f"Search status: {response.status}")
     if response.meta:
         print(f"總結果數: {response.meta.total_count}")
         print(f"當前頁: {response.meta.current_page}")

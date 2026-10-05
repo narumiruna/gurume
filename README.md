@@ -109,6 +109,7 @@ Notes:
 
 - For natural-language input, use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant — it decomposes free-form text into the structured flags above.
 - `--output json` returns a structured envelope (`status`, `items`, `meta`, `applied_filters`, `warnings`, `error`). Use `--output json-list` for the legacy list-only JSON shape.
+- CLI, TUI, and MCP diagnostics are in English; user-entered search terms and Tabelog restaurant data may remain in Japanese.
 - Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
 
 ### 🐍 Python Library

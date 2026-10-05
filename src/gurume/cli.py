@@ -32,7 +32,7 @@ from .server_models import ToolErrorOutput
 
 app = typer.Typer(
     name="gurume",
-    help="Gurume 餐廳搜尋工具 - 搜尋 Tabelog 上的日本餐廳",
+    help="Search Japanese restaurants on Tabelog with Gurume.",
     add_completion=False,
 )
 
@@ -79,16 +79,16 @@ def _resolve_search_filters(
     if cuisine:
         genre_code = get_genre_code(cuisine)
         if genre_code:
-            status_console.print(f"[cyan]使用料理類別過濾：{cuisine} ({genre_code})[/cyan]")
+            status_console.print(f"[cyan]Filtering by cuisine: {cuisine} ({genre_code})[/cyan]")
             return ResolvedSearchFilters(keyword=keyword, cuisine=cuisine, genre_code=genre_code)
 
-        status_console.print(f"[yellow]警告：未知的料理類別「{cuisine}」，將作為關鍵字搜尋[/yellow]")
+        status_console.print(f"[yellow]Warning: unknown cuisine '{cuisine}'; searching as a keyword instead.[/yellow]")
         return ResolvedSearchFilters(keyword=cuisine, cuisine=None, genre_code=None)
 
     if keyword:
         detected_genre_code = get_genre_code(keyword)
         if detected_genre_code:
-            status_console.print(f"[cyan]自動偵測料理類別：{keyword} ({detected_genre_code})[/cyan]")
+            status_console.print(f"[cyan]Detected cuisine: {keyword} ({detected_genre_code})[/cyan]")
             return ResolvedSearchFilters(keyword=None, cuisine=keyword, genre_code=detected_genre_code)
 
     return ResolvedSearchFilters(keyword=keyword, cuisine=None, genre_code=None)
@@ -243,12 +243,12 @@ def _output_search_results(
 
 @app.command()
 def search(
-    area: Annotated[str | None, typer.Option("--area", "-a", help="搜尋地區（例如：東京、大阪）")] = None,
-    keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="關鍵字（例如：寿司、ラーメン）")] = None,
-    cuisine: Annotated[str | None, typer.Option("--cuisine", "-c", help="料理類別（例如：すき焼き、寿司）")] = None,
-    sort: Annotated[SortOption, typer.Option("--sort", "-s", help="排序方式")] = SortOption.RANKING,
-    limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="顯示結果數量")] = 20,
-    output: Annotated[OutputFormat, typer.Option("--output", "-o", help="輸出格式")] = OutputFormat.TABLE,
+    area: Annotated[str | None, typer.Option("--area", "-a", help="Search area (e.g. Tokyo, Osaka).")] = None,
+    keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Search keyword (e.g. sushi).")] = None,
+    cuisine: Annotated[str | None, typer.Option("--cuisine", "-c", help="Cuisine type (e.g. sushi).")] = None,
+    sort: Annotated[SortOption, typer.Option("--sort", "-s", help="Sort order.")] = SortOption.RANKING,
+    limit: Annotated[int, typer.Option("--limit", "-n", min=1, help="Number of results to display.")] = 20,
+    output: Annotated[OutputFormat, typer.Option("--output", "-o", help="Output format.")] = OutputFormat.TABLE,
 ) -> None:
     """Search restaurants.
 
@@ -263,7 +263,7 @@ def search(
     )
 
     if not area and not keyword and not cuisine:
-        status_console.print("[red]錯誤：至少需要提供地區、關鍵字或料理類別之一[/red]")
+        status_console.print("[red]Error: provide at least one of --area, --keyword, or --cuisine.[/red]")
         _output_error_envelope_if_requested(
             output,
             area=area,
@@ -276,11 +276,13 @@ def search(
 
     filters = _resolve_search_filters(cuisine, keyword, status_console)
     if _unmapped_area_warning(area, filters.genre_code):
-        status_console.print(f"[yellow]警告：無法精準映射地區「{area}」，搜尋結果可能包含其他地區[/yellow]")
+        status_console.print(
+            f"[yellow]Warning: area '{area}' could not be mapped precisely; results may include other areas.[/yellow]"
+        )
     sort_type = resolve_sort_type(sort)
 
     # Execute search.
-    status_console.print("[green]搜尋中...[/green]")
+    status_console.print("[green]Searching...[/green]")
     request = SearchRequest(
         area=area,
         keyword=filters.keyword,
@@ -292,9 +294,11 @@ def search(
     response = request.search_sync()
 
     if response.status.value == "error":
-        status_console.print(f"[red]搜尋錯誤：{response.error_message}[/red]")
+        status_console.print(f"[red]Search failed: {response.error_message}[/red]")
         if response.http_status == 403:
-            status_console.print("[yellow]Tabelog 拒絕存取 (HTTP 403)；重試相同請求通常無效。[/yellow]")
+            status_console.print(
+                "[yellow]Tabelog denied access (HTTP 403); retrying the same request will not help.[/yellow]"
+            )
         _output_error_envelope_if_requested(
             output,
             area=area,
@@ -306,7 +310,7 @@ def search(
         raise typer.Exit(1)
 
     if not response.restaurants:
-        status_console.print("[yellow]沒有找到餐廳[/yellow]")
+        status_console.print("[yellow]No restaurants found.[/yellow]")
         _output_no_results_envelope_if_requested(
             output,
             response,
@@ -324,17 +328,19 @@ def search(
     _output_search_results(output, response, restaurants, area=area, filters=filters, sort=sort, limit=limit)
 
     # Show summary stats.
-    status_console.print(f"\n[cyan]共找到 {len(response.restaurants)} 家餐廳，顯示前 {len(restaurants)} 家[/cyan]")
+    status_console.print(
+        f"\n[cyan]Found {len(response.restaurants)} restaurants; showing {len(restaurants)}.[/cyan]"
+    )
 
 
 def _output_table(restaurants: list) -> None:
     """Output restaurants as a table."""
-    table = Table(title="搜尋結果")
-    table.add_column("餐廳名稱", style="cyan", no_wrap=False)
-    table.add_column("評分", justify="right", style="yellow")
-    table.add_column("評論數", justify="right", style="green")
-    table.add_column("地區", style="blue")
-    table.add_column("類型", style="magenta")
+    table = Table(title="Search results")
+    table.add_column("Restaurant", style="cyan", no_wrap=False)
+    table.add_column("Rating", justify="right", style="yellow")
+    table.add_column("Reviews", justify="right", style="green")
+    table.add_column("Area", style="blue")
+    table.add_column("Cuisine", style="magenta")
 
     for r in restaurants:
         table.add_row(
@@ -367,11 +373,11 @@ def _output_simple(restaurants: list) -> None:
     for i, r in enumerate(restaurants, 1):
         rating_str = f"{r.rating:.2f}" if r.rating else "N/A"
         review_str = str(r.review_count) if r.review_count else "N/A"
-        console.print(f"{i}. {r.name} - ⭐{rating_str} ({review_str} 評論)")
+        console.print(f"{i}. {r.name} - ⭐{rating_str} ({review_str} reviews)")
         if r.area:
-            console.print(f"   地區: {r.area}")
+            console.print(f"   Area: {r.area}")
         if r.genres:
-            console.print(f"   類型: {', '.join(r.genres[:3])}")
+            console.print(f"   Cuisine: {', '.join(r.genres[:3])}")
         console.print(f"   URL: {r.url}")
         console.print()
 
@@ -381,9 +387,9 @@ def list_cuisines() -> None:
     """List all supported cuisines."""
     cuisines = get_all_genres()
 
-    table = Table(title=f"支援的料理類別（共 {len(cuisines)} 種）")
-    table.add_column("料理名稱", style="cyan")
-    table.add_column("代碼", style="yellow")
+    table = Table(title=f"Supported cuisines ({len(cuisines)})")
+    table.add_column("Cuisine", style="cyan")
+    table.add_column("Code", style="yellow")
 
     for cuisine in cuisines:
         code = get_genre_code(cuisine)

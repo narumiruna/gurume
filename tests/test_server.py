@@ -1354,6 +1354,24 @@ async def test_mcp_call_area_suggestions_returns_structured_error_for_empty_quer
     assert structured_data["error"]["error_code"] == "invalid_parameters"
 
 
+@pytest.mark.asyncio
+async def test_mcp_error_guidance_is_english() -> None:
+    results = [
+        await tabelog_search_restaurants(cuisine="unsupported"),
+        await tabelog_get_restaurant_details(restaurant_url="invalid"),
+        await tabelog_get_area_suggestions(query="  "),
+        await tabelog_get_keyword_suggestions(query="  "),
+    ]
+    with patch("gurume.server.get_all_genres", side_effect=ValueError("unavailable")):
+        results.append(await tabelog_list_cuisines())
+
+    for result in results:
+        assert result.status == "error"
+        assert result.error is not None
+        assert result.error.message.isascii()
+        assert result.error.suggested_action.isascii()
+
+
 # ============================================================================
 # Test run() transport switching (issue #39)
 # ============================================================================
