@@ -16,6 +16,13 @@ from gurume.tui import TabelogApp
 
 
 @pytest.mark.asyncio
+async def test_tui_area_placeholder_uses_supported_name() -> None:
+    app = TabelogApp()
+    async with app.run_test():
+        assert "東京" in app.query_one("#area-input", Input).placeholder
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("response", "expected"),
     [

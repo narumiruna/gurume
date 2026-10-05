@@ -243,7 +243,7 @@ def _output_search_results(
 
 @app.command()
 def search(
-    area: Annotated[str | None, typer.Option("--area", "-a", help="Search area (e.g. Tokyo, Osaka).")] = None,
+    area: Annotated[str | None, typer.Option("--area", "-a", help="Search area in Japanese (e.g. 東京, 大阪).")] = None,
     keyword: Annotated[str | None, typer.Option("--keyword", "-k", help="Search keyword (e.g. sushi).")] = None,
     cuisine: Annotated[
         str | None,

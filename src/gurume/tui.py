@@ -270,7 +270,7 @@ class SearchPanel(Container):
         """Compose search panel widgets."""
         yield Static("Restaurant search", classes="panel-title")
         with Horizontal(id="input-row"):
-            yield Input(placeholder="Area (e.g. Tokyo; F2 for suggestions)", id="area-input")
+            yield Input(placeholder="Area (e.g. 東京; F2 for suggestions)", id="area-input")
             yield Input(placeholder="Keyword (e.g. sushi; F3 for cuisines)", id="keyword-input")
         with Horizontal(id="sort-row"):
             yield Static("Sort:", classes="sort-label")

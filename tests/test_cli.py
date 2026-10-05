@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
+from gurume.area_mapping import get_area_slug
 from gurume.restaurant import Restaurant
 from gurume.restaurant import SortType
 from gurume.search import SearchMeta
@@ -569,6 +570,10 @@ class TestSearchCommand:
         plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
         assert "json-envelope" in plain
         assert "json-list" in plain
+        assert "Search area in Japanese" in plain
+        assert "東京" in plain and "大阪" in plain
+        assert get_area_slug("東京") == "tokyo"
+        assert get_area_slug("大阪") == "osaka"
         assert "Cuisine name in Japanese" in plain
         assert "list-cuisines" in plain
 
