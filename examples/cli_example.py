@@ -1,4 +1,4 @@
-"""CLI 範例"""
+"""CLI example."""
 
 import argparse
 import asyncio
@@ -16,7 +16,7 @@ def _now() -> datetime:
 
 
 def format_date(date_str: str) -> str:
-    """格式化日期字串"""
+    """Format a date string."""
     if date_str.lower() == "today":
         return _now().strftime("%Y%m%d")
     if date_str.lower() == "tomorrow":
@@ -31,18 +31,18 @@ def _validate_enum_value(value: str | None, enum_cls: type[PriceRange] | type[So
     try:
         enum_cls(value)
     except ValueError:
-        print(f"無效的{label}: {value}")
+        print(f"Invalid {label}: {value}")
         return False
 
     return True
 
 
 async def search_restaurants(args) -> None:
-    """搜尋餐廳"""
+    """Search restaurants."""
     reservation_date = format_date(args.date) if args.date else None
-    if not _validate_enum_value(args.price_range, PriceRange, "價格範圍"):
+    if not _validate_enum_value(args.price_range, PriceRange, "price range"):
         return
-    if not _validate_enum_value(args.sort, SortType, "排序方式"):
+    if not _validate_enum_value(args.sort, SortType, "sort order"):
         return
 
     request = _build_request(args, reservation_date)
@@ -64,23 +64,23 @@ def _build_request(args, reservation_date: str | None) -> SearchRequest:
 
 
 def _print_search_params(args, reservation_date: str | None) -> None:
-    print("搜尋中...")
-    print(f"地區: {args.area or '全部'}")
-    print(f"關鍵字: {args.keyword or '無'}")
-    print(f"日期: {reservation_date or '無'}")
-    print(f"時間: {args.time or '無'}")
-    print(f"人數: {args.party_size or '無'}")
-    print(f"最大頁數: {args.max_pages}")
+    print("Searching...")
+    print(f"Area: {args.area or 'all'}")
+    print(f"Keyword: {args.keyword or 'none'}")
+    print(f"Date: {reservation_date or 'none'}")
+    print(f"Time: {args.time or 'none'}")
+    print(f"Party size: {args.party_size or 'none'}")
+    print(f"Max pages: {args.max_pages}")
     print("-" * 50)
 
 
 def _handle_response(response) -> None:
     if response.status == "error":
-        print(f"搜尋錯誤: {response.error_message}")
+        print(f"Search failed: {response.error_message}")
         return
 
     if response.status == "no_results":
-        print("沒有找到符合條件的餐廳")
+        print("No restaurants matched the search.")
         return
 
     _print_meta(response)
@@ -91,9 +91,9 @@ def _print_meta(response) -> None:
     if not response.meta:
         return
 
-    print(f"總結果數: {response.meta.total_count}")
-    print(f"顯示頁數: {response.meta.current_page}")
-    print(f"總頁數: {response.meta.total_pages}")
+    print(f"Total results: {response.meta.total_count}")
+    print(f"Current page: {response.meta.current_page}")
+    print(f"Total pages: {response.meta.total_pages}")
     print("-" * 50)
 
 
@@ -101,40 +101,40 @@ def _print_restaurants(response) -> None:
     for i, restaurant in enumerate(response.restaurants, 1):
         print(f"{i}. {restaurant.name}")
         if restaurant.rating:
-            print(f"   評分: {restaurant.rating}")
+            print(f"   Rating: {restaurant.rating}")
         if restaurant.review_count:
-            print(f"   評論數: {restaurant.review_count}")
+            print(f"   Reviews: {restaurant.review_count}")
         if restaurant.area:
-            print(f"   地區: {restaurant.area}")
+            print(f"   Area: {restaurant.area}")
         if restaurant.station:
-            print(f"   車站: {restaurant.station} ({restaurant.distance})")
+            print(f"   Station: {restaurant.station} ({restaurant.distance})")
         if restaurant.genres:
-            print(f"   類型: {', '.join(restaurant.genres)}")
+            print(f"   Cuisine: {', '.join(restaurant.genres)}")
         if restaurant.description:
-            print(f"   描述: {restaurant.description[:100]}...")
+            print(f"   Description: {restaurant.description[:100]}...")
         print(f"   URL: {restaurant.url}")
         print()
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Tabelog 餐廳搜尋工具")
-    parser.add_argument("-a", "--area", help="地區或車站")
-    parser.add_argument("-k", "--keyword", help="關鍵字")
-    parser.add_argument("-d", "--date", help="預約日期 (YYYYMMDD, today, tomorrow)")
-    parser.add_argument("-t", "--time", help="預約時間 (HHMM)")
-    parser.add_argument("-p", "--party-size", type=int, help="預約人數")
-    parser.add_argument("--max-pages", type=int, default=1, help="最大頁數")
+    parser = argparse.ArgumentParser(description="Tabelog restaurant search")
+    parser.add_argument("-a", "--area", help="Area or station")
+    parser.add_argument("-k", "--keyword", help="Keyword")
+    parser.add_argument("-d", "--date", help="Reservation date (YYYYMMDD, today, tomorrow)")
+    parser.add_argument("-t", "--time", help="Reservation time (HHMM)")
+    parser.add_argument("-p", "--party-size", type=int, help="Party size")
+    parser.add_argument("--max-pages", type=int, default=1, help="Maximum pages")
     parser.add_argument(
         "--sort",
         choices=["trend", "rt", "rvcn", "nod"],
-        help="排序方式: trend(標準), rt(評分), rvcn(評論數), nod(新開)",
+        help="Sort order: trend (standard), rt (ranking), rvcn (review count), nod (new openings)",
     )
-    parser.add_argument("--price-range", help="價格範圍 (例: C003 代表晚餐2000-3000)")
+    parser.add_argument("--price-range", help="Price range (e.g. C003 for a dinner budget of 2000-3000)")
     return parser
 
 
 def main() -> None:
-    """主函數"""
+    """Run the example."""
     args = _build_parser().parse_args()
     asyncio.run(search_restaurants(args))
 

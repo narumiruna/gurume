@@ -203,20 +203,22 @@ class RestaurantSearchRequest:
         # Validate YYYYMMDD date format.
         if self.reservation_date is not None and not re.fullmatch(r"\d{8}", self.reservation_date):
             raise InvalidParameterError(
-                f"reservation_date 必須是 YYYYMMDD 格式，例如：20250715。收到：{self.reservation_date}"
+                f"reservation_date must be in YYYYMMDD format (e.g. 20250715); received: {self.reservation_date}"
             )
 
         # Validate HHMM time format.
         if self.reservation_time is not None and not re.fullmatch(r"\d{4}", self.reservation_time):
-            raise InvalidParameterError(f"reservation_time 必須是 HHMM 格式，例如：1900。收到：{self.reservation_time}")
+            raise InvalidParameterError(
+                f"reservation_time must be in HHMM format (e.g. 1900); received: {self.reservation_time}"
+            )
 
         # Validate party size bounds.
         if self.party_size is not None and not (1 <= self.party_size <= 100):
-            raise InvalidParameterError(f"party_size 必須在 1 到 100 之間。收到：{self.party_size}")
+            raise InvalidParameterError(f"party_size must be between 1 and 100; received: {self.party_size}")
 
         # Validate page number.
         if self.page < 1:
-            raise InvalidParameterError(f"page 必須 >= 1。收到：{self.page}")
+            raise InvalidParameterError(f"page must be at least 1; received: {self.page}")
 
     def _build_params(self) -> dict[str, Any]:
         """Build search parameters."""

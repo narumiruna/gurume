@@ -25,10 +25,11 @@ pip install gurume
 
 ## HTTP Configuration
 
-No additional HTTP setup is required for normal use.
-Gurume uses `curl_cffi` with Safari impersonation by default so its TLS fingerprint and generated browser headers remain consistent.
+Gurume uses `curl_cffi` with Safari impersonation by default so its TLS fingerprint
+and generated browser headers remain consistent. Live access depends on Tabelog.
 
-If Tabelog starts returning HTTP 403 for the default profile, set `GURUME_IMPERSONATE` before starting the CLI, TUI, MCP server, or Python process:
+You can set `GURUME_IMPERSONATE` before starting the CLI, TUI, MCP server, or
+Python process to select a different browser profile:
 
 ```bash
 GURUME_IMPERSONATE=firefox gurume search --area 三重 --cuisine すき焼き
@@ -42,7 +43,9 @@ gurume search --area 三重 --cuisine すき焼き
 ```
 
 The value must be an impersonation profile supported by the installed `curl_cffi` version.
-An unsupported value is rejected by `curl_cffi`.
+An unsupported value is rejected by `curl_cffi`. Changing the profile does not
+guarantee access to pages blocked by Tabelog; an HTTP 403 requires checking
+authorized upstream access, not repeatedly retrying the same request.
 
 ## Features
 

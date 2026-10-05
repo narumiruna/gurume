@@ -109,6 +109,7 @@ Notes:
 
 - For natural-language input, use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant — it decomposes free-form text into the structured flags above.
 - `--output json` returns a structured envelope (`status`, `items`, `meta`, `applied_filters`, `warnings`, `error`). Use `--output json-list` for the legacy list-only JSON shape.
+- CLI, TUI, and MCP diagnostics are in English; user-entered search terms and Tabelog restaurant data may remain in Japanese.
 - Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
 
 ### 🐍 Python Library
@@ -341,8 +342,11 @@ When `status="error"`, inspect `error.error_code`, `error.retryable`, and `error
 ### 🧪 Testing the MCP Server
 
 ```bash
-# Run the MCP test suite
+# Run the MCP test suite (mocked upstream)
 uv run pytest -q tests/test_server.py
+
+# Opt-in live stdio check of cuisines, suggestions, search, and details
+uv run python scripts/check_mcp_live.py
 
 # Start the server locally (stdio, default)
 uv run gurume mcp
@@ -350,6 +354,13 @@ uv run gurume mcp
 # Inspect tools and schemas interactively
 npx @modelcontextprotocol/inspector uv run gurume mcp
 ```
+
+The live check exits nonzero when any tool fails and reports each result as JSON.
+Supply a known current Tabelog restaurant URL for an independent detail check;
+without one, details use the first search result or are marked `skipped`.
+HTTP 403 on search or detail means Tabelog denied page access; repeated retries
+or different search filters will not fix it. Browser impersonation may not
+resolve upstream restrictions.
 
 ### 🌐 HTTP transport
 

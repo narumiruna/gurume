@@ -6,9 +6,11 @@ from collections.abc import Callable
 from typing import Any
 from typing import cast
 from unittest.mock import AsyncMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
+from curl_cffi.requests import exceptions as request_errors
 
 from gurume.detail import Course
 from gurume.detail import MenuItem
@@ -585,6 +587,31 @@ async def test_search_restaurants_raises_for_error_status():
 
 
 @pytest.mark.asyncio
+async def test_search_restaurants_access_denied_is_not_retryable():
+    response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ", http_status=403)
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock, return_value=response):
+        result = await tabelog_search_restaurants(area="東京")
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "upstream_unavailable"
+    assert result.error.retryable is False
+    assert "HTTP 403" in result.error.message
+    assert "Do not repeatedly retry" in result.error.suggested_action
+    assert result.error.detail == "HTTP Error 403: "
+
+
+@pytest.mark.asyncio
+async def test_search_restaurants_403_text_without_status_is_not_treated_as_access_denied():
+    response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ")
+    with patch("gurume.server.SearchRequest.search", new_callable=AsyncMock, return_value=response):
+        result = await tabelog_search_restaurants(area="東京")
+
+    assert result.error is not None
+    assert result.error.retryable is True
+
+
+@pytest.mark.asyncio
 async def test_search_restaurants_no_results_envelope():
     """Test empty searches return a no_results envelope"""
     mock_response = SearchResponse(
@@ -763,6 +790,27 @@ async def test_get_restaurant_details_runtime_error():
     assert result.error is not None
     assert result.error.error_code == "upstream_unavailable"
     assert result.error.detail == "timeout"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status_code", [403, 404])
+async def test_detail_http_error_is_upstream_not_internal(status_code: int):
+    error = request_errors.HTTPError(f"HTTP Error {status_code}: ", 0, Mock(status_code=status_code))
+    with patch("gurume.server.RestaurantDetailRequest.fetch", new_callable=AsyncMock, side_effect=error):
+        result = await tabelog_get_restaurant_details(
+            restaurant_url="https://tabelog.com/tokyo/A1301/A130101/13000001/",
+            fetch_reviews=False,
+            fetch_menu=False,
+            fetch_courses=False,
+        )
+
+    assert result.status == "error"
+    assert result.error is not None
+    assert result.error.error_code == "upstream_unavailable"
+    assert result.error.retryable is (status_code != 403)
+    assert result.error.detail == f"HTTP Error {status_code}: "
+    if status_code == 403:
+        assert "Do not repeatedly retry" in result.error.suggested_action
 
 
 # ============================================================================
@@ -1304,6 +1352,24 @@ async def test_mcp_call_area_suggestions_returns_structured_error_for_empty_quer
     assert content
     assert structured_data["status"] == "error"
     assert structured_data["error"]["error_code"] == "invalid_parameters"
+
+
+@pytest.mark.asyncio
+async def test_mcp_error_guidance_is_english() -> None:
+    results = [
+        await tabelog_search_restaurants(cuisine="unsupported"),
+        await tabelog_get_restaurant_details(restaurant_url="invalid"),
+        await tabelog_get_area_suggestions(query="  "),
+        await tabelog_get_keyword_suggestions(query="  "),
+    ]
+    with patch("gurume.server.get_all_genres", side_effect=ValueError("unavailable")):
+        results.append(await tabelog_list_cuisines())
+
+    for result in results:
+        assert result.status == "error"
+        assert result.error is not None
+        assert result.error.message.isascii()
+        assert result.error.suggested_action.isascii()
 
 
 # ============================================================================

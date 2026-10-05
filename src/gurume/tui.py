@@ -29,6 +29,7 @@ from .genre_mapping import get_genre_code
 from .restaurant import Restaurant
 from .restaurant import SortType
 from .search import SearchRequest
+from .search import SearchStatus
 from .suggest import AreaSuggestion
 from .suggest import KeywordSuggestion
 from .suggest import TabelogSuggestUnavailableError
@@ -91,14 +92,14 @@ class AreaSuggestModal(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         """Compose modal widgets."""
         with Vertical(id="suggest-dialog"):
-            yield Label(f"🗺️  地區建議（共 {len(self.suggestions)} 個）", id="suggest-title")
+            yield Label(f"🗺️  Area suggestions ({len(self.suggestions)})", id="suggest-title")
             option_list = OptionList(id="suggest-list")
             for suggestion in self.suggestions:
                 # Display format: icon, name, and type.
-                type_label = "🚉 駅" if suggestion.datatype == "RailroadStation" else "📍 地區"
+                type_label = "🚉 Station" if suggestion.datatype == "RailroadStation" else "📍 Area"
                 option_list.add_option(f"{type_label}  {suggestion.name}")
             yield option_list
-            yield Static("💡 提示：使用 ↑↓ 方向鍵選擇，Enter 確認，Esc 取消", id="suggest-hint")
+            yield Static("💡 Use ↑↓ to choose, Enter to confirm, Esc to cancel", id="suggest-hint")
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
@@ -165,13 +166,13 @@ class GenreSuggestModal(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         """Compose modal widgets."""
         with Vertical(id="genre-dialog"):
-            yield Label(f"🍽️  料理類別（共 {len(self.genres)} 個）", id="genre-title")
+            yield Label(f"🍽️  Cuisines ({len(self.genres)})", id="genre-title")
             option_list = OptionList(id="genre-list")
             for genre in self.genres:
                 # Use a cuisine icon for genre entries.
                 option_list.add_option(f"🍜  {genre}")
             yield option_list
-            yield Static("💡 提示：使用 ↑↓ 方向鍵選擇，Enter 確認，Esc 取消", id="genre-hint")
+            yield Static("💡 Use ↑↓ to choose, Enter to confirm, Esc to cancel", id="genre-hint")
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
@@ -238,7 +239,7 @@ class KeywordSuggestModal(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         """Compose modal widgets."""
         with Vertical(id="keyword-dialog"):
-            yield Label(f"🔍  關鍵字建議（共 {len(self.suggestions)} 個）", id="keyword-title")
+            yield Label(f"🔍  Keyword suggestions ({len(self.suggestions)})", id="keyword-title")
             option_list = OptionList(id="keyword-list")
             for suggestion in self.suggestions:
                 # Choose icons by datatype.
@@ -247,7 +248,7 @@ class KeywordSuggestModal(ModalScreen[str]):
                 )
                 option_list.add_option(f"{icon}  {suggestion.name}")
             yield option_list
-            yield Static("💡 提示：使用 ↑↓ 方向鍵選擇，Enter 確認，Esc 取消", id="keyword-hint")
+            yield Static("💡 Use ↑↓ to choose, Enter to confirm, Esc to cancel", id="keyword-hint")
 
     @on(OptionList.OptionSelected)
     def on_option_selected(self, event: OptionList.OptionSelected) -> None:
@@ -267,18 +268,18 @@ class SearchPanel(Container):
 
     def compose(self) -> ComposeResult:
         """Compose search panel widgets."""
-        yield Static("餐廳搜尋", classes="panel-title")
+        yield Static("Restaurant search", classes="panel-title")
         with Horizontal(id="input-row"):
-            yield Input(placeholder="地區 (例如: 東京, 按 F2 查看建議)", id="area-input")
-            yield Input(placeholder="關鍵字 (例如: 寿司, 按 F3 選擇料理類別)", id="keyword-input")
+            yield Input(placeholder="Area (e.g. 東京; F2 for suggestions)", id="area-input")
+            yield Input(placeholder="Keyword (e.g. sushi; F3 for cuisines)", id="keyword-input")
         with Horizontal(id="sort-row"):
-            yield Static("排序:", classes="sort-label")
+            yield Static("Sort:", classes="sort-label")
             with RadioSet(id="sort-radio"):
-                yield RadioButton("評分排名", value=True, id="sort-ranking")
-                yield RadioButton("評論數", id="sort-review")
-                yield RadioButton("新開幕", id="sort-new")
-                yield RadioButton("標準", id="sort-standard")
-            yield Button("搜尋", variant="primary", id="search-button")
+                yield RadioButton("Ranking", value=True, id="sort-ranking")
+                yield RadioButton("Review count", id="sort-review")
+                yield RadioButton("New openings", id="sort-new")
+                yield RadioButton("Standard", id="sort-standard")
+            yield Button("Search", variant="primary", id="search-button")
 
 
 class ResultsTable(DataTable):
@@ -290,7 +291,7 @@ class ResultsTable(DataTable):
 
     def on_mount(self) -> None:
         """Initialize table columns."""
-        self.add_columns("餐廳名稱", "評分", "評論數", "地區", "類型")
+        self.add_columns("Restaurant", "Rating", "Reviews", "Area", "Cuisine")
 
 
 class DetailPanel(Container):
@@ -298,8 +299,8 @@ class DetailPanel(Container):
 
     def compose(self) -> ComposeResult:
         """Compose detail panel widgets."""
-        yield Static("詳細資訊", classes="panel-title")
-        yield Static("請選擇餐廳查看詳細資訊", id="detail-content")
+        yield Static("Details", classes="panel-title")
+        yield Static("Select a restaurant to view details", id="detail-content")
 
 
 class TabelogApp(App):
@@ -481,17 +482,23 @@ class TabelogApp(App):
         try:
             area, keyword = self._get_search_inputs()
             if not area and not keyword:
-                self.query_one("#detail-content", Static).update("請輸入地區或關鍵字")
+                self.query_one("#detail-content", Static).update("Enter an area or keyword before searching.")
                 return
 
             genre_code_to_use, keyword = self._resolve_genre_search(keyword)
             sort_type, sort_name = self._get_sort_selection()
             detail_content = self.query_one("#detail-content", Static)
             search_params = self._build_search_params_text(area, keyword, genre_code_to_use)
-            detail_content.update(f"搜尋中 ({sort_name}): {search_params}...")
+            detail_content.update(f"Searching ({sort_name}): {search_params}...")
 
             request = SearchRequest(area=area, keyword=keyword, genre_code=genre_code_to_use, sort_type=sort_type)
             response = await request.search()
+            if response.status == SearchStatus.ERROR:
+                reason = response.error_message or "Upstream service did not return usable results."
+                if response.http_status == 403:
+                    reason = "Tabelog denied access (HTTP 403). Retrying the same request will not help."
+                self._update_search_error(RuntimeError(reason))
+                return
             self._handle_search_response(response.restaurants, search_params, sort_name)
         except TUI_ACTION_EXCEPTIONS as e:
             self._update_search_error(e)
@@ -529,12 +536,12 @@ class TabelogApp(App):
         sort_radio = self.query_one("#sort-radio", RadioSet)
         pressed_button = sort_radio.pressed_button
         if pressed_button and pressed_button.id == "sort-review":
-            return SortType.REVIEW_COUNT, "評論數排序"
+            return SortType.REVIEW_COUNT, "Review count"
         if pressed_button and pressed_button.id == "sort-new":
-            return SortType.NEW_OPEN, "新開幕"
+            return SortType.NEW_OPEN, "New openings"
         if pressed_button and pressed_button.id == "sort-standard":
-            return SortType.STANDARD, "標準排序"
-        return SortType.RANKING, "評分排名"
+            return SortType.STANDARD, "Standard"
+        return SortType.RANKING, "Ranking"
 
     def _build_search_params_text(self, area: str, keyword: str, genre_code: str | None) -> str:
         genre_name = ""
@@ -543,9 +550,9 @@ class TabelogApp(App):
 
             genre_name = get_genre_name_by_code(genre_code) or ""
 
-        search_params = f"地區: {area or '(無)'}, 關鍵字: {keyword or '(無)'}"
+        search_params = f"Area: {area or '(none)'}, Keyword: {keyword or '(none)'}"
         if genre_name:
-            search_params += f", 料理類別: {genre_name}"
+            search_params += f", Cuisine: {genre_name}"
         return search_params
 
     def _handle_search_response(self, restaurants: list[Restaurant], search_params: str, sort_name: str) -> None:
@@ -553,16 +560,22 @@ class TabelogApp(App):
         if restaurants:
             self.restaurants = restaurants
             self.update_results_table()
-            detail_content.update(f"找到 {len(self.restaurants)} 家餐廳\n搜尋條件: {search_params}\n排序: {sort_name}")
+            detail_content.update(
+                f"Found {len(self.restaurants)} restaurants\nFilters: {search_params}\nSort: {sort_name}"
+            )
             return
 
         self.restaurants = []
+        self.selected_restaurant = None
         self.query_one("#results-table", ResultsTable).clear()
-        detail_content.update("沒有找到餐廳")
+        detail_content.update("No restaurants found.")
 
     def _update_search_error(self, error: BaseException) -> None:
-        message = "搜尋已取消" if isinstance(error, WorkerCancelled) else f"搜尋錯誤: {error!s}"
+        self.restaurants = []
+        self.selected_restaurant = None
+        message = "Search cancelled." if isinstance(error, WorkerCancelled) else f"Search failed: {error!s}"
         with contextlib.suppress(*TUI_UPDATE_EXCEPTIONS):
+            self.query_one("#results-table", ResultsTable).clear()
             self.query_one("#detail-content", Static).update(message)
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
@@ -578,16 +591,16 @@ class TabelogApp(App):
 
         r = self.selected_restaurant
 
-        detail_text = f"""名稱: {r.name}
-評分: {r.rating or "N/A"}
-評論數: {r.review_count or "N/A"}
-儲存數: {r.save_count or "N/A"}
-地區: {r.area or "N/A"}
-車站: {r.station or "N/A"}
-距離: {r.distance or "N/A"}
-類型: {", ".join(r.genres) if r.genres else "N/A"}
-午餐價格: {r.lunch_price or "N/A"}
-晚餐價格: {r.dinner_price or "N/A"}
+        detail_text = f"""Name: {r.name}
+Rating: {r.rating or "N/A"}
+Reviews: {r.review_count or "N/A"}
+Saves: {r.save_count or "N/A"}
+Area: {r.area or "N/A"}
+Station: {r.station or "N/A"}
+Distance: {r.distance or "N/A"}
+Cuisine: {", ".join(r.genres) if r.genres else "N/A"}
+Lunch price: {r.lunch_price or "N/A"}
+Dinner price: {r.dinner_price or "N/A"}
 URL: {r.url}
 """
 
@@ -617,23 +630,23 @@ URL: {r.url}
         if not query:
             # Prompt the user when the input is empty.
             detail_content = self.query_one("#detail-content", Static)
-            detail_content.update("💡 請先輸入地區關鍵字\n\n例如：東京、大阪、伊勢\n\n然後按 F2 查看建議")
+            detail_content.update("💡 Enter an area first, then press F2 for suggestions.")
             return
 
         # Show a loading message.
         detail_content = self.query_one("#detail-content", Static)
-        detail_content.update(f"🔍 正在搜尋「{query}」的地區建議...\n\n請稍候...")
+        detail_content.update("🔍 Searching for area suggestions... Please wait.")
 
         # Fetch suggestions.
         try:
             suggestions = await get_area_suggestions_async(query)
         except TabelogSuggestUnavailableError as e:
-            detail_content.update(f"⚠️ 地區建議服務暫時無法使用\n\n{e}")
+            detail_content.update(f"⚠️ Area suggestions are temporarily unavailable.\n\n{e}")
             return
 
         if not suggestions:
             detail_content.update(
-                f"❌ 找不到「{query}」的地區建議\n\n建議：\n• 嘗試更短的關鍵字\n• 使用日文地名\n• 試試附近的地標或車站"
+                "❌ No area suggestions found. Try a shorter query, a Japanese place name, or a nearby station."
             )
             return
 
@@ -641,9 +654,9 @@ URL: {r.url}
         def on_dismiss(selected_area: str | None) -> None:
             if selected_area:
                 area_input.value = selected_area
-                detail_content.update(f"✅ 已選擇地區：{selected_area}\n\n現在可以點擊搜尋按鈕或按 Enter 開始搜尋")
+                detail_content.update(f"✅ Selected area: {selected_area}\n\nClick Search or press Enter to search.")
             else:
-                detail_content.update("⏸️ 已取消選擇")
+                detail_content.update("⏸️ Selection cancelled.")
 
         await self.push_screen(AreaSuggestModal(suggestions), on_dismiss)
 
@@ -659,25 +672,25 @@ URL: {r.url}
 
         # Case 1: empty keyword; show the fixed cuisine list.
         if not keyword_value:
-            detail_content.update("🍽️ 正在載入料理類別選項...")
+            detail_content.update("🍽️ Loading cuisines...")
 
             def on_dismiss_genre(selected_genre: str | None) -> None:
                 if selected_genre:
                     keyword_input.value = selected_genre
                     self.current_genre_code = get_genre_code(selected_genre)
                     detail_content.update(
-                        f"✅ 已選擇料理類別：{selected_genre}\n\n"
-                        f"料理代碼：{self.current_genre_code}\n\n"
-                        f"💡 現在可以輸入地區後按搜尋，或直接按 Enter 開始搜尋"
+                        f"✅ Selected cuisine: {selected_genre}\n\n"
+                        f"Cuisine code: {self.current_genre_code}\n\n"
+                        "💡 Enter an area and click Search, or press Enter to search."
                     )
                 else:
-                    detail_content.update("⏸️ 已取消選擇")
+                    detail_content.update("⏸️ Selection cancelled.")
 
             await self.push_screen(GenreSuggestModal(), on_dismiss_genre)
 
         # Case 2: non-empty keyword; show dynamic API suggestions.
         else:
-            detail_content.update(f"🔍 正在搜尋「{keyword_value}」的關鍵字建議...")
+            detail_content.update("🔍 Searching for keyword suggestions...")
 
             try:
                 # Fetch keyword suggestions from the API.
@@ -685,14 +698,12 @@ URL: {r.url}
 
                 if not suggestions:
                     detail_content.update(
-                        f"❌ 沒有找到「{keyword_value}」的相關建議\n\n"
-                        f"💡 提示：\n"
-                        f"• 清空關鍵字後按 F3 可查看所有料理類別\n"
-                        f"• 嘗試輸入更短的關鍵字（例如：すき、寿司）"
+                        "❌ No keyword suggestions found.\n\n"
+                        "💡 Clear the keyword and press F3 to view cuisines, or try a shorter keyword."
                     )
                     return
 
-                detail_content.update(f"✅ 找到 {len(suggestions)} 個建議")
+                detail_content.update(f"✅ Found {len(suggestions)} suggestions")
 
                 def on_dismiss_keyword(selected_keyword: str | None) -> None:
                     if selected_keyword:
@@ -701,22 +712,24 @@ URL: {r.url}
                         self.current_genre_code = get_genre_code(selected_keyword)
                         if self.current_genre_code:
                             detail_content.update(
-                                f"✅ 已選擇：{selected_keyword}\n\n"
-                                f"料理代碼：{self.current_genre_code}\n\n"
-                                f"💡 現在可以輸入地區後按搜尋，或直接按 Enter 開始搜尋"
+                                f"✅ Selected: {selected_keyword}\n\n"
+                                f"Cuisine code: {self.current_genre_code}\n\n"
+                                "💡 Enter an area and click Search, or press Enter to search."
                             )
                         else:
                             detail_content.update(
-                                f"✅ 已選擇：{selected_keyword}\n\n💡 現在可以輸入地區後按搜尋，或直接按 Enter 開始搜尋"
+                                f"✅ Selected: {selected_keyword}\n\n"
+                                "💡 Enter an area and click Search, or press Enter to search."
                             )
                     else:
-                        detail_content.update("⏸️ 已取消選擇")
+                        detail_content.update("⏸️ Selection cancelled.")
 
                 await self.push_screen(KeywordSuggestModal(suggestions), on_dismiss_keyword)
 
             except TUI_ACTION_EXCEPTIONS as e:
                 detail_content.update(
-                    f"❌ 取得關鍵字建議時發生錯誤\n\n錯誤訊息：{e}\n\n💡 建議：清空關鍵字後按 F3 查看所有料理類別"
+                    f"❌ Could not fetch keyword suggestions.\n\nError: {e}\n\n"
+                    "💡 Clear the keyword and press F3 to view all cuisines."
                 )
 
 

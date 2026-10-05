@@ -31,6 +31,8 @@
 - Restaurant output projection must keep CLI `json-list` URLs raw while MCP uses `_as_http_url`; validating the URL before the Pydantic restaurant model also preserves existing invalid-URL error text.
 - MCP output conversion intentionally runs outside the caught request operation; keep malformed-output errors and cancellation propagating rather than converting them into request-error envelopes.
 - `mcp` 2.x removes `mcp.server.fastmcp.FastMCP`; keep the 1.x upper bound until the server and MCP tests migrate to `MCPServer`.
+- Live MCP checks on 2026-10-05: Tabelog's Cloudflare returns 403 for restaurant search and detail pages even with Safari impersonation while homepage and suggestion API work; preserve HTTP status from `SearchResponse` instead of parsing error text, and classify both search and detail 403 as non-retryable `upstream_unavailable`.
+- TUI search receives `SearchResponse(status=ERROR)` without an exception; check the status and clear prior rows, `self.restaurants`, and selection or failures appear as "No restaurants found" or leave stale results. Keep CLI/TUI text and core validation exceptions in English; Japanese restaurant data and user input may still appear in results.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

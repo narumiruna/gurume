@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
+from gurume.area_mapping import get_area_slug
 from gurume.restaurant import Restaurant
 from gurume.restaurant import SortType
 from gurume.search import SearchMeta
@@ -49,6 +50,19 @@ class TestCLIHelpers:
         result = format_date("20250715")
 
         assert result == "20250715"
+
+
+def test_cli_example_errors_are_english(capsys: pytest.CaptureFixture[str]) -> None:
+    from examples.cli_example import _handle_response
+    from examples.cli_example import _validate_enum_value
+    from gurume.restaurant import SortType
+
+    assert _validate_enum_value("invalid", SortType, "sort order") is False
+    _handle_response(SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403"))
+    assert capsys.readouterr().out.splitlines() == [
+        "Invalid sort order: invalid",
+        "Search failed: HTTP Error 403",
+    ]
 
 
 class TestCLISearch:
@@ -377,7 +391,7 @@ class TestSearchCommand:
                 "dinner_price": None,
             }
         ]
-        assert "搜尋中" in result.stderr
+        assert "Searching..." in result.stderr
 
     @pytest.mark.parametrize("output_format", ["json", "json-envelope"])
     def test_json_envelope_output_contains_search_metadata(self, output_format: str):
@@ -448,8 +462,8 @@ class TestSearchCommand:
         assert payload["applied_filters"]["sort"] == "ranking"
         assert payload["warnings"] == []
         assert payload["error"] is None
-        assert "搜尋中" in result.stderr
-        assert "共找到" in result.stderr
+        assert "Searching..." in result.stderr
+        assert "Found 1 restaurants" in result.stderr
 
     def test_json_envelope_no_results_is_parseable(self):
         from typer.testing import CliRunner
@@ -480,7 +494,7 @@ class TestSearchCommand:
         assert payload["limit"] == 20
         assert payload["meta"]["total_count"] == 0
         assert payload["error"] is None
-        assert "沒有找到餐廳" in result.stderr
+        assert "No restaurants found." in result.stderr
 
     def test_json_envelope_validation_error_is_parseable(self):
         from typer.testing import CliRunner
@@ -502,7 +516,7 @@ class TestSearchCommand:
         assert payload["error"]["retryable"] is False
         assert "area, keyword, or cuisine" in payload["error"]["detail"]
         assert "--area" in payload["error"]["suggested_action"]
-        assert "錯誤" in result.stderr
+        assert "Error: provide at least one of --area, --keyword, or --cuisine." in result.stderr
 
     def test_json_envelope_search_error_is_parseable(self):
         from typer.testing import CliRunner
@@ -523,7 +537,24 @@ class TestSearchCommand:
         assert payload["applied_filters"]["area"] == "東京"
         assert payload["applied_filters"]["cuisine"] == "寿司"
         assert payload["applied_filters"]["genre_code"] == "RC0201"
-        assert "搜尋錯誤" in result.stderr
+        assert "Search failed: HTTP 500" in result.stderr
+
+    def test_json_envelope_403_explains_access_denial(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ", http_status=403)
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = CliRunner().invoke(app, ["search", "--area", "東京", "--output", "json-envelope"])
+
+        payload = json.loads(result.stdout)
+        assert result.exit_code == 1
+        assert payload["error"]["error_code"] == "upstream_unavailable"
+        assert payload["error"]["retryable"] is False
+        assert "HTTP 403" in payload["error"]["message"]
+        assert "Tabelog denied access (HTTP 403); retrying the same request will not help." in result.stderr
+        assert "搜尋錯誤" not in result.stderr
 
     def test_search_help_lists_json_envelope_outputs(self):
         import re
@@ -539,6 +570,12 @@ class TestSearchCommand:
         plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
         assert "json-envelope" in plain
         assert "json-list" in plain
+        assert "Search area in Japanese" in plain
+        assert "東京" in plain and "大阪" in plain
+        assert get_area_slug("東京") == "tokyo"
+        assert get_area_slug("大阪") == "osaka"
+        assert "Cuisine name in Japanese" in plain
+        assert "list-cuisines" in plain
 
     def test_limit_must_be_positive(self):
         import re
@@ -554,6 +591,19 @@ class TestSearchCommand:
         plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
         assert "--limit" in plain
 
+    def test_unknown_cuisine_warning_is_english(self):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        response = SearchResponse(status=SearchStatus.NO_RESULTS)
+        with patch("gurume.search.SearchRequest.search_sync", return_value=response):
+            result = CliRunner().invoke(app, ["search", "--cuisine", "unsupported", "--output", "json"])
+
+        assert result.exit_code == 0
+        assert "Warning: unknown cuisine 'unsupported'; searching as a keyword instead." in result.stderr
+        assert "No restaurants found." in result.stderr
+
     def test_unmapped_area_with_cuisine_warns_about_broad_results(self):
         from typer.testing import CliRunner
 
@@ -568,7 +618,7 @@ class TestSearchCommand:
             result = runner.invoke(app, ["search", "--area", "存在しない地域", "--cuisine", "寿司", "--limit", "1"])
 
         assert result.exit_code == 0
-        assert "無法精準映射地區" in result.output
+        assert "could not be mapped precisely" in result.output
 
     def test_national_area_with_cuisine_does_not_warn_about_broad_results(self):
         from typer.testing import CliRunner
@@ -584,7 +634,7 @@ class TestSearchCommand:
             result = runner.invoke(app, ["search", "--area", "全国", "--cuisine", "すき焼き", "--limit", "1"])
 
         assert result.exit_code == 0
-        assert "無法精準映射地區" not in result.output
+        assert "could not be mapped precisely" not in result.output
 
     @pytest.mark.parametrize(
         ("sort_option", "expected_sort_type"),

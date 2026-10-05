@@ -100,6 +100,21 @@ class TestSearchResponse:
         assert response.status == SearchStatus.ERROR
         assert len(response.restaurants) == 0
         assert response.error_message == "HTTP 404 Not Found"
+        assert response.http_status is None
+
+    def test_http_status_is_preserved_by_response_views(self):
+        response = SearchResponse(status=SearchStatus.ERROR, http_status=403)
+
+        assert response.filter().http_status == 403
+        assert response.sort_by("rating").http_status == 403
+        assert response.top(1).http_status == 403
+
+    def test_http_error_status_is_serialized_when_available(self):
+        response = SearchResponse(status=SearchStatus.ERROR, error_message="HTTP Error 403: ", http_status=403)
+
+        assert response.to_dict()["http_status"] == 403
+        assert json.loads(response.to_json())["http_status"] == 403
+        assert "http_status" not in SearchResponse(status=SearchStatus.SUCCESS).to_dict()
 
 
 @pytest.mark.parametrize("status", list(SearchStatus))
@@ -571,6 +586,7 @@ class TestSearchRequest:
 
         assert response.status == SearchStatus.ERROR
         assert response.error_message is not None and "404 Not Found" in response.error_message
+        assert response.http_status == 404
         assert len(response.restaurants) == 0
 
     @patch("curl_cffi.requests.get")
@@ -660,6 +676,7 @@ class TestSearchRequest:
 
         assert response.status == SearchStatus.ERROR
         assert response.error_message is not None and "404 Not Found" in response.error_message
+        assert response.http_status == 404
         assert len(response.restaurants) == 0
 
     @pytest.mark.asyncio

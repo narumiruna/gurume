@@ -21,6 +21,7 @@ from curl_cffi.requests import exceptions as request_errors
 from .area_mapping import get_area_slug
 from .genre_mapping import get_genre_name_by_code
 from .http_client import DEFAULT_IMPERSONATE
+from .http_client import http_status_code
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
@@ -89,6 +90,7 @@ class SearchResponse:
     meta: SearchMeta | None = None
     error_message: str | None = None
     warnings: list[str] = field(default_factory=list)
+    http_status: int | None = None
 
     def filter(
         self,
@@ -123,6 +125,7 @@ class SearchResponse:
             meta=self.meta,
             error_message=self.error_message,
             warnings=list(self.warnings),
+            http_status=self.http_status,
         )
 
     def sort_by(self, key: str, reverse: bool = False) -> SearchResponse:
@@ -147,6 +150,7 @@ class SearchResponse:
             meta=self.meta,
             error_message=self.error_message,
             warnings=list(self.warnings),
+            http_status=self.http_status,
         )
 
     def top(self, n: int) -> SearchResponse:
@@ -164,6 +168,7 @@ class SearchResponse:
             meta=self.meta,
             error_message=self.error_message,
             warnings=list(self.warnings),
+            http_status=self.http_status,
         )
 
     def to_json(self, indent: int = 2) -> str:
@@ -183,13 +188,16 @@ class SearchResponse:
         Returns:
             Dictionary containing all response data.
         """
-        return {
+        data = {
             "status": self.status.value,
             "restaurants": [asdict(r) for r in self.restaurants],
             "meta": asdict(self.meta) if self.meta else None,
             "error_message": self.error_message,
             "warnings": list(self.warnings),
         }
+        if self.http_status is not None:
+            data["http_status"] = self.http_status
+        return data
 
 
 @dataclass
@@ -521,6 +529,7 @@ class SearchRequest:
             return SearchResponse(
                 status=SearchStatus.ERROR,
                 error_message=str(e),
+                http_status=http_status_code(e),
             )
         else:
             return SearchResponse(
@@ -565,6 +574,7 @@ class SearchRequest:
             return SearchResponse(
                 status=SearchStatus.ERROR,
                 error_message=str(e),
+                http_status=http_status_code(e),
             )
         else:
             return SearchResponse(

@@ -76,13 +76,13 @@ class RestaurantDetailRequest:
 
     def __post_init__(self) -> None:
         if not self.restaurant_url:
-            raise InvalidParameterError("restaurant_url 不能為空")
+            raise InvalidParameterError("restaurant_url cannot be empty")
 
         if not self.restaurant_url.startswith("https://tabelog.com/"):
-            raise InvalidParameterError(f"restaurant_url 必須是 Tabelog URL。收到：{self.restaurant_url}")
+            raise InvalidParameterError(f"restaurant_url must be a Tabelog URL; received: {self.restaurant_url}")
 
         if self.max_review_pages < 1:
-            raise InvalidParameterError(f"max_review_pages 必須 >= 1。收到：{self.max_review_pages}")
+            raise InvalidParameterError(f"max_review_pages must be at least 1; received: {self.max_review_pages}")
 
     def _get_base_url(self) -> str:
         """Get the restaurant base URL without trailing slashes or query parameters."""
