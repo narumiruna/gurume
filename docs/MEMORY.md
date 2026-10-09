@@ -58,5 +58,7 @@
 
 - Map `nextpg`/`prevpg` are optional UI labels, not authoritative flags. Derive next from global total and fixed page size, previous navigation from page > 1; preserve `has_more` for local truncation even on the final page.
 
+- Explicit headed-browser search uses a separate persistent `~/.cache/gurume/browser` profile. A working Chrome DevTools session does not prove a fresh Gurume profile will pass Cloudflare; live verification may still require manual browser access. Do not copy cookies or classify challenges as empty results.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

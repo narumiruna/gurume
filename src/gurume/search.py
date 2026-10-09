@@ -539,6 +539,38 @@ class SearchRequest:
                 warnings=warnings,
             )
 
+    async def search_browser(self) -> SearchResponse:
+        """Fetch one page with an explicitly requested headed browser."""
+        from urllib.parse import urlencode
+
+        from .browser import BrowserRetrievalError
+        from .browser import fetch_search_document
+
+        try:
+            if self.max_pages != 1:
+                raise ValueError("Browser search supports exactly one page per invocation")
+            request = self._create_restaurant_request(self.page)
+            url, params = self._build_url_and_params(request)
+            html, final_url = await fetch_search_document(f"{url}?{urlencode(params)}", self.timeout)
+            restaurants = request._parse_restaurants(html)
+            page_result = SearchPageResult(html, restaurants, final_url, self._stringify_params(params))
+            meta = self._update_meta(None, page_result, self.page)
+            return SearchResponse(
+                status=SearchStatus.SUCCESS if restaurants else SearchStatus.NO_RESULTS,
+                restaurants=restaurants,
+                meta=meta,
+                warnings=[
+                    *self._annotate_area_filter(meta, restaurants),
+                    *self._annotate_cuisine_filter(meta, restaurants),
+                ],
+            )
+        except SEARCH_EXCEPTIONS as error:
+            return SearchResponse(
+                status=SearchStatus.ERROR,
+                error_message=str(error),
+                http_status=error.status if isinstance(error, BrowserRetrievalError) else http_status_code(error),
+            )
+
     async def search(self) -> SearchResponse:
         """Run the search asynchronously."""
         try:
