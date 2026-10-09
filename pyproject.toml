@@ -54,6 +54,11 @@ Repository    = "https://github.com/narumiruna/gurume"
 [project.scripts]
 gurume = "gurume.cli:main"
 
+[project.optional-dependencies]
+browser = [
+    "playwright>=1.58",
+]
+
 [dependency-groups]
 dev  = [
   "pytest>=9.1.1",

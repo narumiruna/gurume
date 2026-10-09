@@ -58,5 +58,13 @@
 
 - Map `nextpg`/`prevpg` are optional UI labels, not authoritative flags. Derive next from global total and fixed page size, previous navigation from page > 1; preserve `has_more` for local truncation even on the final page.
 
+- Explicit headed-browser search uses a separate persistent `~/.cache/gurume/browser` profile. A working Chrome DevTools session does not prove a fresh Gurume profile will pass Cloudflare; live verification may still require manual browser access. Do not copy cookies or classify challenges as empty results.
+
+- Browser retryability must survive the typed error and SearchResponse boundary: distinguish HTTP 5xx and recognized navigation timeouts/network failures from verification/403, certificate/configuration errors, and unknown documents. Retry metadata does not enable automatic retries.
+
+- Recover browser navigation timeouts only with current main-frame response status and validated content; never infer HTTP success from a rendered DOM alone. Zero parsed cards need explicit not-found or zero-count evidence, and profile filesystem failures must stay non-retryable setup errors.
+
+- Keep browser document/empty-result guards aligned with the shared parser's area-not-found predicate, including its Japanese text sentinel; otherwise invalid areas become errors or leak national fallback cards. Challenge/HTTP-error checks still take precedence.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

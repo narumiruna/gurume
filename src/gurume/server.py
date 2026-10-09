@@ -25,6 +25,7 @@ from .map_output import validate_map_limit
 from .map_search import MapSearchRequest
 from .search import SearchRequest
 from .search import SearchStatus
+from .server_helpers import _browser_search_error
 from .server_helpers import _build_cuisine_list_error_output
 from .server_helpers import _build_cuisine_list_output
 from .server_helpers import _build_detail_error_output
@@ -218,6 +219,10 @@ async def tabelog_search_restaurants(
         int | None,
         Field(default=None, description="Optional party size for reservation filtering.", ge=1),
     ] = None,
+    transport: Annotated[
+        Literal["http", "browser"],
+        Field(default="http", description="Explicit transport: browser opens headed Chromium, not automatic fallback."),
+    ] = "http",
 ) -> RestaurantSearchOutput:
     """Search Tabelog restaurants with validated filters and pagination metadata.
 
@@ -254,7 +259,9 @@ async def tabelog_search_restaurants(
             page=page,
             max_pages=1,
         )
-        response = await request.search()
+        if transport not in {"http", "browser"}:
+            raise ValueError("transport must be http or browser")
+        response = await request.search_browser() if transport == "browser" else await request.search()
     except ValueError as e:
         detail = str(e)
         error_code = "unsupported_cuisine" if cuisine and "Unknown cuisine type" in detail else "invalid_parameters"
@@ -312,7 +319,9 @@ async def tabelog_search_restaurants(
             )
 
         error = (
-            _upstream_access_denied_error("Restaurant search", response.error_message)
+            _browser_search_error(response)
+            if transport == "browser"
+            else _upstream_access_denied_error("Restaurant search", response.error_message)
             if response.http_status == 403
             else ToolErrorOutput(
                 error_code="upstream_unavailable",
