@@ -662,6 +662,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#explicit-headed-browser-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicit headed-browser search
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gurume.server" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -997,6 +1008,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#explicit-headed-browser-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Explicit headed-browser search
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#gurume.server" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1254,6 +1276,44 @@
 
 
 <h1 id="server">server<a class="headerlink" href="#server" title="Permanent link">&para;</a></h1>
+<h2 id="explicit-headed-browser-search">Explicit headed-browser search<a class="headerlink" href="#explicit-headed-browser-search" title="Permanent link">&para;</a></h2>
+<p>HTTP remains the default. To use a real browser instead, install the optional extra
+and its Chromium binary on the MCP server machine:</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>browser
+uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>browser<span class="w"> </span>playwright<span class="w"> </span>install<span class="w"> </span>chromium
+uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>browser<span class="w"> </span>gurume<span class="w"> </span>mcp
+</code></pre></div>
+<p>Call <code>tabelog_search_restaurants</code> with:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;area&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;三重&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ranking&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;transport&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;browser&quot;</span><span class="p">}</span>
+</code></pre></div>
+<p>This opens <strong>headed</strong> Chromium and fetches one page using the same URL builder,
+restaurant parser, metadata, and area/cuisine checks as HTTP search. After a navigation
+timeout, it can recover rendered content only when the current main-frame HTTP
+response status is known and the document passes validation. It does not navigate
+again. Empty output requires explicit not-found markup, the shared parser's
+<code>該当のエリア・駅が見つかりませんでした</code> area-error text, or a parsed zero count;
+positive/unknown counts with no parsed restaurants are errors. A graphical
+display is required. CLI and TUI continue to use HTTP; Python callers can explicitly
+use <code>await SearchRequest(...).search_browser()</code>.</p>
+<p>The dedicated profile is <code>~/.cache/gurume/browser</code>. Cookies stay within that profile;
+they are not copied from other browsers or sent to the HTTP client. Access is not
+guaranteed: verification pages return a non-retryable error, not empty results.
+Transient HTTP 5xx, navigation timeouts, and recognized network failures return
+<code>retryable: true</code> with a retry-later action. Verification/403, other HTTP 4xx,
+installation/display/profile errors, and unrecognized documents remain
+non-retryable. Permanent HTTP 4xx errors report their status and recommend checking
+the generated URL/upstream routes (or rate limits for 429), rather than browser
+installation or verification. This metadata allows callers to decide whether to retry; the tool
+itself performs no automatic fallback, challenge solving, or retry.</p>
+<p>If verification is required, manually open the same profile on the server machine:</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>browser<span class="w"> </span>playwright<span class="w"> </span>open<span class="w"> </span>--browser<span class="w"> </span>chromium<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--user-data-dir<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.cache/gurume/browser&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">&#39;https://tabelog.com/mie/rstLst/?SrtT=rt&amp;PG=1&#39;</span>
+</code></pre></div>
+<p>Complete any verification yourself, then close that browser before calling the tool
+again. Concurrent calls sharing the profile are not supported. The tool closes its
+browser on success, failure, or cancellation and does not leave a verification
+window running. Do not repeatedly call it if access remains denied.</p>
 
 
 <div class="doc doc-object doc-module">
@@ -2020,16 +2080,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
-<span class="normal">679</span>
-<span class="normal">680</span>
-<span class="normal">681</span>
-<span class="normal">682</span>
-<span class="normal">683</span>
-<span class="normal">684</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">684</span>
 <span class="normal">685</span>
 <span class="normal">686</span>
 <span class="normal">687</span>
@@ -2044,7 +2095,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">696</span>
 <span class="normal">697</span>
 <span class="normal">698</span>
-<span class="normal">699</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span>
+<span class="normal">702</span>
+<span class="normal">703</span>
+<span class="normal">704</span>
+<span class="normal">705</span>
+<span class="normal">706</span>
+<span class="normal">707</span>
+<span class="normal">708</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
     <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
@@ -2105,16 +2165,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">526</span>
 <span class="normal">527</span>
 <span class="normal">528</span>
 <span class="normal">529</span>
@@ -2159,7 +2210,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">568</span>
 <span class="normal">569</span>
 <span class="normal">570</span>
-<span class="normal">571</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2250,16 +2310,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">574</span>
-<span class="normal">575</span>
-<span class="normal">576</span>
-<span class="normal">577</span>
-<span class="normal">578</span>
-<span class="normal">579</span>
-<span class="normal">580</span>
-<span class="normal">581</span>
-<span class="normal">582</span>
-<span class="normal">583</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">583</span>
 <span class="normal">584</span>
 <span class="normal">585</span>
 <span class="normal">586</span>
@@ -2305,7 +2356,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">626</span>
 <span class="normal">627</span>
 <span class="normal">628</span>
-<span class="normal">629</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2426,16 +2486,7 @@ delegating response schemas and helper logic to focused modules.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
-<span class="normal">344</span>
-<span class="normal">345</span>
-<span class="normal">346</span>
-<span class="normal">347</span>
-<span class="normal">348</span>
-<span class="normal">349</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">349</span>
 <span class="normal">350</span>
 <span class="normal">351</span>
 <span class="normal">352</span>
@@ -2529,7 +2580,16 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">440</span>
 <span class="normal">441</span>
 <span class="normal">442</span>
-<span class="normal">443</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2729,16 +2789,7 @@ Returns list of all supported cuisines:
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">446</span>
-<span class="normal">447</span>
-<span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">455</span>
 <span class="normal">456</span>
 <span class="normal">457</span>
 <span class="normal">458</span>
@@ -2797,7 +2848,16 @@ Returns list of all supported cuisines:
 <span class="normal">511</span>
 <span class="normal">512</span>
 <span class="normal">513</span>
-<span class="normal">514</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -2956,16 +3016,7 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">640</span>
-<span class="normal">641</span>
-<span class="normal">642</span>
-<span class="normal">643</span>
-<span class="normal">644</span>
-<span class="normal">645</span>
-<span class="normal">646</span>
-<span class="normal">647</span>
-<span class="normal">648</span>
-<span class="normal">649</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">649</span>
 <span class="normal">650</span>
 <span class="normal">651</span>
 <span class="normal">652</span>
@@ -2988,7 +3039,16 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
 <span class="normal">669</span>
 <span class="normal">670</span>
 <span class="normal">671</span>
-<span class="normal">672</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span>
+<span class="normal">675</span>
+<span class="normal">676</span>
+<span class="normal">677</span>
+<span class="normal">678</span>
+<span class="normal">679</span>
+<span class="normal">680</span>
+<span class="normal">681</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span><span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">openWorldHint</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
     <span class="n">structured_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
@@ -3112,6 +3172,13 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">transport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">],</span>
+        <span class="n">Field</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;http&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Explicit transport: browser opens headed Chromium, not automatic fallback.&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantSearchOutput</span>
 </code></pre></div>
 
@@ -3129,8 +3196,7 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 
             <details class="mkdocstrings-source">
               <summary>Source code in <code>src/gurume/server.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">139</span>
-<span class="normal">140</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
 <span class="normal">143</span>
@@ -3327,7 +3393,16 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 <span class="normal">334</span>
 <span class="normal">335</span>
 <span class="normal">336</span>
-<span class="normal">337</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span>
+<span class="normal">342</span>
+<span class="normal">343</span>
+<span class="normal">344</span>
+<span class="normal">345</span>
+<span class="normal">346</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
     <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
         <span class="n">readOnlyHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">idempotentHint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -3409,6 +3484,10 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional party size for reservation filtering.&quot;</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">transport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">],</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Explicit transport: browser opens headed Chromium, not automatic fallback.&quot;</span><span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantSearchOutput</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Search Tabelog restaurants with validated filters and pagination metadata.</span>
 
@@ -3445,7 +3524,9 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
             <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
             <span class="n">max_pages</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">transport</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;transport must be http or browser&quot;</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search_browser</span><span class="p">()</span> <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">&quot;browser&quot;</span> <span class="k">else</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">detail</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
         <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;unsupported_cuisine&quot;</span> <span class="k">if</span> <span class="n">cuisine</span> <span class="ow">and</span> <span class="s2">&quot;Unknown cuisine type&quot;</span> <span class="ow">in</span> <span class="n">detail</span> <span class="k">else</span> <span class="s2">&quot;invalid_parameters&quot;</span>
@@ -3503,7 +3584,9 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
             <span class="p">)</span>
 
         <span class="n">error</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">&quot;Restaurant search&quot;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">)</span>
+            <span class="n">_browser_search_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">&quot;browser&quot;</span>
+            <span class="k">else</span> <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">&quot;Restaurant search&quot;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">http_status</span> <span class="o">==</span> <span class="mi">403</span>
             <span class="k">else</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
                 <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
