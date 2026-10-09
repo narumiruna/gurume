@@ -56,5 +56,7 @@
 
 - Validate raw map marker counts against the total remaining after the fixed page offset, and restrict all numeric restaurant-path segments to ASCII digits. Reuse `retry.is_retryable_error` for upstream error metadata; treating every HTTP error as retryable incorrectly includes 404/410.
 
+- Map `nextpg`/`prevpg` are optional UI labels, not authoritative flags. Derive next from global total and fixed page size, previous navigation from page > 1; preserve `has_more` for local truncation even on the final page.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

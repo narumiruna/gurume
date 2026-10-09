@@ -25,6 +25,13 @@ class MapBounds(TypedDict):
 
 BOUNDS: MapBounds = {"min_lat": 34.36, "max_lat": 35.15, "min_lon": 135.85, "max_lon": 137.25}
 XML = (Path(__file__).parent / "fixtures/map_yakitori.xml").read_text()
+PAGINATION_OUTPUT_CASES = [
+    (1, 271, "", 20, True, True),
+    (2, 271, "", 20, True, True),
+    (14, 271, ' nextpg="stale" prevpg="stale"', 20, False, False),
+    (1, 2, ' nextpg="stale" prevpg="stale"', 20, False, False),
+    (1, 2, ' nextpg="stale" prevpg="stale"', 1, False, True),
+]
 
 
 def test_params_use_map_categories_not_ranking_genre_code():
@@ -104,6 +111,27 @@ def test_parse_keeps_geographic_scope_and_raw_budgets():
     assert result.items[1].prefecture_code == "23"  # Not silently prefecture-filtered.
     assert result.items[1].restaurant.review_count == 0
     assert result.items[1].restaurant.closed_days == "月曜日"
+
+
+@pytest.mark.parametrize(
+    "page,total,has_next",
+    [(1, 2, False), (1, 20, False), (1, 21, True), (2, 22, False), (2, 40, False), (2, 41, True), (14, 271, False)],
+)
+@pytest.mark.parametrize("labels", ["", ' nextpg="" prevpg=""', ' nextpg="stale" prevpg="stale"'])
+def test_pagination_uses_counts_not_labels(page, total, has_next, labels):
+    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(xml)
+    assert result.has_next_page is has_next
+    assert result.has_prev_page is (page > 1)
+
+
+@pytest.mark.parametrize("page,total", [(1, 0), (2, 0), (2, 20), (15, 271)])
+def test_stale_labels_do_not_create_next_pages_on_empty_results(page, total):
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(
+        f'<markers><srchinfo cnt="{total}" nextpg="stale" prevpg="stale"/></markers>'
+    )
+    assert result.items == [] and result.has_next_page is False
+    assert result.has_prev_page is (page > 1)
 
 
 @pytest.mark.parametrize(
@@ -197,9 +225,7 @@ def test_empty_pages_at_or_beyond_total_are_allowed(page, total):
 @pytest.mark.parametrize("nextpg", ["", "next"])
 def test_empty_pages_with_remaining_results_fail(page, total, nextpg):
     with pytest.raises(ParseError, match="inconsistent result counts"):
-        MapSearchRequest(**BOUNDS, page=page)._parse(
-            f'<markers><srchinfo cnt="{total}" nextpg="{nextpg}"/></markers>'
-        )
+        MapSearchRequest(**BOUNDS, page=page)._parse(f'<markers><srchinfo cnt="{total}" nextpg="{nextpg}"/></markers>')
 
 
 @pytest.mark.parametrize("page,total", [(2, 0), (2, 2), (2, 20), (2, 21), (3, 40), (15, 271)])

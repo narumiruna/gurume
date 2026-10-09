@@ -61,7 +61,8 @@ The MCP response and CLI `--output json` / `json-envelope` share the same schema
 ## Interpretation and limits
 
 - Rectangle results may cross prefecture boundaries. Do not call these prefecture or national rankings, or infer an exact prefecture total from the map total.
-- `has_more` is true for a reported next page or local output truncation. If `limit < 20`, first re-fetch the same page with `limit=20` to see omitted items; increasing `page` skips them.
+- `has_next_page` is computed as `page * 20 < total_count`; optional upstream navigation labels are ignored. `has_prev_page` indicates a preceding page index (`page > 1`), not a guarantee of results there for an out-of-range request.
+- `has_more` is true for a computed next page or local output truncation. If `limit < 20`, first re-fetch the same page with `limit=20` to see omitted items; increasing `page` skips them.
 - The default table shows raw prefecture codes and coordinates instead of an unavailable named area; codes do not establish prefecture ranking completeness.
 - Malformed, duplicate, outside-rectangle, or cuisine-mismatched markers are skipped with warnings, without changing the upstream total. Rectangle edges are inclusive. Each valid marker must include the verified `焼き鳥` genre label; missing labels and unverified aliases are not accepted. If every received marker is invalid, the request fails rather than reporting no results.
 - An empty page is an upstream failure while the reported total indicates results remain after its fixed page offset. Received marker count must not exceed that remaining total. Empty pages at or beyond the total are legitimate `no_results` responses and retain the upstream total.

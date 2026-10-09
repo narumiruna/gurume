@@ -92,7 +92,7 @@ class MapSearchRequest:
         }
 
     def _parse(self, xml: str) -> MapSearchResult:
-        root, info, total = _parse_document(xml)
+        root, total = _parse_document(xml)
         markers = root.findall("marker")
         remaining_count = max(0, total - (self.page - 1) * MAP_PAGE_SIZE)
         if len(markers) > min(MAP_PAGE_SIZE, remaining_count) or (remaining_count > 0 and not markers):
@@ -127,8 +127,8 @@ class MapSearchRequest:
             total_count=total,
             page=self.page,
             upstream_count=len(markers),
-            has_next_page=bool(info.get("nextpg", "").strip()),
-            has_prev_page=bool(info.get("prevpg", "").strip()),
+            has_next_page=self.page * MAP_PAGE_SIZE < total,
+            has_prev_page=self.page > 1,
             source_params=self._build_params(),
             skipped_count=skipped,
             warnings=warnings,
@@ -148,7 +148,7 @@ class MapSearchRequest:
             return self._parse(response.text)
 
 
-def _parse_document(xml: str) -> tuple[ET.Element, ET.Element, int]:
+def _parse_document(xml: str) -> tuple[ET.Element, int]:
     # ElementTree expands internal entities; these are never needed by this API.
     if "<!DOCTYPE" in xml.upper() or "<!ENTITY" in xml.upper():
         raise ParseError("Map response must not contain XML document types or entities")
@@ -165,7 +165,7 @@ def _parse_document(xml: str) -> tuple[ET.Element, ET.Element, int]:
             raise ValueError("negative total")
     except (KeyError, ValueError) as error:
         raise ParseError("Map response has an invalid total count") from error
-    return root, info, total
+    return root, total
 
 
 def _optional_text(marker: ET.Element, key: str) -> str | None:

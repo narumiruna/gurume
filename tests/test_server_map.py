@@ -15,6 +15,7 @@ from gurume.server import mcp
 from gurume.server import tabelog_search_map_restaurants
 
 from .test_map_search import BOUNDS
+from .test_map_search import PAGINATION_OUTPUT_CASES
 from .test_map_search import XML
 from .test_map_search import MapBounds
 
@@ -186,6 +187,28 @@ async def test_mcp_empty_page_status_respects_remaining_count(page, status):
         assert structured["error"]["retryable"] is False and structured["meta"] is None
     else:
         assert structured["error"] is None and structured["meta"]["total_count"] == 271
+    client.get.assert_awaited_once()
+    client.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more", PAGINATION_OUTPUT_CASES)
+async def test_mcp_pagination_ignores_labels_and_preserves_local_truncation(
+    page, total, labels, limit, has_next, has_more
+):
+    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+    client = AsyncMock()
+    client.get.return_value = Mock(text=xml)
+    client.__aenter__.return_value = client
+    with patch("gurume.map_search.requests.AsyncSession", return_value=client):
+        _, structured = await mcp.call_tool(
+            "tabelog_search_map_restaurants", dict(BOUNDS) | {"page": page, "limit": limit}
+        )
+    assert isinstance(structured, dict) and structured["status"] == "success"
+    assert structured["meta"]["has_next_page"] is has_next
+    assert structured["meta"]["has_prev_page"] is (page > 1)
+    assert structured["meta"]["total_count"] == total and structured["has_more"] is has_more
+    assert structured["returned_count"] == min(2, limit)
     client.get.assert_awaited_once()
     client.__aexit__.assert_awaited_once()
 

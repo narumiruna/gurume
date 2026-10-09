@@ -13,6 +13,7 @@ from gurume.exceptions import ParseError
 from gurume.map_search import MapSearchRequest
 
 from .test_map_search import BOUNDS
+from .test_map_search import PAGINATION_OUTPUT_CASES
 from .test_map_search import XML
 
 runner = CliRunner()
@@ -34,6 +35,21 @@ def test_json_envelope_and_limit_preserve_upstream_metadata():
     assert data["items"][0]["latitude"] == pytest.approx(34.49462941849498)
     assert "Warning:" in output.stderr and "Map page" in output.stderr
     fetch.assert_called_once()
+
+
+@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more", PAGINATION_OUTPUT_CASES)
+def test_json_pagination_ignores_labels_and_preserves_local_truncation(page, total, labels, limit, has_next, has_more):
+    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+    with patch("gurume.map_search.requests.get") as get:
+        get.return_value.text = xml
+        result = runner.invoke(app, [*ARGS, "--page", str(page), "--limit", str(limit), "-o", "json"])
+    assert result.exit_code == 0, result.output
+    data = json.loads(result.stdout)
+    assert data["meta"]["has_next_page"] is has_next
+    assert data["meta"]["has_prev_page"] is (page > 1)
+    assert data["meta"]["total_count"] == total and data["has_more"] is has_more
+    assert data["returned_count"] == min(2, limit)
+    get.assert_called_once()
 
 
 @pytest.mark.parametrize("output_format", ["json-list", "table", "simple", "json-envelope"])
