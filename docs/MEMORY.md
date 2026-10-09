@@ -54,7 +54,7 @@
 
 - Both observed map XML pages (40 markers) contain the exact `焼き鳥` genre token. Match that verified label when validating markers, not a substring or an invented alias; retain raw prefecture codes/coordinates in the default map table instead of presenting missing named areas.
 
-- Validate raw map marker counts against the total remaining after the fixed page offset, and restrict all numeric restaurant-path segments to ASCII digits. Reuse `retry.is_retryable_error` for upstream error metadata; treating every HTTP error as retryable incorrectly includes 404/410.
+- Require raw map marker count to equal the fixed-page quota before skipping malformed markers; truncated XML fixtures need coherent totals or generated full pages. Check coordinate ranges before `math.isfinite` so oversized Python integers become parameter errors, not float-conversion overflow. Restrict numeric restaurant-path segments to ASCII digits. Reuse `retry.is_retryable_error` for upstream error metadata; treating every HTTP error as retryable incorrectly includes 404/410.
 
 - Map `nextpg`/`prevpg` are optional UI labels, not authoritative flags. Derive next from global total and fixed page size, previous navigation from page > 1; preserve `has_more` for local truncation even on the final page.
 

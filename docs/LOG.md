@@ -101,3 +101,4 @@
 2026-10-09 | fix(map): validate page totals, HTTP retryability, and ASCII identities (#95)
 2026-10-09 | fix(map): reject empty pages while upstream totals still imply remaining results (#95)
 2026-10-09 | fix(map): derive navigation flags from total and page instead of optional upstream labels (#95)
+2026-10-09 | fix(map): reject partial raw pages and validate oversized coordinates before float conversion (#95)

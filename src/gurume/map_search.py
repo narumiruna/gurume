@@ -64,7 +64,7 @@ class MapSearchRequest:
             ("min_lon", self.min_lon, 180),
             ("max_lon", self.max_lon, 180),
         ):
-            if isinstance(value, bool) or not math.isfinite(value) or not -bound <= value <= bound:
+            if isinstance(value, bool) or not -bound <= value <= bound or not math.isfinite(value):
                 raise ValueError(f"{name} must be a finite number (not a Boolean) between {-bound} and {bound}")
         if self.min_lat >= self.max_lat or self.min_lon >= self.max_lon:
             raise ValueError("min_lat must be less than max_lat and min_lon must be less than max_lon")
@@ -95,7 +95,7 @@ class MapSearchRequest:
         root, total = _parse_document(xml)
         markers = root.findall("marker")
         remaining_count = max(0, total - (self.page - 1) * MAP_PAGE_SIZE)
-        if len(markers) > min(MAP_PAGE_SIZE, remaining_count) or (remaining_count > 0 and not markers):
+        if len(markers) != min(MAP_PAGE_SIZE, remaining_count):
             raise ParseError("Map response has inconsistent result counts")
         items: list[MapRestaurant] = []
         seen: set[str] = set()

@@ -14,10 +14,11 @@ from gurume.map_search import MapSearchRequest
 from gurume.server import mcp
 from gurume.server import tabelog_search_map_restaurants
 
-from .test_map_search import BOUNDS
-from .test_map_search import PAGINATION_OUTPUT_CASES
-from .test_map_search import XML
-from .test_map_search import MapBounds
+from .map_fixtures import BOUNDS
+from .map_fixtures import PAGINATION_OUTPUT_CASES
+from .map_fixtures import XML
+from .map_fixtures import MapBounds
+from .map_fixtures import map_page_xml
 
 
 @pytest.mark.asyncio
@@ -41,7 +42,7 @@ async def test_mcp_call_returns_validated_structured_output():
     assert structured["status"] == "success"
     assert structured["returned_count"] == 1 and structured["has_more"] is True
     assert structured["meta"]["upstream_count"] == 2
-    assert structured["meta"]["total_count"] == 271
+    assert structured["meta"]["total_count"] == 2
     assert structured["applied_filters"]["cuisine"] == "焼き鳥"
     assert structured["items"][0]["dinner_price"] is None
     assert structured["items"][0]["price_range2"] == "￥15,000～￥19,999"
@@ -68,6 +69,18 @@ async def test_direct_validation_precedes_http(override):
         result = await tabelog_search_map_restaurants(**(BOUNDS | override))
     assert result.status == "error" and result.error is not None
     assert result.error.error_code == "invalid_parameters" and not result.error.retryable
+    fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", list(BOUNDS))
+@pytest.mark.parametrize("sign", [-1, 1])
+async def test_oversized_integer_bounds_return_invalid_parameters(field, sign):
+    with patch.object(MapSearchRequest, "search", new_callable=AsyncMock) as fetch:
+        result = await tabelog_search_map_restaurants(**(BOUNDS | {field: sign * 10**1000}))
+    assert result.status == "error" and result.error is not None
+    assert result.error.error_code == "invalid_parameters" and result.error.retryable is False
+    assert result.items == [] and result.meta is None
     fetch.assert_not_called()
 
 
@@ -112,7 +125,7 @@ async def test_protocol_pagination_requires_integers(field, value):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("page,limit", [(1, 20), (2, 1)])
 async def test_protocol_accepts_valid_integer_pagination(page, limit):
-    result = MapSearchRequest(**BOUNDS, page=page)._parse(XML)
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(map_page_xml(page, (page - 1) * 20 + 2))
     with patch.object(MapSearchRequest, "search", new_callable=AsyncMock, return_value=result) as fetch:
         _, structured = await mcp.call_tool(
             "tabelog_search_map_restaurants", dict(BOUNDS) | {"page": page, "limit": limit}
@@ -192,11 +205,11 @@ async def test_mcp_empty_page_status_respects_remaining_count(page, status):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more", PAGINATION_OUTPUT_CASES)
+@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more,returned", PAGINATION_OUTPUT_CASES)
 async def test_mcp_pagination_ignores_labels_and_preserves_local_truncation(
-    page, total, labels, limit, has_next, has_more
+    page, total, labels, limit, has_next, has_more, returned
 ):
-    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+    xml = map_page_xml(page, total, labels)
     client = AsyncMock()
     client.get.return_value = Mock(text=xml)
     client.__aenter__.return_value = client
@@ -208,7 +221,22 @@ async def test_mcp_pagination_ignores_labels_and_preserves_local_truncation(
     assert structured["meta"]["has_next_page"] is has_next
     assert structured["meta"]["has_prev_page"] is (page > 1)
     assert structured["meta"]["total_count"] == total and structured["has_more"] is has_more
-    assert structured["returned_count"] == min(2, limit)
+    assert structured["returned_count"] == returned
+    client.get.assert_awaited_once()
+    client.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_mcp_partial_page_returns_nonretryable_upstream_error():
+    client = AsyncMock()
+    client.get.return_value = Mock(text=XML.replace('cnt="2"', 'cnt="271"'))
+    client.__aenter__.return_value = client
+    with patch("gurume.map_search.requests.AsyncSession", return_value=client):
+        _, structured = await mcp.call_tool("tabelog_search_map_restaurants", dict(BOUNDS))
+    assert isinstance(structured, dict) and structured["status"] == "error"
+    assert structured["error"]["error_code"] == "upstream_unavailable"
+    assert structured["error"]["retryable"] is False and structured["meta"] is None
+    assert structured["items"] == [] and structured["has_more"] is False
     client.get.assert_awaited_once()
     client.__aexit__.assert_awaited_once()
 

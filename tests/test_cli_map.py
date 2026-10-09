@@ -12,9 +12,10 @@ from gurume.cli import app
 from gurume.exceptions import ParseError
 from gurume.map_search import MapSearchRequest
 
-from .test_map_search import BOUNDS
-from .test_map_search import PAGINATION_OUTPUT_CASES
-from .test_map_search import XML
+from .map_fixtures import BOUNDS
+from .map_fixtures import PAGINATION_OUTPUT_CASES
+from .map_fixtures import XML
+from .map_fixtures import map_page_xml
 
 runner = CliRunner()
 ARGS = ["map-search", "--min-lat", "34.36", "--max-lat", "35.15", "--min-lon", "135.85", "--max-lon", "137.25"]
@@ -29,7 +30,7 @@ def test_json_envelope_and_limit_preserve_upstream_metadata():
     assert data["status"] == "success"
     assert data["scope"] == "geographic_rectangle"
     assert data["returned_count"] == 1 and data["has_more"] is True
-    assert data["meta"]["total_count"] == 271 and data["meta"]["upstream_count"] == 2
+    assert data["meta"]["total_count"] == 2 and data["meta"]["upstream_count"] == 2
     assert data["meta"]["page_size"] == 20
     assert data["applied_filters"]["sort"] == "ranking"
     assert data["items"][0]["latitude"] == pytest.approx(34.49462941849498)
@@ -37,9 +38,11 @@ def test_json_envelope_and_limit_preserve_upstream_metadata():
     fetch.assert_called_once()
 
 
-@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more", PAGINATION_OUTPUT_CASES)
-def test_json_pagination_ignores_labels_and_preserves_local_truncation(page, total, labels, limit, has_next, has_more):
-    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+@pytest.mark.parametrize("page,total,labels,limit,has_next,has_more,returned", PAGINATION_OUTPUT_CASES)
+def test_json_pagination_ignores_labels_and_preserves_local_truncation(
+    page, total, labels, limit, has_next, has_more, returned
+):
+    xml = map_page_xml(page, total, labels)
     with patch("gurume.map_search.requests.get") as get:
         get.return_value.text = xml
         result = runner.invoke(app, [*ARGS, "--page", str(page), "--limit", str(limit), "-o", "json"])
@@ -48,7 +51,7 @@ def test_json_pagination_ignores_labels_and_preserves_local_truncation(page, tot
     assert data["meta"]["has_next_page"] is has_next
     assert data["meta"]["has_prev_page"] is (page > 1)
     assert data["meta"]["total_count"] == total and data["has_more"] is has_more
-    assert data["returned_count"] == min(2, limit)
+    assert data["returned_count"] == returned
     get.assert_called_once()
 
 
@@ -125,6 +128,18 @@ def test_incomplete_page_is_upstream_error_not_no_results(page, nextpg):
     assert data["status"] == "error" and data["error"]["error_code"] == "upstream_unavailable"
     assert data["error"]["retryable"] is False and data["has_more"] is False
     assert data["meta"] is None and data["items"] == []
+    get.assert_called_once()
+
+
+def test_partial_page_returns_nonretryable_upstream_error():
+    with patch("gurume.map_search.requests.get") as get:
+        get.return_value.text = XML.replace('cnt="2"', 'cnt="271"')
+        result = runner.invoke(app, [*ARGS, "-o", "json"])
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    assert data["status"] == "error" and data["error"]["error_code"] == "upstream_unavailable"
+    assert data["error"]["retryable"] is False and data["meta"] is None
+    assert data["items"] == [] and data["has_more"] is False
     get.assert_called_once()
 
 

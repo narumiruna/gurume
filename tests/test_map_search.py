@@ -1,8 +1,7 @@
 """Map XML parsing and transport tests; no live HTTP."""
 
+import xml.etree.ElementTree as ET
 from asyncio import CancelledError
-from pathlib import Path
-from typing import TypedDict
 from unittest.mock import AsyncMock
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -15,23 +14,10 @@ from gurume.http_client import DEFAULT_IMPERSONATE
 from gurume.map_search import MAP_SEARCH_URL
 from gurume.map_search import MapSearchRequest
 
-
-class MapBounds(TypedDict):
-    min_lat: float
-    max_lat: float
-    min_lon: float
-    max_lon: float
-
-
-BOUNDS: MapBounds = {"min_lat": 34.36, "max_lat": 35.15, "min_lon": 135.85, "max_lon": 137.25}
-XML = (Path(__file__).parent / "fixtures/map_yakitori.xml").read_text()
-PAGINATION_OUTPUT_CASES = [
-    (1, 271, "", 20, True, True),
-    (2, 271, "", 20, True, True),
-    (14, 271, ' nextpg="stale" prevpg="stale"', 20, False, False),
-    (1, 2, ' nextpg="stale" prevpg="stale"', 20, False, False),
-    (1, 2, ' nextpg="stale" prevpg="stale"', 1, False, True),
-]
+from .map_fixtures import BOUNDS
+from .map_fixtures import XML
+from .map_fixtures import MapBounds
+from .map_fixtures import map_page_xml
 
 
 def test_params_use_map_categories_not_ranking_genre_code():
@@ -84,6 +70,17 @@ def test_boolean_bounds_are_rejected_before_http(field, value):
     get.assert_not_called()
 
 
+@pytest.mark.parametrize("field", list(BOUNDS))
+@pytest.mark.parametrize("sign", [-1, 1])
+def test_oversized_integer_bounds_rejected_before_http(field, sign):
+    with (
+        patch("gurume.map_search.requests.get") as get,
+        pytest.raises(ValueError, match=f"{field}.*between"),
+    ):
+        MapSearchRequest(**(BOUNDS | {field: sign * 10**1000})).search_sync()
+    get.assert_not_called()
+
+
 @pytest.mark.parametrize("cuisine", [None, 26, True, [], {}])
 def test_nonstring_cuisine_rejected_before_http(cuisine):
     with patch("gurume.map_search.requests.get") as get, pytest.raises(TypeError, match="cuisine must be a string"):
@@ -93,10 +90,10 @@ def test_nonstring_cuisine_rejected_before_http(cuisine):
 
 def test_parse_keeps_geographic_scope_and_raw_budgets():
     result = MapSearchRequest(**BOUNDS)._parse(XML)
-    assert result.total_count == 271
+    assert result.total_count == 2
     assert result.upstream_count == 2
     assert result.skipped_count == 0
-    assert result.has_next_page and not result.has_prev_page
+    assert not result.has_next_page and not result.has_prev_page
     first = result.items[0]
     assert first.restaurant.name == "にかわ"
     assert first.restaurant.rating == 3.93
@@ -119,7 +116,7 @@ def test_parse_keeps_geographic_scope_and_raw_budgets():
 )
 @pytest.mark.parametrize("labels", ["", ' nextpg="" prevpg=""', ' nextpg="stale" prevpg="stale"'])
 def test_pagination_uses_counts_not_labels(page, total, has_next, labels):
-    xml = XML.replace('cnt="271"', f'cnt="{total}"').replace(' nextpg="次の20件" prevpg=""', labels)
+    xml = map_page_xml(page, total, labels)
     result = MapSearchRequest(**BOUNDS, page=page)._parse(xml)
     assert result.has_next_page is has_next
     assert result.has_prev_page is (page > 1)
@@ -146,7 +143,7 @@ def test_stale_labels_do_not_create_next_pages_on_empty_results(page, total):
         "<markers><srchinfo/></markers>",
         '<!DOCTYPE markers><markers><srchinfo cnt="0"/></markers>',
         '<!DOCTYPE markers [<!ENTITY x "test">]><markers><srchinfo cnt="0"/></markers>',
-        XML.replace('cnt="271"', 'cnt="1"'),
+        XML.replace('cnt="2"', 'cnt="1"'),
     ],
 )
 def test_bad_or_challenged_xml_is_not_no_results(xml):
@@ -176,7 +173,7 @@ def test_empty_result_and_previous_page():
 def test_partial_bad_markers_are_skipped_with_warning(old, new):
     result = MapSearchRequest(**BOUNDS)._parse(XML.replace(old, new))
     assert len(result.items) == 1
-    assert result.total_count == 271 and result.skipped_count == 1
+    assert result.total_count == 2 and result.skipped_count == 1
     assert "Skipped 1" in result.warnings[-1]
 
 
@@ -193,7 +190,7 @@ def test_partial_bad_markers_are_skipped_with_warning(old, new):
 def test_outside_rectangle_markers_are_skipped(old, new):
     result = MapSearchRequest(**BOUNDS)._parse(XML.replace(old, new))
     assert len(result.items) == 1 and result.items[0].restaurant_id == "24019007"
-    assert result.skipped_count == 1 and result.upstream_count == 2 and result.total_count == 271
+    assert result.skipped_count == 1 and result.upstream_count == 2 and result.total_count == 2
     assert "out-of-bounds" in result.warnings[-1]
 
 
@@ -231,13 +228,40 @@ def test_empty_pages_with_remaining_results_fail(page, total, nextpg):
 @pytest.mark.parametrize("page,total", [(2, 0), (2, 2), (2, 20), (2, 21), (3, 40), (15, 271)])
 def test_markers_beyond_remaining_page_count_fail(page, total):
     with pytest.raises(ParseError, match="inconsistent result counts"):
-        MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="271"', f'cnt="{total}"'))
+        MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="2"', f'cnt="{total}"'))
 
 
 @pytest.mark.parametrize("page,total", [(1, 2), (2, 22), (3, 42), (14, 262)])
 def test_markers_within_remaining_page_count_are_accepted(page, total):
-    result = MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="271"', f'cnt="{total}"'))
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="2"', f'cnt="{total}"'))
     assert len(result.items) == 2 and result.total_count == total and result.page == page
+
+
+@pytest.mark.parametrize("page", [1, 2])
+@pytest.mark.parametrize("count", range(1, 20))
+def test_partial_in_range_pages_fail(page, count):
+    root = ET.fromstring(map_page_xml(page, 271))
+    for marker in root.findall("marker")[count:]:
+        root.remove(marker)
+    with pytest.raises(ParseError, match="inconsistent result counts"):
+        MapSearchRequest(**BOUNDS, page=page)._parse(ET.tostring(root, encoding="unicode"))
+
+
+@pytest.mark.parametrize("count", [10, 11, 12])
+def test_final_page_requires_exact_remaining_count(count):
+    xml = map_page_xml(14, 260 + count).replace(f'cnt="{260 + count}"', 'cnt="271"')
+    if count != 11:
+        with pytest.raises(ParseError, match="inconsistent result counts"):
+            MapSearchRequest(**BOUNDS, page=14)._parse(xml)
+    else:
+        result = MapSearchRequest(**BOUNDS, page=14)._parse(xml)
+        assert result.upstream_count == 11 and len(result.items) == 11
+
+
+def test_raw_page_quota_is_checked_before_skipping_invalid_markers():
+    result = MapSearchRequest(**BOUNDS)._parse(map_page_xml(1, 271).replace('rstname="にかわ"', 'rstname=""'))
+    assert result.upstream_count == 20 and result.skipped_count == 1 and len(result.items) == 19
+    assert result.total_count == 271 and "Skipped 1" in result.warnings[-1]
 
 
 def test_all_outside_rectangle_markers_fail():
@@ -252,7 +276,7 @@ def test_missing_or_nonmatching_cuisine_markers_are_skipped(genre):
     replacement = f'rstcat="{genre}"' if genre is not None else ""
     result = MapSearchRequest(**BOUNDS)._parse(XML.replace('rstcat="焼き鳥"', replacement))
     assert len(result.items) == 1 and result.items[0].restaurant_id == "24019007"
-    assert result.skipped_count == 1 and result.total_count == 271
+    assert result.skipped_count == 1 and result.total_count == 2
     assert "cuisine-mismatched" in result.warnings[-1]
 
 
@@ -309,7 +333,7 @@ def test_sync_transport_checks_status_and_uses_shared_profile():
     with patch("gurume.map_search.requests.get", return_value=response) as get:
         result = MapSearchRequest(**BOUNDS).search_sync()
     response.raise_for_status.assert_called_once()
-    assert result.total_count == 271
+    assert result.total_count == 2
     assert get.call_args.args == (MAP_SEARCH_URL,)
     assert get.call_args.kwargs["impersonate"] == DEFAULT_IMPERSONATE
     assert get.call_args.kwargs["timeout"] == 30.0
@@ -330,7 +354,7 @@ def test_http_failure_is_not_parsed_or_retried():
 
 @pytest.mark.asyncio
 async def test_async_transport_closes_session():
-    response = Mock(text=XML)
+    response = Mock(text=map_page_xml(2, 22))
     client = AsyncMock()
     client.get.return_value = response
     client.__aenter__.return_value = client
