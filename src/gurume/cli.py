@@ -16,6 +16,11 @@ from rich.table import Table
 from .area_mapping import get_area_slug
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
+from .map_output import build_map_error
+from .map_output import build_map_output
+from .map_output import validate_map_limit
+from .map_search import MapRestaurant
+from .map_search import MapSearchRequest
 from .restaurant import Restaurant
 from .restaurant import resolve_sort_type
 from .search import SearchRequest
@@ -331,9 +336,7 @@ def search(
     _output_search_results(output, response, restaurants, area=area, filters=filters, sort=sort, limit=limit)
 
     # Show summary stats.
-    status_console.print(
-        f"\n[cyan]Found {len(response.restaurants)} restaurants; showing {len(restaurants)}.[/cyan]"
-    )
+    status_console.print(f"\n[cyan]Found {len(response.restaurants)} restaurants; showing {len(restaurants)}.[/cyan]")
 
 
 def _output_table(restaurants: list) -> None:
@@ -349,11 +352,31 @@ def _output_table(restaurants: list) -> None:
         table.add_row(
             r.name,
             f"{r.rating:.2f}" if r.rating else "N/A",
-            str(r.review_count) if r.review_count else "N/A",
+            str(r.review_count) if r.review_count is not None else "N/A",
             r.area or "N/A",
             ", ".join(r.genres[:2]) if r.genres else "N/A",
         )
 
+    console.print(table)
+
+
+def _output_map_table(items: list[MapRestaurant]) -> None:
+    """Show geographic evidence without presenting map results as named-area rankings."""
+    table = Table(title="Map search results")
+    table.add_column("Restaurant", style="cyan")
+    table.add_column("Rating", justify="right", style="yellow")
+    table.add_column("Reviews", justify="right", style="green")
+    table.add_column("Pref. code", justify="right")
+    table.add_column("Coordinates", style="blue", no_wrap=True)
+    for item in items:
+        restaurant = item.restaurant
+        table.add_row(
+            restaurant.name,
+            f"{restaurant.rating:.2f}" if restaurant.rating is not None else "N/A",
+            str(restaurant.review_count) if restaurant.review_count is not None else "N/A",
+            item.prefecture_code or "N/A",
+            f"{item.latitude:.5f}, {item.longitude:.5f}",
+        )
     console.print(table)
 
 
@@ -375,7 +398,7 @@ def _output_simple(restaurants: list) -> None:
     """Output restaurants in a simple text format."""
     for i, r in enumerate(restaurants, 1):
         rating_str = f"{r.rating:.2f}" if r.rating else "N/A"
-        review_str = str(r.review_count) if r.review_count else "N/A"
+        review_str = str(r.review_count) if r.review_count is not None else "N/A"
         console.print(f"{i}. {r.name} - ⭐{rating_str} ({review_str} reviews)")
         if r.area:
             console.print(f"   Area: {r.area}")
@@ -383,6 +406,48 @@ def _output_simple(restaurants: list) -> None:
             console.print(f"   Cuisine: {', '.join(r.genres[:3])}")
         console.print(f"   URL: {r.url}")
         console.print()
+
+
+@app.command()
+def map_search(
+    min_lat: Annotated[float, typer.Option(help="Southern latitude of the search rectangle.")],
+    max_lat: Annotated[float, typer.Option(help="Northern latitude of the search rectangle.")],
+    min_lon: Annotated[float, typer.Option(help="Western longitude of the search rectangle.")],
+    max_lon: Annotated[float, typer.Option(help="Eastern longitude of the search rectangle.")],
+    cuisine: Annotated[str, typer.Option("--cuisine", "-c", help="Only 焼き鳥 is currently verified.")] = "焼き鳥",
+    page: Annotated[int, typer.Option("--page", help="Upstream page (20 markers per page).", min=1)] = 1,
+    limit: Annotated[int, typer.Option("--limit", "-n", min=1, max=20, help="Results shown from this page.")] = 20,
+    output: Annotated[OutputFormat, typer.Option("--output", "-o", help="Output format.")] = OutputFormat.TABLE,
+) -> None:
+    """Search yakitori in a geographic rectangle, NOT an exact area ranking."""
+    json_output = output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE, OutputFormat.JSON_LIST)
+    status_console = err_console if json_output else console
+    try:
+        validate_map_limit(limit)
+        request = MapSearchRequest(min_lat, max_lat, min_lon, max_lon, cuisine=cuisine, page=page)
+        result = request.search_sync()
+    except Exception as error:
+        envelope = build_map_error(error, limit)
+        if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+            _print_json(envelope.model_dump(mode="json"))
+        status_console.print(envelope.error.message if envelope.error else "Map search failed.", markup=False)
+        raise typer.Exit(1) from error
+
+    envelope = build_map_output(request, result, limit)
+    for warning in envelope.warnings:
+        status_console.print(f"Warning: {warning}", markup=False)
+    if output == OutputFormat.JSON_LIST:
+        _print_json([item.model_dump(mode="json") for item in envelope.items])
+    elif output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+        _print_json(envelope.model_dump(mode="json"))
+    elif output == OutputFormat.SIMPLE:
+        _output_simple([item.restaurant for item in result.items[:limit]])
+    else:
+        _output_map_table(result.items[:limit])
+    status_console.print(
+        f"Map page {page}: showing {envelope.returned_count}; upstream rectangle total {result.total_count}.",
+        markup=False,
+    )
 
 
 @app.command()

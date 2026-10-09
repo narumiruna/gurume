@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<markers>
+  <srchinfo cnt="2" nextpg="" prevpg="" />
+  <marker id="24019007" rstname="にかわ" rsturl="/mie/A2403/A240301/24019007/"
+          rstcat="焼き鳥、創作料理" score="3.93" rvwcnt="149"
+          lat="34.49462941849498" lng="136.70590877454399" pcd="24"
+          station_name="伊勢市、宮町、宇治山田" holiday=""
+          price_range1="－" price_range2="￥15,000～￥19,999" />
+  <marker id="23073004" rstname="炭火焼鳥 かぐら" rsturl="/aichi/A2304/A230401/23073004/"
+          rstcat="焼き鳥" score="3.20" rvwcnt="0"
+          lat="35.0" lng="136.8" pcd="23" holiday="月曜日" />
+</markers>

@@ -34,5 +34,29 @@
 - Live MCP checks on 2026-10-05: Tabelog's Cloudflare returns 403 for restaurant search and detail pages even with Safari impersonation while homepage and suggestion API work; preserve HTTP status from `SearchResponse` instead of parsing error text, and classify both search and detail 403 as non-retryable `upstream_unavailable`.
 - TUI search receives `SearchResponse(status=ERROR)` without an exception; check the status and clear prior rows, `self.restaurants`, and selection or failures appear as "No restaurants found" or leave stale results. Keep CLI/TUI text and core validation exceptions in English; Japanese restaurant data and user input may still appear in results.
 
+- Raw live probe with `curl_cffi 0.16.3` and Safari on 2026-10-05: homepage returns 200, but `/mie/rstLst/yakitori/?SrtT=rt` returns 403 with `cf-mitigated: challenge` and a `Just a moment...` page; this is a Cloudflare challenge, not a restaurant parser failure.
+
+- Follow-up live checks on 2026-10-05: Chrome and Firefox profiles also hit the Mie ranking challenge; a Safari Session retaining homepage cookies (including `__cf_bm`) still returns 403. Installed `curl_cffi 0.16.3` matches the latest PyPI release; Chrome DevTools checks are blocked by `Target closed`, so actual browser access remains unverified.
+
+- Homepage `commons.js` appends suggestion IDs/types (`area_datatype`, `area_id`, `key_datatype`, `key_id`, `sa_input`) to GET `/rst/rstsearch/`; this may affect normalization, not the Cloudflare challenge on mapped rankings. `/internal_api/rst_search` is used by a restaurant-link modal, not a verified ranking API. See `docs/tabelog-javascript-research.md`.
+
+- Live check on 2026-10-09: headed Chromium via Chrome DevTools MCP returns 200 for national/Mie yakitori rankings and a detail page while Safari curl_cffi returns challenge 403 on the same URLs; existing parsers consume browser document HTML. Profile/session effects are uncontrolled; do not assume disabling headless alone fixes access. See `docs/tabelog-browser-research.md`.
+
+- Headed map Network inspection on 2026-10-09 found `GET /xml/rstmap`: structured restaurant XML and pagination also return 200 with Safari curl_cffi without browser cookies. It uses geographic bounds and legacy map genre fields, not exact prefecture ranking: the Mie viewport included Aichi and total 271 versus ranking 241. See `docs/tabelog-api-research.md`; do not silently replace ranking semantics.
+
+- `gurume map-search` / `tabelog_search_map_restaurants` use explicit rectangles, fixed upstream pages of 20, and only verified yakitori map categories. `limit` truncates the current page, raw map budgets are not lunch/dinner fields, and XML DTD/entity declarations must be rejected before ElementTree parsing.
+
+- Typer/Rich help can insert ANSI styles inside flag names when CI forces color; strip SGR sequences before help text assertions and test both `FORCE_COLOR=0` and `FORCE_COLOR=1`.
+
+- Python booleans pass numeric checks; reject them explicitly for map bounds and use strict float/int MCP fields to prevent coordinate/pagination coercion before core validation. Check cuisine type before stripping so invalid direct input stays a parameter error. Render review counts using `is not None` so zero stays distinct from missing data.
+
+- Map XML markers need request-rectangle checks in addition to global coordinate ranges; reject empty pages whenever their fixed offset still leaves reported results, not only on page 1; allow empty pages at or beyond the total. Normalize invalid caller limits before constructing a typed error envelope so validation itself cannot mask the original error.
+
+- Both observed map XML pages (40 markers) contain the exact `焼き鳥` genre token. Match that verified label when validating markers, not a substring or an invented alias; retain raw prefecture codes/coordinates in the default map table instead of presenting missing named areas.
+
+- Require raw map marker count to equal the fixed-page quota before skipping malformed markers; truncated XML fixtures need coherent totals or generated full pages. Check coordinate ranges before `math.isfinite` so oversized Python integers become parameter errors, not float-conversion overflow. Restrict numeric restaurant-path segments to ASCII digits. Reuse `retry.is_retryable_error` for upstream error metadata; treating every HTTP error as retryable incorrectly includes 404/410.
+
+- Map `nextpg`/`prevpg` are optional UI labels, not authoritative flags. Derive next from global total and fixed page size, previous navigation from page > 1; preserve `has_more` for local truncation even on the final page.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

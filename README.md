@@ -64,9 +64,10 @@ An unsupported value is rejected by `curl_cffi`.
 
 ### 💻 CLI
 
-The built-in CLI currently exposes four commands:
+The built-in CLI currently exposes five commands:
 
 - `gurume search`
+- `gurume map-search` (experimental geographic yakitori search)
 - `gurume list-cuisines`
 - `gurume tui`
 - `gurume mcp`
@@ -110,7 +111,18 @@ Notes:
 - For natural-language input, use the [`gurume-cli` agent skill](skills/gurume-cli/) with an AI assistant — it decomposes free-form text into the structured flags above.
 - `--output json` returns a structured envelope (`status`, `items`, `meta`, `applied_filters`, `warnings`, `error`). Use `--output json-list` for the legacy list-only JSON shape.
 - CLI, TUI, and MCP diagnostics are in English; user-entered search terms and Tabelog restaurant data may remain in Japanese.
-- Reservation filters, detail fetching, and page selection are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
+- Reservation filters, detail fetching, and page selection for `gurume search` are available in the Python API and MCP tools, but are not currently exposed as CLI flags.
+
+Experimental map search uses explicit geographic bounds, not a prefecture ranking:
+
+```bash
+gurume map-search --min-lat 34.36 --max-lat 35.15 \
+  --min-lon 135.85 --max-lon 137.25 --cuisine 焼き鳥 --page 1 --limit 20 -o json
+```
+
+Only yakitori and upstream rating order are currently supported. Results can cross prefecture boundaries;
+raw budget fields are not interpreted as lunch/dinner prices. See [Map search usage](docs/site/usage/map-search.md)
+for pagination, structured outputs, and limitations.
 
 ### 🐍 Python Library
 
@@ -317,6 +329,12 @@ Local development:
 
 5. `tabelog_get_keyword_suggestions`
    Return structured keyword suggestions for cuisines, restaurant names, and combined terms.
+
+6. `tabelog_search_map_restaurants`
+   Experimental yakitori search within explicit `min_lat`, `max_lat`, `min_lon`, and `max_lon` bounds.
+   Optional `cuisine` (only `焼き鳥`), `page` (1-based), and `limit` (1–20).
+   Returns a separate map envelope with coordinates, raw budgets, and rectangle-scoped metadata.
+   This is not an exact prefecture/national ranking or an automatic fallback for HTTP 403.
 
 ### 📋 Recommended MCP Workflow
 

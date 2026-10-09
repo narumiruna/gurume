@@ -37,6 +37,7 @@ nav:
   - Home: index.md
   - Usage:
       - TUI: usage/tui.md
+      - Map search: usage/map-search.md
   - API Reference:
       - Overview: reference/index.md
       - restaurant: reference/restaurant.md
