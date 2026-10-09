@@ -26,6 +26,7 @@ from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
 from .restaurant import SortType
 from .restaurant import _find_restaurant_cards
+from .restaurant import _is_area_not_found
 from .restaurant import build_search_url_and_params
 
 SEARCH_EXCEPTIONS = (request_errors.RequestException, RuntimeError, ValueError, TypeError)
@@ -568,7 +569,8 @@ class SearchRequest:
                     if count_nodes
                     else count_block.get_text(" ", strip=True) if count_block else ""
                 )
-                if not soup.select_one(".rstlist-notfound") and self._parse_count_text(count_text) != 0:
+                explicit_not_found = _is_area_not_found(soup, html) or soup.select_one(".rstlist-notfound")
+                if not explicit_not_found and self._parse_count_text(count_text) != 0:
                     raise RuntimeError("Browser search returned no parsed restaurants without explicit empty evidence")
             page_result = SearchPageResult(html, restaurants, final_url, self._stringify_params(params))
             meta = self._update_meta(None, page_result, self.page)

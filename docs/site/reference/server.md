@@ -21,7 +21,8 @@ This opens **headed** Chromium and fetches one page using the same URL builder,
 restaurant parser, metadata, and area/cuisine checks as HTTP search. After a navigation
 timeout, it can recover rendered content only when the current main-frame HTTP
 response status is known and the document passes validation. It does not navigate
-again. Empty output requires explicit not-found markup or a parsed zero count;
+again. Empty output requires explicit not-found markup, the shared parser's
+`該当のエリア・駅が見つかりませんでした` area-error text, or a parsed zero count;
 positive/unknown counts with no parsed restaurants are errors. A graphical
 display is required. CLI and TUI continue to use HTTP; Python callers can explicitly
 use `await SearchRequest(...).search_browser()`.

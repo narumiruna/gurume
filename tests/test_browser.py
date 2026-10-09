@@ -38,8 +38,24 @@ def test_unusable_document_rejected(html, status):
         validate_search_document(html, status)
 
 
-def test_recognized_no_results():
-    validate_search_document('<div class="rstlist-notfound"></div>', 200)
+@pytest.mark.parametrize("html", ['<div class="rstlist-notfound"></div>', "該当のエリア・駅が見つかりませんでした"])
+def test_recognized_no_results(html):
+    validate_search_document(html, 200)
+
+
+@pytest.mark.asyncio
+async def test_browser_preserves_shared_parser_cases(restaurant_cards_case):
+    html, expected_names, _ = restaurant_cards_case
+    with patch("gurume.browser.fetch_search_document", AsyncMock(return_value=(html, "https://tabelog.com/mie/rstLst/"))):
+        _, result = await mcp.call_tool("tabelog_search_restaurants", {"area": "三重", "transport": "browser"})
+    assert isinstance(result, dict)
+    assert [item["name"] for item in result["items"]] == expected_names
+    if expected_names:
+        assert result["status"] == "success"
+    elif "rstlist-notfound" in html or "該当のエリア・駅が見つかりませんでした" in html:
+        assert result["status"] == "no_results"
+    else:
+        assert result["status"] == "error"
 
 
 @pytest.mark.asyncio

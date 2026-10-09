@@ -33,6 +33,11 @@ CLASS_LUNCH_MARKERS = ("lunch",)
 _RESTAURANT_URL_RE = re.compile(r"/A\d+/A\d+/\d+")
 
 
+def _is_area_not_found(soup: BeautifulSoup, html: str) -> bool:
+    """Recognize existing area errors before accepting national fallback cards."""
+    return soup.find("div", class_="rstlist-notfound") is not None or "該当のエリア・駅が見つかりませんでした" in html
+
+
 def _find_restaurant_cards(soup: BeautifulSoup) -> list[Tag]:
     """Select list cards, using legacy li markup only when no div cards exist."""
     return soup.find_all("div", class_="list-rst") or soup.find_all("li", class_="list-rst")
@@ -272,8 +277,7 @@ class RestaurantSearchRequest:
         restaurants = []
 
         # Check for the upstream "area not found" error message.
-        error_elem = soup.find("div", class_="rstlist-notfound")
-        if error_elem or "該当のエリア・駅が見つかりませんでした" in html:
+        if _is_area_not_found(soup, html):
             # Invalid areas otherwise fall back to national ranking; return no results instead.
             return []
 

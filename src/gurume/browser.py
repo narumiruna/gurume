@@ -6,6 +6,8 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
+from .restaurant import _is_area_not_found
+
 
 class BrowserRetrievalError(RuntimeError):
     """Browser retrieval failed, optionally with an upstream HTTP status."""
@@ -27,7 +29,9 @@ def validate_search_document(html: str, status: int) -> None:
         raise BrowserRetrievalError("Browser verification required; manual browser access is needed.", status=403)
     if status >= 400:
         raise BrowserRetrievalError(f"HTTP Error {status}: Browser search failed", status=status)
-    if not soup.select_one(".list-rst, .js-rst-cassette-wrap, .rstlist-notfound, .c-page-count"):
+    if not _is_area_not_found(soup, html) and not soup.select_one(
+        ".list-rst, .js-rst-cassette-wrap, .rstlist-notfound, .c-page-count"
+    ):
         raise RuntimeError("Browser did not return a recognizable restaurant search document")
 
 
