@@ -64,10 +64,11 @@ The MCP response and CLI `--output json` / `json-envelope` share the same schema
 - `has_more` is true for a reported next page or local output truncation. If `limit < 20`, first re-fetch the same page with `limit=20` to see omitted items; increasing `page` skips them.
 - The default table shows raw prefecture codes and coordinates instead of an unavailable named area; codes do not establish prefecture ranking completeness.
 - Malformed, duplicate, outside-rectangle, or cuisine-mismatched markers are skipped with warnings, without changing the upstream total. Rectangle edges are inclusive. Each valid marker must include the verified `焼き鳥` genre label; missing labels and unverified aliases are not accepted. If every received marker is invalid, the request fails rather than reporting no results.
-- A positive total with no first-page markers is an upstream failure. An empty later page can be a legitimate request beyond the available results and retains the upstream total.
+- A positive total with no first-page markers is an upstream failure. Received marker count must not exceed the remaining total after the fixed page offset. An empty later page can be a legitimate request beyond the available results and retains the upstream total.
+- Restaurant IDs and numeric URL segments must use ASCII digits; noncanonical Unicode-digit markers are skipped rather than exposed as restaurant links.
 - `price_range1` / `price_range2` retain upstream budget text; empty/dash placeholders become `null`. Meal-period meaning is unverified, so `lunch_price` and `dinner_price` remain `null`.
 - Optional data remains `null` when missing. An upstream zero overall score is treated as no rating. Review count zero is preserved.
-- Invalid/challenge XML is an upstream failure, not an empty search. HTTP 403 is non-retryable; no automatic retries, cookie transfer, or challenge solving are performed.
+- Invalid/challenge XML is an upstream failure, not an empty search. HTTP 4xx errors are marked non-retryable under the existing retry policy; HTTP 5xx, connection failures, and timeouts are retryable in the error metadata. No automatic retries, cookie transfer, or challenge solving are performed.
 - Access and schema stability are not guaranteed. Respect applicable site usage restrictions and use only permitted access.
 
 Existing `gurume search`, detail tools, cuisine lists, and TUI behavior are unchanged. `list-cuisines` describes the existing search, not the experimental map command's limited cuisine support.

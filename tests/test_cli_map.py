@@ -132,6 +132,20 @@ def test_upstream_failure_produces_envelope(error):
     assert data["error"]["retryable"] is False
 
 
+@pytest.mark.parametrize("status,retryable", [(404, False), (410, False), (429, False), (500, True), (503, True)])
+def test_http_retryability_in_json_envelope(status, retryable):
+    from unittest.mock import Mock
+
+    error = request_errors.HTTPError(str(status), response=Mock(status_code=status))
+    with patch.object(MapSearchRequest, "search_sync", side_effect=error) as fetch:
+        result = runner.invoke(app, [*ARGS, "-o", "json"])
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    assert data["error"]["error_code"] == "upstream_unavailable"
+    assert data["error"]["retryable"] is retryable
+    fetch.assert_called_once()
+
+
 @pytest.mark.parametrize("force_color", ["0", "1"])
 def test_map_help_is_explicit(force_color):
     result = runner.invoke(app, ["map-search", "--help"], env={"FORCE_COLOR": force_color})

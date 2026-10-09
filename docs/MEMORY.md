@@ -54,5 +54,7 @@
 
 - Both observed map XML pages (40 markers) contain the exact `焼き鳥` genre token. Match that verified label when validating markers, not a substring or an invented alias; retain raw prefecture codes/coordinates in the default map table instead of presenting missing named areas.
 
+- Validate raw map marker counts against the total remaining after the fixed page offset, and restrict all numeric restaurant-path segments to ASCII digits. Reuse `retry.is_retryable_error` for upstream error metadata; treating every HTTP error as retryable incorrectly includes 404/410.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

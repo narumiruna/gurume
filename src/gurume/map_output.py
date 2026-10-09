@@ -18,6 +18,7 @@ from .map_search import MAP_SEARCH_URL
 from .map_search import MAP_WARNINGS
 from .map_search import MapSearchRequest
 from .map_search import MapSearchResult
+from .retry import is_retryable_error
 from .server_helpers import _as_http_url
 from .server_helpers import _to_restaurant_output
 from .server_helpers import _upstream_access_denied_error
@@ -142,7 +143,7 @@ def build_map_error(error: Exception, limit: int) -> MapSearchOutput:
             message="Map search failed because the upstream response was unavailable or invalid."
             if upstream
             else "Map search failed unexpectedly.",
-            retryable=not isinstance(error, ParseError),
+            retryable=is_retryable_error(error) if upstream else True,
             suggested_action=(
                 "Check permitted Tabelog access and endpoint availability; do not repeatedly retry challenges."
             ),

@@ -183,11 +183,23 @@ def test_rectangle_boundaries_are_inclusive(old, bound, attribute):
     assert len(result.items) == 2 and result.skipped_count == 0
 
 
-@pytest.mark.parametrize("page", [2, 15])
-def test_empty_later_page_preserves_positive_total(page):
-    result = MapSearchRequest(**BOUNDS, page=page)._parse('<markers><srchinfo cnt="271" prevpg="prev"/></markers>')
-    assert result.items == [] and result.total_count == 271
+@pytest.mark.parametrize("page,total", [(2, 271), (15, 271), (2, 2), (2, 20)])
+def test_empty_later_page_preserves_positive_total(page, total):
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(f'<markers><srchinfo cnt="{total}" prevpg="prev"/></markers>')
+    assert result.items == [] and result.total_count == total
     assert result.has_prev_page and not result.has_next_page
+
+
+@pytest.mark.parametrize("page,total", [(2, 0), (2, 2), (2, 20), (2, 21), (3, 40), (15, 271)])
+def test_markers_beyond_remaining_page_count_fail(page, total):
+    with pytest.raises(ParseError, match="inconsistent result counts"):
+        MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="271"', f'cnt="{total}"'))
+
+
+@pytest.mark.parametrize("page,total", [(1, 2), (2, 22), (3, 42), (14, 262)])
+def test_markers_within_remaining_page_count_are_accepted(page, total):
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(XML.replace('cnt="271"', f'cnt="{total}"'))
+    assert len(result.items) == 2 and result.total_count == total and result.page == page
 
 
 def test_all_outside_rectangle_markers_fail():
@@ -224,6 +236,24 @@ def test_all_invalid_markers_fail():
         MapSearchRequest(**BOUNDS)._parse(
             XML.replace('rstname="にかわ"', 'rstname=""').replace('lat="35.0"', 'lat="nan"')
         )
+
+
+@pytest.mark.parametrize("digits", ["０１２３４５６７８９", "٠١٢٣٤٥٦٧٨٩"])
+@pytest.mark.parametrize("segment", ["23073004", "A2304", "A230401"])
+def test_nonascii_identity_or_area_segments_are_skipped(digits, segment):
+    nonascii = segment.translate(str.maketrans("0123456789", digits))
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace(segment, nonascii))
+    assert len(result.items) == 1 and result.skipped_count == 1
+    assert result.items[0].restaurant_id == "24019007" and result.items[0].restaurant.url.isascii()
+
+
+def test_all_nonascii_identities_fail():
+    mapping = str.maketrans("0123456789", "０１２３４５６７８９")
+    xml = XML
+    for identity in ("24019007", "23073004"):
+        xml = xml.replace(identity, identity.translate(mapping))
+    with pytest.raises(ParseError, match="no valid"):
+        MapSearchRequest(**BOUNDS)._parse(xml)
 
 
 def test_duplicate_markers_are_skipped():

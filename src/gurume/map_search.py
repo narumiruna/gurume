@@ -21,7 +21,7 @@ MAP_WARNINGS = (
     "Results and total_count describe a geographic rectangle, not an exact prefecture or national ranking.",
     "price_range1 and price_range2 are raw upstream fields; lunch/dinner semantics are not verified.",
 )
-RESTAURANT_PATH = re.compile(r"/[a-z]+/A\d+/A\d+/(\d+)/")
+RESTAURANT_PATH = re.compile(r"/[a-z]+/A[0-9]+/A[0-9]+/([0-9]+)/")
 
 
 @dataclass
@@ -94,7 +94,8 @@ class MapSearchRequest:
     def _parse(self, xml: str) -> MapSearchResult:
         root, info, total = _parse_document(xml)
         markers = root.findall("marker")
-        if len(markers) > MAP_PAGE_SIZE or total < len(markers) or (self.page == 1 and total > 0 and not markers):
+        remaining_count = max(0, total - (self.page - 1) * MAP_PAGE_SIZE)
+        if len(markers) > min(MAP_PAGE_SIZE, remaining_count) or (self.page == 1 and total > 0 and not markers):
             raise ParseError("Map response has inconsistent result counts")
         items: list[MapRestaurant] = []
         seen: set[str] = set()
@@ -177,7 +178,7 @@ def _parse_marker(marker: ET.Element) -> MapRestaurant:
     restaurant_id = marker.attrib["id"]
     path = marker.attrib["rsturl"]
     match = RESTAURANT_PATH.fullmatch(path)
-    if not name or not restaurant_id.isdecimal() or match is None or match[1] != restaurant_id:
+    if not name or match is None or match[1] != restaurant_id:
         raise ValueError("Invalid map restaurant identity or URL")
     latitude = float(marker.attrib["lat"])
     longitude = float(marker.attrib["lng"])
