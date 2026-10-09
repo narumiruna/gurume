@@ -18,6 +18,11 @@ from .detail import RestaurantDetailRequest
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
 from .http_client import http_status_code
+from .map_output import MapSearchOutput
+from .map_output import build_map_error
+from .map_output import build_map_output
+from .map_output import validate_map_limit
+from .map_search import MapSearchRequest
 from .search import SearchRequest
 from .search import SearchStatus
 from .server_helpers import _build_cuisine_list_error_output
@@ -57,6 +62,7 @@ __all__ = [
     "CourseOutput",
     "CuisineListOutput",
     "CuisineOutput",
+    "MapSearchOutput",
     "MenuItemOutput",
     "RestaurantDetailOutput",
     "RestaurantOutput",
@@ -76,6 +82,7 @@ __all__ = [
     "tabelog_get_restaurant_details",
     "tabelog_list_cuisines",
     "tabelog_search_restaurants",
+    "tabelog_search_map_restaurants",
 ]
 
 mcp = FastMCP(
@@ -111,6 +118,8 @@ Optional Step 4: Filter by reservation availability
 - Always validate user input with suggestion tools before searching
 - All parameters and results are in Japanese
 - Use reservation filters to check availability on specific dates
+- For explicit geographic bounds, use tabelog_search_map_restaurants (currently yakitori only).
+  Map results and totals are NOT exact prefecture or national rankings; never silently substitute them.
 
 Example:
 User: "Find sukiyaki in Tokyo available April 27 at 7pm for 2 people"
@@ -626,6 +635,33 @@ async def tabelog_get_keyword_suggestions(
 
 
 TransportType = Literal["stdio", "sse", "streamable-http"]
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(readOnlyHint=True, idempotentHint=True, openWorldHint=True),
+    structured_output=True,
+)
+async def tabelog_search_map_restaurants(
+    min_lat: Annotated[float, Field(ge=-90, le=90, description="Southern latitude of the search rectangle")],
+    max_lat: Annotated[float, Field(ge=-90, le=90, description="Northern latitude of the search rectangle")],
+    min_lon: Annotated[float, Field(ge=-180, le=180, description="Western longitude of the search rectangle")],
+    max_lon: Annotated[float, Field(ge=-180, le=180, description="Eastern longitude of the search rectangle")],
+    cuisine: Annotated[str, Field(description="Only 焼き鳥 is currently verified for the map endpoint")] = "焼き鳥",
+    page: Annotated[int, Field(ge=1, description="Upstream page; fixed 20 markers per page")] = 1,
+    limit: Annotated[int, Field(ge=1, le=20, description="Results to return from the fetched page")] = 20,
+) -> MapSearchOutput:
+    """Search yakitori by geographic rectangle using undocumented map XML, NOT a prefecture/national ranking.
+
+    Sorting is by upstream rating. Bounds may cross prefectures; total_count is the rectangle total.
+    Budget fields are raw and unverified. This is separate from tabelog_search_restaurants, not a 403 fallback.
+    """
+    try:
+        validate_map_limit(limit)
+        request = MapSearchRequest(min_lat, max_lat, min_lon, max_lon, cuisine=cuisine, page=page)
+        result = await request.search()
+    except Exception as error:
+        return build_map_error(error, limit)
+    return build_map_output(request, result, limit)
 
 
 def run(

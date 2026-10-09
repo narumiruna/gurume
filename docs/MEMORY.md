@@ -34,5 +34,17 @@
 - Live MCP checks on 2026-10-05: Tabelog's Cloudflare returns 403 for restaurant search and detail pages even with Safari impersonation while homepage and suggestion API work; preserve HTTP status from `SearchResponse` instead of parsing error text, and classify both search and detail 403 as non-retryable `upstream_unavailable`.
 - TUI search receives `SearchResponse(status=ERROR)` without an exception; check the status and clear prior rows, `self.restaurants`, and selection or failures appear as "No restaurants found" or leave stale results. Keep CLI/TUI text and core validation exceptions in English; Japanese restaurant data and user input may still appear in results.
 
+- Raw live probe with `curl_cffi 0.16.3` and Safari on 2026-10-05: homepage returns 200, but `/mie/rstLst/yakitori/?SrtT=rt` returns 403 with `cf-mitigated: challenge` and a `Just a moment...` page; this is a Cloudflare challenge, not a restaurant parser failure.
+
+- Follow-up live checks on 2026-10-05: Chrome and Firefox profiles also hit the Mie ranking challenge; a Safari Session retaining homepage cookies (including `__cf_bm`) still returns 403. Installed `curl_cffi 0.16.3` matches the latest PyPI release; Chrome DevTools checks are blocked by `Target closed`, so actual browser access remains unverified.
+
+- Homepage `commons.js` appends suggestion IDs/types (`area_datatype`, `area_id`, `key_datatype`, `key_id`, `sa_input`) to GET `/rst/rstsearch/`; this may affect normalization, not the Cloudflare challenge on mapped rankings. `/internal_api/rst_search` is used by a restaurant-link modal, not a verified ranking API. See `docs/tabelog-javascript-research.md`.
+
+- Live check on 2026-10-09: headed Chromium via Chrome DevTools MCP returns 200 for national/Mie yakitori rankings and a detail page while Safari curl_cffi returns challenge 403 on the same URLs; existing parsers consume browser document HTML. Profile/session effects are uncontrolled; do not assume disabling headless alone fixes access. See `docs/tabelog-browser-research.md`.
+
+- Headed map Network inspection on 2026-10-09 found `GET /xml/rstmap`: structured restaurant XML and pagination also return 200 with Safari curl_cffi without browser cookies. It uses geographic bounds and legacy map genre fields, not exact prefecture ranking: the Mie viewport included Aichi and total 271 versus ranking 241. See `docs/tabelog-api-research.md`; do not silently replace ranking semantics.
+
+- `gurume map-search` / `tabelog_search_map_restaurants` use explicit rectangles, fixed upstream pages of 20, and only verified yakitori map categories. `limit` truncates the current page, raw map budgets are not lunch/dinner fields, and XML DTD/entity declarations must be rejected before ElementTree parsing.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

@@ -13,6 +13,9 @@ from .exceptions import TabelogError
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
 from .genre_mapping import get_genre_name_by_code
+from .map_search import MapRestaurant
+from .map_search import MapSearchRequest
+from .map_search import MapSearchResult
 from .restaurant import PriceRange
 from .restaurant import Restaurant
 from .restaurant import RestaurantSearchRequest
@@ -31,6 +34,9 @@ __all__ = [
     "AreaSuggestion",
     "Course",
     "InvalidParameterError",
+    "MapRestaurant",
+    "MapSearchRequest",
+    "MapSearchResult",
     "MenuItem",
     "NetworkError",
     "ParseError",

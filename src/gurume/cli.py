@@ -16,6 +16,10 @@ from rich.table import Table
 from .area_mapping import get_area_slug
 from .genre_mapping import get_all_genres
 from .genre_mapping import get_genre_code
+from .map_output import build_map_error
+from .map_output import build_map_output
+from .map_output import validate_map_limit
+from .map_search import MapSearchRequest
 from .restaurant import Restaurant
 from .restaurant import resolve_sort_type
 from .search import SearchRequest
@@ -383,6 +387,48 @@ def _output_simple(restaurants: list) -> None:
             console.print(f"   Cuisine: {', '.join(r.genres[:3])}")
         console.print(f"   URL: {r.url}")
         console.print()
+
+
+@app.command()
+def map_search(
+    min_lat: Annotated[float, typer.Option(help="Southern latitude of the search rectangle.")],
+    max_lat: Annotated[float, typer.Option(help="Northern latitude of the search rectangle.")],
+    min_lon: Annotated[float, typer.Option(help="Western longitude of the search rectangle.")],
+    max_lon: Annotated[float, typer.Option(help="Eastern longitude of the search rectangle.")],
+    cuisine: Annotated[str, typer.Option("--cuisine", "-c", help="Only 焼き鳥 is currently verified.")] = "焼き鳥",
+    page: Annotated[int, typer.Option("--page", help="Upstream page (20 markers per page).", min=1)] = 1,
+    limit: Annotated[int, typer.Option("--limit", "-n", min=1, max=20, help="Results shown from this page.")] = 20,
+    output: Annotated[OutputFormat, typer.Option("--output", "-o", help="Output format.")] = OutputFormat.TABLE,
+) -> None:
+    """Search yakitori in a geographic rectangle, NOT an exact area ranking."""
+    json_output = output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE, OutputFormat.JSON_LIST)
+    status_console = err_console if json_output else console
+    try:
+        validate_map_limit(limit)
+        request = MapSearchRequest(min_lat, max_lat, min_lon, max_lon, cuisine=cuisine, page=page)
+        result = request.search_sync()
+    except Exception as error:
+        envelope = build_map_error(error, limit)
+        if output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+            _print_json(envelope.model_dump(mode="json"))
+        status_console.print(envelope.error.message if envelope.error else "Map search failed.", markup=False)
+        raise typer.Exit(1) from error
+
+    envelope = build_map_output(request, result, limit)
+    for warning in envelope.warnings:
+        status_console.print(f"Warning: {warning}", markup=False)
+    if output == OutputFormat.JSON_LIST:
+        _print_json([item.model_dump(mode="json") for item in envelope.items])
+    elif output in (OutputFormat.JSON, OutputFormat.JSON_ENVELOPE):
+        _print_json(envelope.model_dump(mode="json"))
+    elif output == OutputFormat.SIMPLE:
+        _output_simple([item.restaurant for item in result.items[:limit]])
+    else:
+        _output_table([item.restaurant for item in result.items[:limit]])
+    status_console.print(
+        f"Map page {page}: showing {envelope.returned_count}; upstream rectangle total {result.total_count}.",
+        markup=False,
+    )
 
 
 @app.command()
