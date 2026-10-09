@@ -107,6 +107,7 @@ def test_parse_keeps_geographic_scope_and_raw_budgets():
         "<markers/>",
         '<markers><srchinfo cnt="-1"/></markers>',
         '<markers><srchinfo cnt="unknown"/></markers>',
+        '<markers><srchinfo cnt="271"/></markers>',
         "<markers><srchinfo/></markers>",
         '<!DOCTYPE markers><markers><srchinfo cnt="0"/></markers>',
         '<!DOCTYPE markers [<!ENTITY x "test">]><markers><srchinfo cnt="0"/></markers>',
@@ -142,6 +143,51 @@ def test_partial_bad_markers_are_skipped_with_warning(old, new):
     assert len(result.items) == 1
     assert result.total_count == 271 and result.skipped_count == 1
     assert "Skipped 1" in result.warnings[-1]
+
+
+@pytest.mark.parametrize(
+    "old,new",
+    [
+        ('lat="35.0"', 'lat="34.35"'),
+        ('lat="35.0"', 'lat="35.16"'),
+        ('lat="35.0"', 'lat="80.0"'),
+        ('lng="136.8"', 'lng="135.84"'),
+        ('lng="136.8"', 'lng="137.26"'),
+    ],
+)
+def test_outside_rectangle_markers_are_skipped(old, new):
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace(old, new))
+    assert len(result.items) == 1 and result.items[0].restaurant_id == "24019007"
+    assert result.skipped_count == 1 and result.upstream_count == 2 and result.total_count == 271
+    assert "out-of-bounds" in result.warnings[-1]
+
+
+@pytest.mark.parametrize(
+    "old,bound,attribute",
+    [
+        ('lat="35.0"', "min_lat", "lat"),
+        ('lat="35.0"', "max_lat", "lat"),
+        ('lng="136.8"', "min_lon", "lng"),
+        ('lng="136.8"', "max_lon", "lng"),
+    ],
+)
+def test_rectangle_boundaries_are_inclusive(old, bound, attribute):
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace(old, f'{attribute}="{BOUNDS[bound]}"'))
+    assert len(result.items) == 2 and result.skipped_count == 0
+
+
+@pytest.mark.parametrize("page", [2, 15])
+def test_empty_later_page_preserves_positive_total(page):
+    result = MapSearchRequest(**BOUNDS, page=page)._parse('<markers><srchinfo cnt="271" prevpg="prev"/></markers>')
+    assert result.items == [] and result.total_count == 271
+    assert result.has_prev_page and not result.has_next_page
+
+
+def test_all_outside_rectangle_markers_fail():
+    with pytest.raises(ParseError, match="no valid"):
+        MapSearchRequest(**BOUNDS)._parse(
+            XML.replace('lat="34.49462941849498"', 'lat="80.0"').replace('lat="35.0"', 'lat="80.0"')
+        )
 
 
 def test_all_invalid_markers_fail():

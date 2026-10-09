@@ -84,6 +84,17 @@ def test_invalid_options_do_not_fetch(extra):
     fetch.assert_not_called()
 
 
+def test_incomplete_first_page_is_upstream_error_not_no_results():
+    with patch("gurume.map_search.requests.get") as get:
+        get.return_value.text = '<markers><srchinfo cnt="271"/></markers>'
+        result = runner.invoke(app, [*ARGS, "-o", "json"])
+    assert result.exit_code == 1
+    data = json.loads(result.stdout)
+    assert data["status"] == "error" and data["error"]["error_code"] == "upstream_unavailable"
+    assert data["error"]["retryable"] is False
+    get.assert_called_once()
+
+
 def test_empty_json_response():
     empty = MapSearchRequest(**BOUNDS)._parse('<markers><srchinfo cnt="0"/></markers>')
     with patch.object(MapSearchRequest, "search_sync", return_value=empty):

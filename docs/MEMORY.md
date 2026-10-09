@@ -50,5 +50,7 @@
 
 - Python booleans pass numeric finite/range checks; reject them explicitly for map bounds and use strict float MCP fields to prevent coercion before core validation. Render review counts using `is not None` so zero stays distinct from missing data.
 
+- Map XML markers need request-rectangle checks in addition to global coordinate ranges; reject positive-total empty first pages, but allow empty later pages. Normalize invalid caller limits before constructing a typed error envelope so validation itself cannot mask the original error.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

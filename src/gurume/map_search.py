@@ -92,7 +92,7 @@ class MapSearchRequest:
     def _parse(self, xml: str) -> MapSearchResult:
         root, info, total = _parse_document(xml)
         markers = root.findall("marker")
-        if len(markers) > MAP_PAGE_SIZE or total < len(markers):
+        if len(markers) > MAP_PAGE_SIZE or total < len(markers) or (self.page == 1 and total > 0 and not markers):
             raise ParseError("Map response has inconsistent result counts")
         items: list[MapRestaurant] = []
         seen: set[str] = set()
@@ -100,6 +100,11 @@ class MapSearchRequest:
             try:
                 item = _parse_marker(marker)
                 if item.restaurant_id in seen:
+                    continue
+                if (
+                    not self.min_lat <= item.latitude <= self.max_lat
+                    or not self.min_lon <= item.longitude <= self.max_lon
+                ):
                     continue
             except (KeyError, ValueError):
                 continue
@@ -110,7 +115,9 @@ class MapSearchRequest:
         skipped = len(markers) - len(items)
         warnings = list(MAP_WARNINGS)
         if skipped:
-            warnings.append(f"Skipped {skipped} malformed or duplicate map markers; total_count is unchanged.")
+            warnings.append(
+                f"Skipped {skipped} malformed, duplicate, or out-of-bounds map markers; total_count is unchanged."
+            )
         return MapSearchResult(
             items=items,
             total_count=total,

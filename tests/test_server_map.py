@@ -59,6 +59,17 @@ async def test_direct_validation_precedes_http(override):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("limit", [1.5, 1.0, "x", "3", None, True, False, 0, -1, 21])
+async def test_invalid_direct_limit_returns_structured_error(limit):
+    with patch.object(MapSearchRequest, "search", new_callable=AsyncMock) as fetch:
+        result = await tabelog_search_map_restaurants(**BOUNDS, limit=limit)
+    assert result.status == "error" and result.error is not None
+    assert result.error.error_code == "invalid_parameters" and not result.error.retryable
+    assert result.limit == 20 and result.meta is None and result.items == []
+    fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("field", list(BOUNDS))
 @pytest.mark.parametrize("value", [False, True])
 async def test_boolean_bounds_rejected_by_direct_and_protocol_calls(field, value):

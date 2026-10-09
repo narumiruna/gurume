@@ -120,6 +120,11 @@ def build_map_output(request: MapSearchRequest, result: MapSearchResult, limit: 
 
 
 def build_map_error(error: Exception, limit: int) -> MapSearchOutput:
+    # Invalid caller input must not make the error envelope fail validation too.
+    try:
+        validate_map_limit(limit)
+    except ValueError:
+        limit = MAP_PAGE_SIZE
     if isinstance(error, ValueError | TypeError):
         detail = ToolErrorOutput(
             error_code="invalid_parameters",

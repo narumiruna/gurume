@@ -54,13 +54,14 @@ The MCP response and CLI `--output json` / `json-envelope` share the same schema
 - `applied_filters`: verified bounds, cuisine, page, and fixed ranking sort; omitted (`null`) on errors.
 - `returned_count`, `limit`, `has_more`, `warnings`, and a structured `error` when applicable.
 
-`json-list` returns only the map items. Diagnostics and warnings go to stderr for all JSON formats. The CLI exits 1 on a request/validation failure and 0 on a successful or empty result. Typer rejects invalid option ranges before running the command.
+`json-list` returns only the map items. Diagnostics and warnings go to stderr for all JSON formats. The CLI exits 1 on a request/validation failure and 0 on a successful or empty result. Typer rejects invalid option ranges before running the command. For direct Python tool calls with an invalid `limit`, the error envelope uses `limit=20` rather than storing the rejected value in its typed field.
 
 ## Interpretation and limits
 
 - Rectangle results may cross prefecture boundaries. Do not call these prefecture or national rankings, or infer an exact prefecture total from the map total.
 - `has_more` is true for a reported next page or local output truncation. If `limit < 20`, first re-fetch the same page with `limit=20` to see omitted items; increasing `page` skips them.
-- Malformed or duplicate markers are skipped with warnings, without changing the upstream total. If every received marker is invalid, the request fails rather than reporting no results.
+- Malformed, duplicate, or outside-rectangle markers are skipped with warnings, without changing the upstream total. Rectangle edges are inclusive. If every received marker is invalid or outside the rectangle, the request fails rather than reporting no results.
+- A positive total with no first-page markers is an upstream failure. An empty later page can be a legitimate request beyond the available results and retains the upstream total.
 - `price_range1` / `price_range2` retain upstream budget text; empty/dash placeholders become `null`. Meal-period meaning is unverified, so `lunch_price` and `dinner_price` remain `null`.
 - Optional data remains `null` when missing. An upstream zero overall score is treated as no rating. Review count zero is preserved.
 - Invalid/challenge XML is an upstream failure, not an empty search. HTTP 403 is non-retryable; no automatic retries, cookie transfer, or challenge solving are performed.
