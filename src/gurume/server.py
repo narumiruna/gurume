@@ -642,10 +642,18 @@ TransportType = Literal["stdio", "sse", "streamable-http"]
     structured_output=True,
 )
 async def tabelog_search_map_restaurants(
-    min_lat: Annotated[float, Field(ge=-90, le=90, description="Southern latitude of the search rectangle")],
-    max_lat: Annotated[float, Field(ge=-90, le=90, description="Northern latitude of the search rectangle")],
-    min_lon: Annotated[float, Field(ge=-180, le=180, description="Western longitude of the search rectangle")],
-    max_lon: Annotated[float, Field(ge=-180, le=180, description="Eastern longitude of the search rectangle")],
+    min_lat: Annotated[
+        float, Field(strict=True, ge=-90, le=90, description="Southern latitude of the search rectangle")
+    ],
+    max_lat: Annotated[
+        float, Field(strict=True, ge=-90, le=90, description="Northern latitude of the search rectangle")
+    ],
+    min_lon: Annotated[
+        float, Field(strict=True, ge=-180, le=180, description="Western longitude of the search rectangle")
+    ],
+    max_lon: Annotated[
+        float, Field(strict=True, ge=-180, le=180, description="Eastern longitude of the search rectangle")
+    ],
     cuisine: Annotated[str, Field(description="Only 焼き鳥 is currently verified for the map endpoint")] = "焼き鳥",
     page: Annotated[int, Field(ge=1, description="Upstream page; fixed 20 markers per page")] = 1,
     limit: Annotated[int, Field(ge=1, le=20, description="Results to return from the fetched page")] = 20,

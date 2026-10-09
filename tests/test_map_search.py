@@ -65,6 +65,18 @@ def test_invalid_requests(overrides):
         MapSearchRequest(**(BOUNDS | overrides))
 
 
+@pytest.mark.parametrize("field", list(BOUNDS))
+@pytest.mark.parametrize("value", [False, True])
+def test_boolean_bounds_are_rejected_before_http(field, value):
+    bounds: MapBounds = {"min_lat": -2.0, "max_lat": 2.0, "min_lon": -2.0, "max_lon": 2.0}
+    with (
+        patch("gurume.map_search.requests.get") as get,
+        pytest.raises(ValueError, match=f"{field}.*not a Boolean"),
+    ):
+        MapSearchRequest(**(bounds | {field: value})).search_sync()
+    get.assert_not_called()
+
+
 def test_parse_keeps_geographic_scope_and_raw_budgets():
     result = MapSearchRequest(**BOUNDS)._parse(XML)
     assert result.total_count == 271

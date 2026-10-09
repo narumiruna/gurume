@@ -51,6 +51,21 @@ def test_formats(output_format):
         assert "にかわ" in output.stdout and "Warning:" in output.stdout
 
 
+@pytest.mark.parametrize("output_format", ["table", "simple"])
+@pytest.mark.parametrize("count,expected", [("0", "0"), ("", "N/A")])
+def test_text_formats_distinguish_zero_and_missing_reviews(output_format, count, expected):
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace('rvwcnt="0"', f'rvwcnt="{count}"'))
+    with patch.object(MapSearchRequest, "search_sync", return_value=result):
+        output = runner.invoke(app, [*ARGS, "-o", output_format])
+    assert output.exit_code == 0, output.output
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", output.stdout)
+    if output_format == "simple":
+        assert f"({expected} reviews)" in plain
+    else:
+        row = next(line for line in plain.splitlines() if "炭火焼鳥 かぐら" in line)
+        assert row.split("│")[3].strip() == expected
+
+
 def test_invalid_bounds_are_structured_before_http():
     with patch.object(MapSearchRequest, "search_sync") as fetch:
         result = runner.invoke(app, [*ARGS, "--min-lat", "36", "-o", "json"])

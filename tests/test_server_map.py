@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 from curl_cffi.requests import exceptions as request_errors
+from mcp.server.fastmcp.exceptions import ToolError
 
 from gurume.exceptions import ParseError
 from gurume.map_search import MapSearchRequest
@@ -15,6 +16,7 @@ from gurume.server import tabelog_search_map_restaurants
 
 from .test_map_search import BOUNDS
 from .test_map_search import XML
+from .test_map_search import MapBounds
 
 
 @pytest.mark.asyncio
@@ -54,6 +56,31 @@ async def test_direct_validation_precedes_http(override):
     assert result.status == "error" and result.error is not None
     assert result.error.error_code == "invalid_parameters" and not result.error.retryable
     fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", list(BOUNDS))
+@pytest.mark.parametrize("value", [False, True])
+async def test_boolean_bounds_rejected_by_direct_and_protocol_calls(field, value):
+    bounds: MapBounds = {"min_lat": -2.0, "max_lat": 2.0, "min_lon": -2.0, "max_lon": 2.0}
+    kwargs = bounds | {field: value}
+    with patch.object(MapSearchRequest, "search", new_callable=AsyncMock) as fetch:
+        direct = await tabelog_search_map_restaurants(**kwargs)
+        assert direct.error is not None and direct.error.error_code == "invalid_parameters"
+        with pytest.raises(ToolError, match=field):
+            await mcp.call_tool("tabelog_search_map_restaurants", dict(kwargs))
+    fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_protocol_accepts_integer_coordinates_as_numbers():
+    result = MapSearchRequest(**BOUNDS)._parse(XML)
+    with patch.object(MapSearchRequest, "search", new_callable=AsyncMock, return_value=result) as fetch:
+        _, structured = await mcp.call_tool(
+            "tabelog_search_map_restaurants", {"min_lat": -2, "max_lat": 2, "min_lon": -2, "max_lon": 2}
+        )
+    assert isinstance(structured, dict) and structured["status"] == "success"
+    fetch.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -64,8 +64,8 @@ class MapSearchRequest:
             ("min_lon", self.min_lon, 180),
             ("max_lon", self.max_lon, 180),
         ):
-            if not math.isfinite(value) or not -bound <= value <= bound:
-                raise ValueError(f"{name} must be finite and between {-bound} and {bound}")
+            if isinstance(value, bool) or not math.isfinite(value) or not -bound <= value <= bound:
+                raise ValueError(f"{name} must be a finite number (not a Boolean) between {-bound} and {bound}")
         if self.min_lat >= self.max_lat or self.min_lon >= self.max_lon:
             raise ValueError("min_lat must be less than max_lat and min_lon must be less than max_lon")
         if isinstance(self.page, bool) or not isinstance(self.page, int) or self.page < 1:

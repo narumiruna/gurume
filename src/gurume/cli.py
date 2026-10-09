@@ -353,7 +353,7 @@ def _output_table(restaurants: list) -> None:
         table.add_row(
             r.name,
             f"{r.rating:.2f}" if r.rating else "N/A",
-            str(r.review_count) if r.review_count else "N/A",
+            str(r.review_count) if r.review_count is not None else "N/A",
             r.area or "N/A",
             ", ".join(r.genres[:2]) if r.genres else "N/A",
         )
@@ -379,7 +379,7 @@ def _output_simple(restaurants: list) -> None:
     """Output restaurants in a simple text format."""
     for i, r in enumerate(restaurants, 1):
         rating_str = f"{r.rating:.2f}" if r.rating else "N/A"
-        review_str = str(r.review_count) if r.review_count else "N/A"
+        review_str = str(r.review_count) if r.review_count is not None else "N/A"
         console.print(f"{i}. {r.name} - ⭐{rating_str} ({review_str} reviews)")
         if r.area:
             console.print(f"   Area: {r.area}")

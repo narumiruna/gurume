@@ -48,5 +48,7 @@
 
 - Typer/Rich help can insert ANSI styles inside flag names when CI forces color; strip SGR sequences before help text assertions and test both `FORCE_COLOR=0` and `FORCE_COLOR=1`.
 
+- Python booleans pass numeric finite/range checks; reject them explicitly for map bounds and use strict float MCP fields to prevent coercion before core validation. Render review counts using `is not None` so zero stays distinct from missing data.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

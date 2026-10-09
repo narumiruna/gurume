@@ -18,6 +18,7 @@ Required options:
 - `--min-lat`, `--max-lat`: southern/northern latitude, finite numbers between -90 and 90.
 - `--min-lon`, `--max-lon`: western/eastern longitude, finite numbers between -180 and 180.
 - Each minimum must be strictly less than its maximum. Antimeridian-crossing rectangles are not supported.
+- Python and MCP callers must pass numeric bounds, not Boolean values. Integer coordinates are accepted.
 
 Optional options:
 

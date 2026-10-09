@@ -97,3 +97,4 @@
 2026-10-09 | research(api): verify Tabelog map XML and auxiliary JSON endpoints through headed Chromium and direct HTTP; document geographic scope limits (#local)
 2026-10-09 | feat(map): add bounded yakitori XML search to CLI and MCP with separate geographic metadata and live pagination checks (#local)
 2026-10-09 | test(cli): normalize ANSI styling in map help assertions and cover forced color modes (#95)
+2026-10-09 | fix(map): preserve zero reviews in text output and reject Boolean coordinate bounds after review (#95)
