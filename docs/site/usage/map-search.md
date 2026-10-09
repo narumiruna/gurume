@@ -45,6 +45,8 @@ Call `tabelog_search_map_restaurants` with:
 }
 ```
 
+MCP `page` and `limit` must be JSON integers. Boolean values, floats, and numeric strings are rejected before a request. Direct Python calls with a non-string `cuisine` return a non-retryable parameter error.
+
 The MCP response and CLI `--output json` / `json-envelope` share the same schema:
 
 - `status`: `success`, `no_results`, or `error`.
@@ -60,7 +62,8 @@ The MCP response and CLI `--output json` / `json-envelope` share the same schema
 
 - Rectangle results may cross prefecture boundaries. Do not call these prefecture or national rankings, or infer an exact prefecture total from the map total.
 - `has_more` is true for a reported next page or local output truncation. If `limit < 20`, first re-fetch the same page with `limit=20` to see omitted items; increasing `page` skips them.
-- Malformed, duplicate, or outside-rectangle markers are skipped with warnings, without changing the upstream total. Rectangle edges are inclusive. If every received marker is invalid or outside the rectangle, the request fails rather than reporting no results.
+- The default table shows raw prefecture codes and coordinates instead of an unavailable named area; codes do not establish prefecture ranking completeness.
+- Malformed, duplicate, outside-rectangle, or cuisine-mismatched markers are skipped with warnings, without changing the upstream total. Rectangle edges are inclusive. Each valid marker must include the verified `焼き鳥` genre label; missing labels and unverified aliases are not accepted. If every received marker is invalid, the request fails rather than reporting no results.
 - A positive total with no first-page markers is an upstream failure. An empty later page can be a legitimate request beyond the available results and retains the upstream total.
 - `price_range1` / `price_range2` retain upstream budget text; empty/dash placeholders become `null`. Meal-period meaning is unverified, so `lunch_price` and `dinner_price` remain `null`.
 - Optional data remains `null` when missing. An upstream zero overall score is treated as no rating. Review count zero is preserved.

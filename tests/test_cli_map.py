@@ -66,6 +66,20 @@ def test_text_formats_distinguish_zero_and_missing_reviews(output_format, count,
         assert row.split("│")[3].strip() == expected
 
 
+def test_default_table_displays_geographic_evidence():
+    result = MapSearchRequest(**BOUNDS)._parse(XML)
+    with patch.object(MapSearchRequest, "search_sync", return_value=result):
+        output = runner.invoke(app, ARGS)
+    assert output.exit_code == 0, output.output
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", output.stdout)
+    assert "Coordinates" in plain and "Pref. code" in plain
+    assert "34.49463, 136.70591" in plain and "35.00000, 136.80000" in plain
+    first = next(line for line in plain.splitlines() if "にかわ" in line)
+    second = next(line for line in plain.splitlines() if "炭火焼鳥 かぐら" in line)
+    assert first.split("│")[4].strip() == "24"
+    assert second.split("│")[4].strip() == "23"
+
+
 def test_invalid_bounds_are_structured_before_http():
     with patch.object(MapSearchRequest, "search_sync") as fetch:
         result = runner.invoke(app, [*ARGS, "--min-lat", "36", "-o", "json"])

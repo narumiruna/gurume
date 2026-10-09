@@ -655,8 +655,8 @@ async def tabelog_search_map_restaurants(
         float, Field(strict=True, ge=-180, le=180, description="Eastern longitude of the search rectangle")
     ],
     cuisine: Annotated[str, Field(description="Only 焼き鳥 is currently verified for the map endpoint")] = "焼き鳥",
-    page: Annotated[int, Field(ge=1, description="Upstream page; fixed 20 markers per page")] = 1,
-    limit: Annotated[int, Field(ge=1, le=20, description="Results to return from the fetched page")] = 20,
+    page: Annotated[int, Field(strict=True, ge=1, description="Upstream page; fixed 20 markers per page")] = 1,
+    limit: Annotated[int, Field(strict=True, ge=1, le=20, description="Results to return from the fetched page")] = 20,
 ) -> MapSearchOutput:
     """Search yakitori by geographic rectangle using undocumented map XML, NOT a prefecture/national ranking.
 

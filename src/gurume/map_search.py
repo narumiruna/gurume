@@ -70,6 +70,8 @@ class MapSearchRequest:
             raise ValueError("min_lat must be less than max_lat and min_lon must be less than max_lon")
         if isinstance(self.page, bool) or not isinstance(self.page, int) or self.page < 1:
             raise ValueError("page must be an integer greater than or equal to 1")
+        if not isinstance(self.cuisine, str):
+            raise TypeError("cuisine must be a string")
         self.cuisine = self.cuisine.strip()
         if self.cuisine != "焼き鳥":
             raise ValueError("Map search currently supports only cuisine='焼き鳥'")
@@ -99,7 +101,7 @@ class MapSearchRequest:
         for marker in markers:
             try:
                 item = _parse_marker(marker)
-                if item.restaurant_id in seen:
+                if item.restaurant_id in seen or self.cuisine not in item.restaurant.genres:
                     continue
                 if (
                     not self.min_lat <= item.latitude <= self.max_lat
@@ -116,7 +118,8 @@ class MapSearchRequest:
         warnings = list(MAP_WARNINGS)
         if skipped:
             warnings.append(
-                f"Skipped {skipped} malformed, duplicate, or out-of-bounds map markers; total_count is unchanged."
+                f"Skipped {skipped} malformed, duplicate, out-of-bounds, or cuisine-mismatched map markers; "
+                "total_count is unchanged."
             )
         return MapSearchResult(
             items=items,

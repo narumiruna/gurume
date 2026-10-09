@@ -77,6 +77,13 @@ def test_boolean_bounds_are_rejected_before_http(field, value):
     get.assert_not_called()
 
 
+@pytest.mark.parametrize("cuisine", [None, 26, True, [], {}])
+def test_nonstring_cuisine_rejected_before_http(cuisine):
+    with patch("gurume.map_search.requests.get") as get, pytest.raises(TypeError, match="cuisine must be a string"):
+        MapSearchRequest(**BOUNDS, cuisine=cuisine).search_sync()
+    get.assert_not_called()
+
+
 def test_parse_keeps_geographic_scope_and_raw_budgets():
     result = MapSearchRequest(**BOUNDS)._parse(XML)
     assert result.total_count == 271
@@ -188,6 +195,28 @@ def test_all_outside_rectangle_markers_fail():
         MapSearchRequest(**BOUNDS)._parse(
             XML.replace('lat="34.49462941849498"', 'lat="80.0"').replace('lat="35.0"', 'lat="80.0"')
         )
+
+
+@pytest.mark.parametrize("genre", ["寿司", "焼き鳥屋", "", None])
+def test_missing_or_nonmatching_cuisine_markers_are_skipped(genre):
+    replacement = f'rstcat="{genre}"' if genre is not None else ""
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace('rstcat="焼き鳥"', replacement))
+    assert len(result.items) == 1 and result.items[0].restaurant_id == "24019007"
+    assert result.skipped_count == 1 and result.total_count == 271
+    assert "cuisine-mismatched" in result.warnings[-1]
+
+
+def test_all_cuisine_mismatches_fail():
+    with pytest.raises(ParseError, match="no valid"):
+        MapSearchRequest(**BOUNDS)._parse(
+            XML.replace('rstcat="焼き鳥、創作料理"', 'rstcat="寿司"').replace('rstcat="焼き鳥"', 'rstcat="寿司"')
+        )
+
+
+def test_supported_cuisine_among_other_genres_is_accepted():
+    result = MapSearchRequest(**BOUNDS)._parse(XML.replace('rstcat="焼き鳥"', 'rstcat="寿司、 焼き鳥 "'))
+    assert len(result.items) == 2 and result.skipped_count == 0
+    assert result.items[1].restaurant.genres == ["寿司", "焼き鳥"]
 
 
 def test_all_invalid_markers_fail():

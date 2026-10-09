@@ -48,9 +48,11 @@
 
 - Typer/Rich help can insert ANSI styles inside flag names when CI forces color; strip SGR sequences before help text assertions and test both `FORCE_COLOR=0` and `FORCE_COLOR=1`.
 
-- Python booleans pass numeric finite/range checks; reject them explicitly for map bounds and use strict float MCP fields to prevent coercion before core validation. Render review counts using `is not None` so zero stays distinct from missing data.
+- Python booleans pass numeric checks; reject them explicitly for map bounds and use strict float/int MCP fields to prevent coordinate/pagination coercion before core validation. Check cuisine type before stripping so invalid direct input stays a parameter error. Render review counts using `is not None` so zero stays distinct from missing data.
 
 - Map XML markers need request-rectangle checks in addition to global coordinate ranges; reject positive-total empty first pages, but allow empty later pages. Normalize invalid caller limits before constructing a typed error envelope so validation itself cannot mask the original error.
+
+- Both observed map XML pages (40 markers) contain the exact `焼き鳥` genre token. Match that verified label when validating markers, not a substring or an invented alias; retain raw prefecture codes/coordinates in the default map table instead of presenting missing named areas.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

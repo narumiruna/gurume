@@ -19,6 +19,7 @@ from .genre_mapping import get_genre_code
 from .map_output import build_map_error
 from .map_output import build_map_output
 from .map_output import validate_map_limit
+from .map_search import MapRestaurant
 from .map_search import MapSearchRequest
 from .restaurant import Restaurant
 from .restaurant import resolve_sort_type
@@ -335,9 +336,7 @@ def search(
     _output_search_results(output, response, restaurants, area=area, filters=filters, sort=sort, limit=limit)
 
     # Show summary stats.
-    status_console.print(
-        f"\n[cyan]Found {len(response.restaurants)} restaurants; showing {len(restaurants)}.[/cyan]"
-    )
+    status_console.print(f"\n[cyan]Found {len(response.restaurants)} restaurants; showing {len(restaurants)}.[/cyan]")
 
 
 def _output_table(restaurants: list) -> None:
@@ -358,6 +357,26 @@ def _output_table(restaurants: list) -> None:
             ", ".join(r.genres[:2]) if r.genres else "N/A",
         )
 
+    console.print(table)
+
+
+def _output_map_table(items: list[MapRestaurant]) -> None:
+    """Show geographic evidence without presenting map results as named-area rankings."""
+    table = Table(title="Map search results")
+    table.add_column("Restaurant", style="cyan")
+    table.add_column("Rating", justify="right", style="yellow")
+    table.add_column("Reviews", justify="right", style="green")
+    table.add_column("Pref. code", justify="right")
+    table.add_column("Coordinates", style="blue", no_wrap=True)
+    for item in items:
+        restaurant = item.restaurant
+        table.add_row(
+            restaurant.name,
+            f"{restaurant.rating:.2f}" if restaurant.rating is not None else "N/A",
+            str(restaurant.review_count) if restaurant.review_count is not None else "N/A",
+            item.prefecture_code or "N/A",
+            f"{item.latitude:.5f}, {item.longitude:.5f}",
+        )
     console.print(table)
 
 
@@ -424,7 +443,7 @@ def map_search(
     elif output == OutputFormat.SIMPLE:
         _output_simple([item.restaurant for item in result.items[:limit]])
     else:
-        _output_table([item.restaurant for item in result.items[:limit]])
+        _output_map_table(result.items[:limit])
     status_console.print(
         f"Map page {page}: showing {envelope.returned_count}; upstream rectangle total {result.total_count}.",
         markup=False,

@@ -48,7 +48,19 @@ async def test_mcp_call_returns_validated_structured_output():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "override", [{"limit": 21}, {"page": 0}, {"cuisine": "寿司"}, {"min_lat": 36}, {"min_lon": float("nan")}]
+    "override",
+    [
+        {"limit": 21},
+        {"page": 0},
+        {"cuisine": "寿司"},
+        {"cuisine": None},
+        {"cuisine": 26},
+        {"cuisine": True},
+        {"cuisine": []},
+        {"cuisine": {}},
+        {"min_lat": 36},
+        {"min_lon": float("nan")},
+    ],
 )
 async def test_direct_validation_precedes_http(override):
     with patch.object(MapSearchRequest, "search", new_callable=AsyncMock) as fetch:
@@ -81,6 +93,32 @@ async def test_boolean_bounds_rejected_by_direct_and_protocol_calls(field, value
         with pytest.raises(ToolError, match=field):
             await mcp.call_tool("tabelog_search_map_restaurants", dict(kwargs))
     fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("field", ["page", "limit"])
+@pytest.mark.parametrize("value", [False, True, 1.0, "1"])
+async def test_protocol_pagination_requires_integers(field, value):
+    kwargs = dict(BOUNDS) | {field: value}
+    with (
+        patch.object(MapSearchRequest, "search", new_callable=AsyncMock) as fetch,
+        pytest.raises(ToolError, match=field),
+    ):
+        await mcp.call_tool("tabelog_search_map_restaurants", kwargs)
+    fetch.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("page,limit", [(1, 20), (2, 1)])
+async def test_protocol_accepts_valid_integer_pagination(page, limit):
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(XML)
+    with patch.object(MapSearchRequest, "search", new_callable=AsyncMock, return_value=result) as fetch:
+        _, structured = await mcp.call_tool(
+            "tabelog_search_map_restaurants", dict(BOUNDS) | {"page": page, "limit": limit}
+        )
+    assert isinstance(structured, dict) and structured["status"] == "success"
+    assert structured["applied_filters"]["page"] == page and structured["limit"] == limit
+    fetch.assert_awaited_once()
 
 
 @pytest.mark.asyncio
