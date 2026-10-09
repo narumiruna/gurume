@@ -1,6 +1,7 @@
 """CLI map search envelopes and validation."""
 
 import json
+import re
 from unittest.mock import patch
 
 import pytest
@@ -91,8 +92,11 @@ def test_upstream_failure_produces_envelope(error):
     assert data["error"]["retryable"] is False
 
 
-def test_map_help_is_explicit():
-    result = runner.invoke(app, ["map-search", "--help"])
+@pytest.mark.parametrize("force_color", ["0", "1"])
+def test_map_help_is_explicit(force_color):
+    result = runner.invoke(app, ["map-search", "--help"], env={"FORCE_COLOR": force_color})
     assert result.exit_code == 0
-    assert "NOT an exact area ranking" in result.output
-    assert "--min-lat" in result.output
+    # Rich can insert ANSI styles between parts of a flag name in CI.
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert "NOT an exact area ranking" in plain
+    assert "--min-lat" in plain

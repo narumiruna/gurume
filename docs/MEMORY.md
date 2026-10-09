@@ -46,5 +46,7 @@
 
 - `gurume map-search` / `tabelog_search_map_restaurants` use explicit rectangles, fixed upstream pages of 20, and only verified yakitori map categories. `limit` truncates the current page, raw map budgets are not lunch/dinner fields, and XML DTD/entity declarations must be rejected before ElementTree parsing.
 
+- Typer/Rich help can insert ANSI styles inside flag names when CI forces color; strip SGR sequences before help text assertions and test both `FORCE_COLOR=0` and `FORCE_COLOR=1`.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

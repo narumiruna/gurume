@@ -96,3 +96,4 @@
 2026-10-09 | research(http): verify headed Chromium access and existing parser compatibility against same-URL curl_cffi 403 failures (#local)
 2026-10-09 | research(api): verify Tabelog map XML and auxiliary JSON endpoints through headed Chromium and direct HTTP; document geographic scope limits (#local)
 2026-10-09 | feat(map): add bounded yakitori XML search to CLI and MCP with separate geographic metadata and live pagination checks (#local)
+2026-10-09 | test(cli): normalize ANSI styling in map help assertions and cover forced color modes (#95)
