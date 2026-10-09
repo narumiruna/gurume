@@ -183,11 +183,23 @@ def test_rectangle_boundaries_are_inclusive(old, bound, attribute):
     assert len(result.items) == 2 and result.skipped_count == 0
 
 
-@pytest.mark.parametrize("page,total", [(2, 271), (15, 271), (2, 2), (2, 20)])
-def test_empty_later_page_preserves_positive_total(page, total):
-    result = MapSearchRequest(**BOUNDS, page=page)._parse(f'<markers><srchinfo cnt="{total}" prevpg="prev"/></markers>')
+@pytest.mark.parametrize("page,total", [(1, 0), (2, 0), (2, 2), (2, 20), (14, 260), (15, 271)])
+def test_empty_pages_at_or_beyond_total_are_allowed(page, total):
+    prevpg = "prev" if page > 1 else ""
+    result = MapSearchRequest(**BOUNDS, page=page)._parse(
+        f'<markers><srchinfo cnt="{total}" prevpg="{prevpg}"/></markers>'
+    )
     assert result.items == [] and result.total_count == total
-    assert result.has_prev_page and not result.has_next_page
+    assert result.has_prev_page is (page > 1) and not result.has_next_page
+
+
+@pytest.mark.parametrize("page,total", [(2, 271), (2, 21), (3, 41), (14, 271)])
+@pytest.mark.parametrize("nextpg", ["", "next"])
+def test_empty_pages_with_remaining_results_fail(page, total, nextpg):
+    with pytest.raises(ParseError, match="inconsistent result counts"):
+        MapSearchRequest(**BOUNDS, page=page)._parse(
+            f'<markers><srchinfo cnt="{total}" nextpg="{nextpg}"/></markers>'
+        )
 
 
 @pytest.mark.parametrize("page,total", [(2, 0), (2, 2), (2, 20), (2, 21), (3, 40), (15, 271)])

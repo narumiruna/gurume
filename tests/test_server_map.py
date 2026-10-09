@@ -170,6 +170,27 @@ async def test_mcp_empty_response():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("page,status", [(2, "error"), (14, "error"), (15, "no_results")])
+async def test_mcp_empty_page_status_respects_remaining_count(page, status):
+    nextpg = "next" if page < 15 else ""
+    response = Mock(text=f'<markers><srchinfo cnt="271" nextpg="{nextpg}" prevpg="prev"/></markers>')
+    client = AsyncMock()
+    client.get.return_value = response
+    client.__aenter__.return_value = client
+    with patch("gurume.map_search.requests.AsyncSession", return_value=client):
+        _, structured = await mcp.call_tool("tabelog_search_map_restaurants", dict(BOUNDS) | {"page": page})
+    assert isinstance(structured, dict) and structured["status"] == status
+    assert structured["items"] == [] and structured["has_more"] is False
+    if status == "error":
+        assert structured["error"]["error_code"] == "upstream_unavailable"
+        assert structured["error"]["retryable"] is False and structured["meta"] is None
+    else:
+        assert structured["error"] is None and structured["meta"]["total_count"] == 271
+    client.get.assert_awaited_once()
+    client.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_mcp_cancellation_propagates():
     with (
         patch.object(MapSearchRequest, "search", new_callable=AsyncMock, side_effect=CancelledError),

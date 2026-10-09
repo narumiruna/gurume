@@ -95,7 +95,7 @@ class MapSearchRequest:
         root, info, total = _parse_document(xml)
         markers = root.findall("marker")
         remaining_count = max(0, total - (self.page - 1) * MAP_PAGE_SIZE)
-        if len(markers) > min(MAP_PAGE_SIZE, remaining_count) or (self.page == 1 and total > 0 and not markers):
+        if len(markers) > min(MAP_PAGE_SIZE, remaining_count) or (remaining_count > 0 and not markers):
             raise ParseError("Map response has inconsistent result counts")
         items: list[MapRestaurant] = []
         seen: set[str] = set()

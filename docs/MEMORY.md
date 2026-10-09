@@ -50,7 +50,7 @@
 
 - Python booleans pass numeric checks; reject them explicitly for map bounds and use strict float/int MCP fields to prevent coordinate/pagination coercion before core validation. Check cuisine type before stripping so invalid direct input stays a parameter error. Render review counts using `is not None` so zero stays distinct from missing data.
 
-- Map XML markers need request-rectangle checks in addition to global coordinate ranges; reject positive-total empty first pages, but allow empty later pages. Normalize invalid caller limits before constructing a typed error envelope so validation itself cannot mask the original error.
+- Map XML markers need request-rectangle checks in addition to global coordinate ranges; reject empty pages whenever their fixed offset still leaves reported results, not only on page 1; allow empty pages at or beyond the total. Normalize invalid caller limits before constructing a typed error envelope so validation itself cannot mask the original error.
 
 - Both observed map XML pages (40 markers) contain the exact `焼き鳥` genre token. Match that verified label when validating markers, not a substring or an invented alias; retain raw prefecture codes/coordinates in the default map table instead of presenting missing named areas.
 

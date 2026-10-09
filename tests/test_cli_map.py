@@ -98,14 +98,17 @@ def test_invalid_options_do_not_fetch(extra):
     fetch.assert_not_called()
 
 
-def test_incomplete_first_page_is_upstream_error_not_no_results():
+@pytest.mark.parametrize("page", [1, 2, 14])
+@pytest.mark.parametrize("nextpg", ["", "next"])
+def test_incomplete_page_is_upstream_error_not_no_results(page, nextpg):
     with patch("gurume.map_search.requests.get") as get:
-        get.return_value.text = '<markers><srchinfo cnt="271"/></markers>'
-        result = runner.invoke(app, [*ARGS, "-o", "json"])
+        get.return_value.text = f'<markers><srchinfo cnt="271" nextpg="{nextpg}"/></markers>'
+        result = runner.invoke(app, [*ARGS, "--page", str(page), "-o", "json"])
     assert result.exit_code == 1
     data = json.loads(result.stdout)
     assert data["status"] == "error" and data["error"]["error_code"] == "upstream_unavailable"
-    assert data["error"]["retryable"] is False
+    assert data["error"]["retryable"] is False and data["has_more"] is False
+    assert data["meta"] is None and data["items"] == []
     get.assert_called_once()
 
 

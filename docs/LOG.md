@@ -99,3 +99,4 @@
 2026-10-09 | test(cli): normalize ANSI styling in map help assertions and cover forced color modes (#95)
 2026-10-09 | fix(map): preserve zero reviews in text output and reject Boolean coordinate bounds after review (#95)
 2026-10-09 | fix(map): validate page totals, HTTP retryability, and ASCII identities (#95)
+2026-10-09 | fix(map): reject empty pages while upstream totals still imply remaining results (#95)
