@@ -60,5 +60,7 @@
 
 - Explicit headed-browser search uses a separate persistent `~/.cache/gurume/browser` profile. A working Chrome DevTools session does not prove a fresh Gurume profile will pass Cloudflare; live verification may still require manual browser access. Do not copy cookies or classify challenges as empty results.
 
+- Browser retryability must survive the typed error and SearchResponse boundary: distinguish HTTP 5xx and recognized navigation timeouts/network failures from verification/403, certificate/configuration errors, and unknown documents. Retry metadata does not enable automatic retries.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

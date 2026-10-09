@@ -103,3 +103,4 @@
 2026-10-09 | fix(map): derive navigation flags from total and page instead of optional upstream labels (#95)
 2026-10-09 | fix(map): reject partial raw pages and validate oversized coordinates before float conversion (#95)
 2026-10-09 | feat(mcp): add explicit headed browser search; fresh-profile access still requires manual verification (#95)
+2026-10-09 | fix(mcp): preserve retryability for transient browser search failures (#96)

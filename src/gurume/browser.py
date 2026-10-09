@@ -9,9 +9,10 @@ from bs4 import BeautifulSoup
 class BrowserRetrievalError(RuntimeError):
     """Browser retrieval failed, optionally with an upstream HTTP status."""
 
-    def __init__(self, message: str, status: int | None = None) -> None:
+    def __init__(self, message: str, status: int | None = None, *, retryable: bool = False) -> None:
         super().__init__(message)
         self.status = status
+        self.retryable = 500 <= status < 600 if status is not None else retryable
 
 
 def validate_search_document(html: str, status: int) -> None:
@@ -44,10 +45,28 @@ async def fetch_search_document(url: str, navigation_timeout: float) -> tuple[st
             context = await playwright.chromium.launch_persistent_context(str(profile), headless=False)
             try:
                 page = await context.new_page()
-                response = await page.goto(url, wait_until="domcontentloaded", timeout=navigation_timeout * 1000)
-                if response is None:
-                    raise RuntimeError("Browser navigation returned no document response")
-                html = await page.content()
+                try:
+                    response = await page.goto(url, wait_until="domcontentloaded", timeout=navigation_timeout * 1000)
+                    if response is None:
+                        raise RuntimeError("Browser navigation returned no document response")
+                    html = await page.content()
+                except api.Error as error:
+                    transient = isinstance(error, api.TimeoutError) or any(
+                        code in str(error)
+                        for code in (
+                            "net::ERR_CONNECTION_RESET",
+                            "net::ERR_CONNECTION_CLOSED",
+                            "net::ERR_CONNECTION_REFUSED",
+                            "net::ERR_CONNECTION_ABORTED",
+                            "net::ERR_CONNECTION_TIMED_OUT",
+                            "net::ERR_TIMED_OUT",
+                            "net::ERR_NETWORK_CHANGED",
+                            "net::ERR_INTERNET_DISCONNECTED",
+                            "net::ERR_NAME_NOT_RESOLVED",
+                            "net::ERR_ADDRESS_UNREACHABLE",
+                        )
+                    )
+                    raise BrowserRetrievalError(f"Browser navigation failed: {error}", retryable=transient) from error
                 validate_search_document(html, response.status)
                 return html, page.url
             finally:

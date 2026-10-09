@@ -25,7 +25,11 @@ use `await SearchRequest(...).search_browser()`.
 The dedicated profile is `~/.cache/gurume/browser`. Cookies stay within that profile;
 they are not copied from other browsers or sent to the HTTP client. Access is not
 guaranteed: verification pages return a non-retryable error, not empty results.
-There is no automatic fallback, challenge solving, or retry.
+Transient HTTP 5xx, navigation timeouts, and recognized network failures return
+`retryable: true` with a retry-later action. Verification/403, other HTTP 4xx,
+installation/display/profile errors, and unrecognized documents remain
+non-retryable. This metadata allows callers to decide whether to retry; the tool
+itself performs no automatic fallback, challenge solving, or retry.
 
 If verification is required, manually open the same profile on the server machine:
 

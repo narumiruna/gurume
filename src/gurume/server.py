@@ -321,9 +321,11 @@ async def tabelog_search_restaurants(
             ToolErrorOutput(
                 error_code="upstream_unavailable",
                 message="Headed browser search did not return usable results.",
-                retryable=False,
+                retryable=response.error_retryable is True,
                 suggested_action=(
-                    "Check browser installation and graphical display. If verification is required, "
+                    "Retry later; the browser encountered a transient upstream or navigation failure."
+                    if response.error_retryable
+                    else "Check browser installation and graphical display. If verification is required, "
                     "open the dedicated Gurume browser profile manually; do not repeatedly retry."
                 ),
                 detail=response.error_message,

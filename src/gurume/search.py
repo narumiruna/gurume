@@ -91,6 +91,7 @@ class SearchResponse:
     error_message: str | None = None
     warnings: list[str] = field(default_factory=list)
     http_status: int | None = None
+    error_retryable: bool | None = None
 
     def filter(
         self,
@@ -126,6 +127,7 @@ class SearchResponse:
             error_message=self.error_message,
             warnings=list(self.warnings),
             http_status=self.http_status,
+            error_retryable=self.error_retryable,
         )
 
     def sort_by(self, key: str, reverse: bool = False) -> SearchResponse:
@@ -151,6 +153,7 @@ class SearchResponse:
             error_message=self.error_message,
             warnings=list(self.warnings),
             http_status=self.http_status,
+            error_retryable=self.error_retryable,
         )
 
     def top(self, n: int) -> SearchResponse:
@@ -169,6 +172,7 @@ class SearchResponse:
             error_message=self.error_message,
             warnings=list(self.warnings),
             http_status=self.http_status,
+            error_retryable=self.error_retryable,
         )
 
     def to_json(self, indent: int = 2) -> str:
@@ -197,6 +201,8 @@ class SearchResponse:
         }
         if self.http_status is not None:
             data["http_status"] = self.http_status
+        if self.error_retryable is not None:
+            data["error_retryable"] = self.error_retryable
         return data
 
 
@@ -569,6 +575,7 @@ class SearchRequest:
                 status=SearchStatus.ERROR,
                 error_message=str(error),
                 http_status=error.status if isinstance(error, BrowserRetrievalError) else http_status_code(error),
+                error_retryable=isinstance(error, BrowserRetrievalError) and error.retryable,
             )
 
     async def search(self) -> SearchResponse:
