@@ -2,6 +2,7 @@
 
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
+from unittest.mock import Mock
 
 import pytest
 
@@ -26,6 +27,8 @@ def browser(monkeypatch, tmp_path):
         goto=AsyncMock(return_value=SimpleNamespace(status=200)),
         content=AsyncMock(return_value='<div class="c-page-count">0</div>'),
         url="https://tabelog.com/mie/rstLst/",
+        on=Mock(),
+        main_frame=object(),
     )
     context = SimpleNamespace(new_page=AsyncMock(return_value=page), close=AsyncMock())
     launcher = AsyncMock(return_value=context)
@@ -138,3 +141,135 @@ async def test_core_preserves_transient_evidence(browser):
 
 def test_permanent_http_status_cannot_be_overridden():
     assert BrowserRetrievalError("Forbidden", status=403, retryable=True).retryable is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [PermissionError("read-only home"), FileExistsError("profile is a file")])
+async def test_profile_directory_failure(browser, monkeypatch, failure):
+    _, _, launcher = browser
+
+    def fail_mkdir(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr("gurume.browser.Path.mkdir", fail_mkdir)
+    _, result = await mcp.call_tool("tabelog_search_restaurants", {"transport": "browser"})
+    assert isinstance(result, dict)
+    assert result["error"]["error_code"] == "upstream_unavailable"
+    assert result["error"]["retryable"] is False
+    assert "profile" in result["error"]["detail"]
+    launcher.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "html,expected",
+    [
+        ('<div class="c-page-count"><span class="c-page-count__num">12</span></div>', "error"),
+        ('<div class="c-page-count">unknown</div>', "error"),
+        ('<div class="list-rst"><span>Malformed card</span></div>', "error"),
+        ('<div class="c-page-count"><span class="c-page-count__num">0</span></div>', "no_results"),
+        ('<div class="c-page-count">0</div>', "no_results"),
+        ('<div class="rstlist-notfound"></div>', "no_results"),
+    ],
+)
+async def test_empty_result_requires_explicit_evidence(browser, html, expected):
+    page, context, _ = browser
+    page.content.return_value = html
+    _, result = await mcp.call_tool("tabelog_search_restaurants", {"transport": "browser"})
+    assert isinstance(result, dict)
+    assert result["status"] == expected
+    assert result["items"] == []
+    if expected == "error":
+        assert result["error"]["retryable"] is False
+        assert result["meta"] is None
+    page.goto.assert_awaited_once()
+    context.close.assert_awaited_once()
+
+
+CARD_HTML = """<div class="list-rst"><a class="list-rst__rst-name-target"
+href="https://tabelog.com/mie/A2403/A240301/24012212/">こま田</a></div>"""
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "status,html,expected,retryable",
+    [
+        (200, CARD_HTML, "success", None),
+        (200, '<div class="c-page-count">0</div>', "no_results", None),
+        (200, '<div class="rstlist-notfound"></div>', "no_results", None),
+        (200, '<div class="c-page-count">12</div>', "error", False),
+        (200, "<html>unknown</html>", "error", True),
+        (200, "<title>Just a moment...</title>", "error", False),
+        (403, CARD_HTML, "error", False),
+        (404, CARD_HTML, "error", False),
+        (503, CARD_HTML, "error", True),
+    ],
+)
+async def test_timeout_recovers_only_valid_current_document(browser, status, html, expected, retryable):
+    page, context, _ = browser
+    page.content.return_value = html
+
+    async def timed_out(*_args, **_kwargs):
+        remember = page.on.call_args.args[1]
+        remember(
+            SimpleNamespace(
+                status=status,
+                frame=page.main_frame,
+                request=SimpleNamespace(is_navigation_request=lambda: True),
+            )
+        )
+        raise PlaywrightTimeoutError("DOM loaded, navigation timed out")
+
+    page.goto.side_effect = timed_out
+    _, result = await mcp.call_tool("tabelog_search_restaurants", {"area": "三重", "transport": "browser"})
+    assert isinstance(result, dict)
+    assert result["status"] == expected
+    if expected == "error":
+        assert result["error"]["retryable"] is retryable
+        assert result["items"] == []
+    elif expected == "success":
+        assert result["items"][0]["name"] == "こま田"
+    page.goto.assert_awaited_once()
+    context.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["none", "subframe", "subresource"])
+async def test_timeout_does_not_invent_document_status(browser, kind):
+    page, context, _ = browser
+    page.content.return_value = CARD_HTML
+
+    async def timed_out(*_args, **_kwargs):
+        if kind != "none":
+            page.on.call_args.args[1](
+                SimpleNamespace(
+                    status=200,
+                    frame=object() if kind == "subframe" else page.main_frame,
+                    request=SimpleNamespace(is_navigation_request=lambda: kind != "subresource"),
+                )
+            )
+        raise PlaywrightTimeoutError("No main document status")
+
+    page.goto.side_effect = timed_out
+    result = await SearchRequest(area="三重").search_browser()
+    assert result.status == SearchStatus.ERROR
+    assert result.http_status is None
+    assert result.error_retryable is True
+    assert result.restaurants == []
+    page.goto.assert_awaited_once()
+    context.close.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [400, 404, 410, 429])
+async def test_permanent_http_recovery_action(browser, status):
+    page, _, _ = browser
+    page.goto.return_value.status = status
+    _, result = await mcp.call_tool("tabelog_search_restaurants", {"transport": "browser"})
+    assert isinstance(result, dict)
+    assert str(status) in result["error"]["message"]
+    assert result["error"]["retryable"] is False
+    action = result["error"]["suggested_action"]
+    assert "verification" not in action.lower()
+    assert "installation" not in action.lower()
+    assert "rate limits" in action if status == 429 else "URL" in action

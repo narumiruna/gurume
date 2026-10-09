@@ -4,6 +4,7 @@ from asyncio import CancelledError
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from unittest.mock import MagicMock
+from unittest.mock import Mock
 from unittest.mock import patch
 
 import pytest
@@ -122,6 +123,8 @@ async def test_context_cleanup(tmp_path, failure):
         goto=AsyncMock(return_value=SimpleNamespace(status=200)),
         content=AsyncMock(return_value=HTML),
         url="https://tabelog.com/mie/rstLst/",
+        on=Mock(),
+        main_frame=object(),
     )
     if failure:
         page.goto.side_effect = failure
@@ -132,7 +135,12 @@ async def test_context_cleanup(tmp_path, failure):
         return_value=SimpleNamespace(chromium=SimpleNamespace(launch_persistent_context=launcher))
     )
     manager.__aexit__ = AsyncMock(return_value=False)
-    api = SimpleNamespace(async_playwright=lambda: manager, Error=type("PlaywrightError", (Exception,), {}))
+    api_error = type("PlaywrightError", (Exception,), {})
+    api = SimpleNamespace(
+        async_playwright=lambda: manager,
+        Error=api_error,
+        TimeoutError=type("PlaywrightTimeoutError", (api_error,), {}),
+    )
     with (
         patch("gurume.browser.import_module", return_value=api),
         patch("gurume.browser.Path.home", return_value=tmp_path),

@@ -18,7 +18,11 @@ Call `tabelog_search_restaurants` with:
 ```
 
 This opens **headed** Chromium and fetches one page using the same URL builder,
-restaurant parser, metadata, and area/cuisine checks as HTTP search. A graphical
+restaurant parser, metadata, and area/cuisine checks as HTTP search. After a navigation
+timeout, it can recover rendered content only when the current main-frame HTTP
+response status is known and the document passes validation. It does not navigate
+again. Empty output requires explicit not-found markup or a parsed zero count;
+positive/unknown counts with no parsed restaurants are errors. A graphical
 display is required. CLI and TUI continue to use HTTP; Python callers can explicitly
 use `await SearchRequest(...).search_browser()`.
 
@@ -28,7 +32,9 @@ guaranteed: verification pages return a non-retryable error, not empty results.
 Transient HTTP 5xx, navigation timeouts, and recognized network failures return
 `retryable: true` with a retry-later action. Verification/403, other HTTP 4xx,
 installation/display/profile errors, and unrecognized documents remain
-non-retryable. This metadata allows callers to decide whether to retry; the tool
+non-retryable. Permanent HTTP 4xx errors report their status and recommend checking
+the generated URL/upstream routes (or rate limits for 429), rather than browser
+installation or verification. This metadata allows callers to decide whether to retry; the tool
 itself performs no automatic fallback, challenge solving, or retry.
 
 If verification is required, manually open the same profile on the server machine:

@@ -2,6 +2,7 @@
 
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -30,6 +31,60 @@ def validate_search_document(html: str, status: int) -> None:
         raise RuntimeError("Browser did not return a recognizable restaurant search document")
 
 
+def _is_transient_navigation_error(error: Exception, timeout_error: type[Exception]) -> bool:
+    return isinstance(error, timeout_error) or any(
+        code in str(error)
+        for code in (
+            "net::ERR_CONNECTION_RESET",
+            "net::ERR_CONNECTION_CLOSED",
+            "net::ERR_CONNECTION_REFUSED",
+            "net::ERR_CONNECTION_ABORTED",
+            "net::ERR_CONNECTION_TIMED_OUT",
+            "net::ERR_TIMED_OUT",
+            "net::ERR_NETWORK_CHANGED",
+            "net::ERR_INTERNET_DISCONNECTED",
+            "net::ERR_NAME_NOT_RESOLVED",
+            "net::ERR_ADDRESS_UNREACHABLE",
+        )
+    )
+
+
+async def _navigate_search_document(page: Any, api: Any, url: str, navigation_timeout: float) -> tuple[str, str]:
+    """Recover a timed-out navigation only with current main-frame response evidence."""
+    document_status: int | None = None
+
+    def remember_response(response: Any) -> None:
+        nonlocal document_status
+        if response.request.is_navigation_request() and response.frame == page.main_frame:
+            document_status = response.status
+
+    page.on("response", remember_response)
+    try:
+        try:
+            response = await page.goto(url, wait_until="domcontentloaded", timeout=navigation_timeout * 1000)
+        except api.TimeoutError as timeout:
+            if document_status is None:
+                raise
+            html = await page.content()
+            try:
+                validate_search_document(html, document_status)
+            except BrowserRetrievalError:
+                raise
+            except RuntimeError:
+                raise timeout from None
+            return html, page.url
+        if response is None:
+            raise RuntimeError("Browser navigation returned no document response")
+        html = await page.content()
+    except api.Error as error:
+        raise BrowserRetrievalError(
+            f"Browser navigation failed: {error}",
+            retryable=_is_transient_navigation_error(error, api.TimeoutError),
+        ) from error
+    validate_search_document(html, response.status)
+    return html, page.url
+
+
 async def fetch_search_document(url: str, navigation_timeout: float) -> tuple[str, str]:
     """Use a dedicated local profile, preserving cookies only within that browser."""
     try:
@@ -38,37 +93,17 @@ async def fetch_search_document(url: str, navigation_timeout: float) -> tuple[st
         raise RuntimeError(
             "Browser support is not installed: install gurume[browser], then run playwright install chromium"
         ) from error
-    profile = Path.home() / ".cache" / "gurume" / "browser"
-    profile.mkdir(parents=True, exist_ok=True)
+    try:
+        profile = Path.home() / ".cache" / "gurume" / "browser"
+        profile.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise BrowserRetrievalError(f"Cannot prepare Gurume browser profile: {error}") from error
     try:
         async with api.async_playwright() as playwright:
             context = await playwright.chromium.launch_persistent_context(str(profile), headless=False)
             try:
                 page = await context.new_page()
-                try:
-                    response = await page.goto(url, wait_until="domcontentloaded", timeout=navigation_timeout * 1000)
-                    if response is None:
-                        raise RuntimeError("Browser navigation returned no document response")
-                    html = await page.content()
-                except api.Error as error:
-                    transient = isinstance(error, api.TimeoutError) or any(
-                        code in str(error)
-                        for code in (
-                            "net::ERR_CONNECTION_RESET",
-                            "net::ERR_CONNECTION_CLOSED",
-                            "net::ERR_CONNECTION_REFUSED",
-                            "net::ERR_CONNECTION_ABORTED",
-                            "net::ERR_CONNECTION_TIMED_OUT",
-                            "net::ERR_TIMED_OUT",
-                            "net::ERR_NETWORK_CHANGED",
-                            "net::ERR_INTERNET_DISCONNECTED",
-                            "net::ERR_NAME_NOT_RESOLVED",
-                            "net::ERR_ADDRESS_UNREACHABLE",
-                        )
-                    )
-                    raise BrowserRetrievalError(f"Browser navigation failed: {error}", retryable=transient) from error
-                validate_search_document(html, response.status)
-                return html, page.url
+                return await _navigate_search_document(page, api, url, navigation_timeout)
             finally:
                 await context.close()
     except api.Error as error:

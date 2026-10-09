@@ -62,5 +62,7 @@
 
 - Browser retryability must survive the typed error and SearchResponse boundary: distinguish HTTP 5xx and recognized navigation timeouts/network failures from verification/403, certificate/configuration errors, and unknown documents. Retry metadata does not enable automatic retries.
 
+- Recover browser navigation timeouts only with current main-frame response status and validated content; never infer HTTP success from a rendered DOM alone. Zero parsed cards need explicit not-found or zero-count evidence, and profile filesystem failures must stay non-retryable setup errors.
+
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.

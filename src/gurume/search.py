@@ -559,6 +559,17 @@ class SearchRequest:
             url, params = self._build_url_and_params(request)
             html, final_url = await fetch_search_document(f"{url}?{urlencode(params)}", self.timeout)
             restaurants = request._parse_restaurants(html)
+            if not restaurants:
+                soup = BeautifulSoup(html, "html.parser")
+                count_block = soup.select_one(".c-page-count")
+                count_nodes = count_block.select(".c-page-count__num") if count_block else []
+                count_text = (
+                    count_nodes[-1].get_text(" ", strip=True)
+                    if count_nodes
+                    else count_block.get_text(" ", strip=True) if count_block else ""
+                )
+                if not soup.select_one(".rstlist-notfound") and self._parse_count_text(count_text) != 0:
+                    raise RuntimeError("Browser search returned no parsed restaurants without explicit empty evidence")
             page_result = SearchPageResult(html, restaurants, final_url, self._stringify_params(params))
             meta = self._update_meta(None, page_result, self.page)
             return SearchResponse(

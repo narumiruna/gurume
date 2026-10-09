@@ -25,6 +25,7 @@ from .map_output import validate_map_limit
 from .map_search import MapSearchRequest
 from .search import SearchRequest
 from .search import SearchStatus
+from .server_helpers import _browser_search_error
 from .server_helpers import _build_cuisine_list_error_output
 from .server_helpers import _build_cuisine_list_output
 from .server_helpers import _build_detail_error_output
@@ -318,18 +319,7 @@ async def tabelog_search_restaurants(
             )
 
         error = (
-            ToolErrorOutput(
-                error_code="upstream_unavailable",
-                message="Headed browser search did not return usable results.",
-                retryable=response.error_retryable is True,
-                suggested_action=(
-                    "Retry later; the browser encountered a transient upstream or navigation failure."
-                    if response.error_retryable
-                    else "Check browser installation and graphical display. If verification is required, "
-                    "open the dedicated Gurume browser profile manually; do not repeatedly retry."
-                ),
-                detail=response.error_message,
-            )
+            _browser_search_error(response)
             if transport == "browser"
             else _upstream_access_denied_error("Restaurant search", response.error_message)
             if response.http_status == 403

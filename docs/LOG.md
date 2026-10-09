@@ -104,3 +104,4 @@
 2026-10-09 | fix(map): reject partial raw pages and validate oversized coordinates before float conversion (#95)
 2026-10-09 | feat(mcp): add explicit headed browser search; fresh-profile access still requires manual verification (#95)
 2026-10-09 | fix(mcp): preserve retryability for transient browser search failures (#96)
+2026-10-09 | fix(browser): recover validated timeout content and classify profile, empty-result and HTTP failures (#96)
