@@ -853,8 +853,8 @@ class TestBuildSearchUrlAndParams:
         assert "LstG" not in params
         assert "sa" not in params
 
-    def test_search_request_build_url_preserves_keyword_filters(self):
-        """SearchRequest._build_url_and_params must not use mapped paths for keyword searches."""
+    def test_search_request_build_url_uses_scoped_keyword_filters(self):
+        """Mapped keyword, area, and cuisine searches use Tabelog's scoped path."""
         from gurume.restaurant import SortType
         from gurume.search import SearchRequest
 
@@ -867,8 +867,5 @@ class TestBuildSearchUrlAndParams:
         rst_req = request._create_restaurant_request(page=1)
         url, params = request._build_url_and_params(rst_req)
 
-        assert url == "https://tabelog.com/rst/rstsearch"
-        assert params["sa"] == "東京"
-        assert params["sk"] == "寿司"
-        assert params["sw"] == "寿司"
-        assert params["LstG"] == "RC0201"
+        assert url == "https://tabelog.com/keywords/%E5%AF%BF%E5%8F%B8/tokyo/kwdLst/sushi/"
+        assert params == {"SrtT": "trend", "PG": "1"}

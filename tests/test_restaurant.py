@@ -12,8 +12,44 @@ from gurume.restaurant import PriceRange
 from gurume.restaurant import Restaurant
 from gurume.restaurant import RestaurantSearchRequest
 from gurume.restaurant import SortType
+from gurume.restaurant import build_search_url_and_params
 from gurume.restaurant import query_restaurants
 from gurume.restaurant import resolve_sort_type
+
+
+def test_keyword_search_uses_scoped_area_and_cuisine_url():
+    params = {
+        "SrtT": "trend",
+        "PG": "1",
+        "sk": "静か",
+        "sa": "渋谷",
+        "LstG": "RC1101",
+        "LstCos": "C006",
+    }
+
+    url, query = build_search_url_and_params(params, "tokyo/A1303/A130301", "RC1101")
+
+    assert url == (
+        "https://tabelog.com/keywords/%E9%9D%99%E3%81%8B/"
+        "tokyo/A1303/A130301/kwdLst/italian/"
+    )
+    assert query == {"SrtT": "trend", "PG": "1", "LstCos": "C006"}
+
+
+def test_keyword_search_without_area_mapping_keeps_generic_url():
+    params = {"SrtT": "trend", "PG": "1", "sk": "静か", "sa": "渋谷"}
+
+    url, query = build_search_url_and_params(params, None, "RC1101")
+
+    assert url == "https://tabelog.com/rst/rstsearch"
+    assert query == {
+        "SrtT": "trend",
+        "PG": "1",
+        "sk": "静か",
+        "sa": "渋谷",
+        "sw": "静か",
+        "LstG": "RC1101",
+    }
 
 
 class TestRestaurantSearchRequest:

@@ -7,6 +7,7 @@ from dataclasses import field
 from enum import StrEnum
 from functools import cache
 from typing import Any
+from urllib.parse import quote
 
 from bs4 import BeautifulSoup
 from bs4 import Tag
@@ -50,10 +51,10 @@ def build_search_url_and_params(
 ) -> tuple[str, dict[str, Any]]:
     """Build the Tabelog search URL and adjust params for area/genre filters.
 
-    Area-only searches still use ``/{area_slug}/rstLst/``. Cuisine searches
-    now require a cuisine-specific path segment (for example ``.../yakiniku/`` or
-    ``.../MC0101/``) because the legacy ``LstG`` query parameter is ignored by
-    current Tabelog pages.
+    Area-only searches use ``/{area_slug}/rstLst/``. Cuisine searches use a
+    cuisine-specific path segment. When keyword, area, and cuisine are all
+    available, the keyword search uses Tabelog's scoped keyword path so the
+    filters are represented in the URL path rather than legacy query params.
 
     Args:
         params: Search params dict (mutated in place and returned).
@@ -67,6 +68,14 @@ def build_search_url_and_params(
     cuisine_slug = get_cuisine_slug_by_code(genre_code) if genre_code else None
     keyword = params.get("sk")
     if keyword:
+        if area_slug and cuisine_slug:
+            params.pop("sk", None)
+            params.pop("sw", None)
+            params.pop("sa", None)
+            params.pop("LstG", None)
+            encoded_keyword = quote(str(keyword), safe="")
+            return f"https://tabelog.com/keywords/{encoded_keyword}/{area_slug}/kwdLst/{cuisine_slug}/", params
+
         params.setdefault("sw", keyword)
         if genre_code:
             params["LstG"] = genre_code
