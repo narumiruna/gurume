@@ -55,6 +55,7 @@ def build_search_url_and_params(
     cuisine-specific path segment. When keyword, area, and cuisine are all
     available, the keyword search uses Tabelog's scoped keyword path so the
     filters are represented in the URL path rather than legacy query params.
+    Keywords ``.`` and ``..`` stay in query params to prevent path normalization.
 
     Args:
         params: Search params dict (mutated in place and returned).
@@ -68,7 +69,7 @@ def build_search_url_and_params(
     cuisine_slug = get_cuisine_slug_by_code(genre_code) if genre_code else None
     keyword = params.get("sk")
     if keyword:
-        if area_slug and cuisine_slug:
+        if area_slug and cuisine_slug and keyword not in (".", ".."):
             params.pop("sk", None)
             params.pop("sw", None)
             params.pop("sa", None)

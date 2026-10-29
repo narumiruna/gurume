@@ -107,3 +107,4 @@
 2026-10-09 | fix(browser): recover validated timeout content and classify profile, empty-result and HTTP failures (#96)
 2026-10-09 | fix(browser): preserve shared textual area-not-found handling (#96)
 2026-10-28 | fix(search): use scoped Tabelog URLs for mapped keyword, area, and cuisine searches (#local)
+2026-10-29 | fix(search): preserve long keyword URLs in JSON metadata and keep dot-only keywords in query parameters (#97)

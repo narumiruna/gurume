@@ -6,6 +6,7 @@ from datetime import date
 from datetime import time
 from typing import Literal
 
+from pydantic import AnyHttpUrl
 from pydantic import HttpUrl
 from pydantic import TypeAdapter
 
@@ -229,7 +230,7 @@ def _to_search_meta_output(meta: SearchMeta | None) -> SearchMetaOutput | None:
         total_pages=meta.total_pages,
         has_next_page=meta.has_next_page,
         has_prev_page=meta.has_prev_page,
-        source_url=_as_http_url(meta.source_url) if meta.source_url else None,
+        source_url=AnyHttpUrl(meta.source_url) if meta.source_url else None,
         source_params=meta.source_params,
         cuisine_filter_confidence=meta.cuisine_filter_confidence,
         cuisine_filter_reason=meta.cuisine_filter_reason,

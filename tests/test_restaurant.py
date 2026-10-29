@@ -17,11 +17,23 @@ from gurume.restaurant import query_restaurants
 from gurume.restaurant import resolve_sort_type
 
 
-def test_keyword_search_uses_scoped_area_and_cuisine_url():
+@pytest.mark.parametrize(
+    ("keyword", "encoded_keyword"),
+    [
+        ("静か", "%E9%9D%99%E3%81%8B"),
+        ("...", "..."),
+        (".hidden", ".hidden"),
+        ("a..b", "a..b"),
+        ("%2e%2e", "%252e%252e"),
+        ("静か / 個室?&#%", "%E9%9D%99%E3%81%8B%20%2F%20%E5%80%8B%E5%AE%A4%3F%26%23%25"),
+    ],
+)
+def test_keyword_search_uses_scoped_area_and_cuisine_url(keyword: str, encoded_keyword: str):
     params = {
         "SrtT": "trend",
         "PG": "1",
-        "sk": "静か",
+        "sk": keyword,
+        "sw": keyword,
         "sa": "渋谷",
         "LstG": "RC1101",
         "LstCos": "C006",
@@ -29,11 +41,26 @@ def test_keyword_search_uses_scoped_area_and_cuisine_url():
 
     url, query = build_search_url_and_params(params, "tokyo/A1303/A130301", "RC1101")
 
-    assert url == (
-        "https://tabelog.com/keywords/%E9%9D%99%E3%81%8B/"
-        "tokyo/A1303/A130301/kwdLst/italian/"
-    )
+    assert url == f"https://tabelog.com/keywords/{encoded_keyword}/tokyo/A1303/A130301/kwdLst/italian/"
     assert query == {"SrtT": "trend", "PG": "1", "LstCos": "C006"}
+
+
+@pytest.mark.parametrize("keyword", [".", ".."])
+def test_dot_only_keyword_stays_in_query_params(keyword: str):
+    params = {"SrtT": "trend", "PG": "2", "sk": keyword, "sa": "渋谷", "LstCos": "C006"}
+
+    url, query = build_search_url_and_params(params, "tokyo/A1303/A130301", "RC1101")
+
+    assert url == "https://tabelog.com/rst/rstsearch"
+    assert query == {
+        "SrtT": "trend",
+        "PG": "2",
+        "sk": keyword,
+        "sw": keyword,
+        "sa": "渋谷",
+        "LstG": "RC1101",
+        "LstCos": "C006",
+    }
 
 
 def test_keyword_search_without_area_mapping_keeps_generic_url():

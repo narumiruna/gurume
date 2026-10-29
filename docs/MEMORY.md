@@ -18,7 +18,7 @@
 - Live Tabelog integration tests can return empty results under the default sandbox network; rerun `GURUME_RUN_INTEGRATION=1 uv run pytest -v -s tests/integration/test_cuisine_filter.py` with network access before treating empty live results as a regression.
 - MCP live checks can pass cuisine filtering while still hiding regressions: keyword search on mapped area paths may be ignored upstream, search meta can disagree with parsed results, and detail `fetch_menu` / course parsing can fail or return empty after Tabelog markup or URL changes.
 - Tabelog search count markup may expose visible range numbers before the real total, for example `.c-page-count__num` values `1`, `20`, then the total after `全`; parse the final number in `.c-page-count` and use `a[rel="next"]` for pagination.
-- Tabelog path-based result pages such as `/tokyo/rstLst/` and cuisine pages may ignore `sk=<keyword>`; keyword searches should use the search endpoint with `sa`, `sk`, and `sw`, and MCP should reject `keyword + cuisine` unless live evidence proves both filters are honored.
+- Tabelog `/rstLst/` pages may ignore query keywords. Use `/keywords/{keyword}/{area}/kwdLst/{cuisine}/` only when both area and cuisine map; otherwise keep `/rst/rstsearch` with `sa`, `sk`, and `sw`. MCP still rejects `keyword + cuisine`.
 - For mapped area keyword searches, `area_filter_confidence` is URL-based and is high only when every parsed restaurant URL starts with the mapped Tabelog area path; mixed-prefecture URLs must stay low-confidence.
 - Detail menu pages are optional: some restaurants return 404 for `/dtlmenu/` while `/party/` has current course data in `.rstdtl-course-list`; treat optional menu/course 404s as empty sections and parse `/party/` courses from current selectors.
 - CLI keyword auto-detection is a special case: when `--keyword` exactly matches a supported cuisine, clear the keyword and search as area+cuisine so city paths like `/hyogo/A2801/rstLst/cafe/` are used.
@@ -65,6 +65,8 @@
 - Recover browser navigation timeouts only with current main-frame response status and validated content; never infer HTTP success from a rendered DOM alone. Zero parsed cards need explicit not-found or zero-count evidence, and profile filesystem failures must stay non-retryable setup errors.
 
 - Keep browser document/empty-result guards aligned with the shared parser's area-not-found predicate, including its Japanese text sentinel; otherwise invalid areas become errors or leak national fallback cards. Challenge/HTTP-error checks still take precedence.
+
+- Use `AnyHttpUrl` for search metadata: encoded keyword paths can exceed `HttpUrl`'s 2,083-character limit. Keep exact `.` and `..` keywords in query parameters because HTTP clients normalize dot path segments.
 
 ## TASTE
 - To reduce Ruff complexity, prefer adding private helpers inside the existing module to split the flow before reaching for new files or new abstractions.
