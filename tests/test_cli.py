@@ -465,6 +465,49 @@ class TestSearchCommand:
         assert "Searching..." in result.stderr
         assert "Found 1 restaurants" in result.stderr
 
+    @pytest.mark.parametrize("output_format", ["json", "json-envelope"])
+    @pytest.mark.parametrize("has_results", [False, True])
+    def test_json_envelope_preserves_long_scoped_keyword_url(self, output_format: str, has_results: bool):
+        from typer.testing import CliRunner
+
+        from gurume.cli import app
+
+        keyword = "静" * 250
+        expected_url = "https://tabelog.com/keywords/" + "%E9%9D%99" * 250 + "/tokyo/A1303/A130301/kwdLst/italian/"
+        html = f'<div class="c-page-count"><span class="c-page-count__num">{int(has_results)}</span></div>'
+        if has_results:
+            html += (
+                '<div class="list-rst">'
+                '<a class="list-rst__rst-name-target" href="/tokyo/A1303/A130301/13312315/">Italian</a>'
+                '<div class="list-rst__area-genre">渋谷 / イタリアン</div></div>'
+            )
+        with patch("curl_cffi.requests.get", return_value=Mock(text=html)) as mock_get:
+            result = CliRunner().invoke(
+                app,
+                [
+                    "search",
+                    "--area",
+                    "渋谷",
+                    "--cuisine",
+                    "イタリアン",
+                    "--keyword",
+                    keyword,
+                    "--output",
+                    output_format,
+                ],
+            )
+
+        assert len(expected_url) > 2083
+        assert result.exit_code == 0, result.exception
+        payload = json.loads(result.stdout)
+        assert payload["status"] == ("success" if has_results else "no_results")
+        assert payload["returned_count"] == int(has_results)
+        assert payload["meta"]["source_url"] == expected_url
+        assert payload["meta"]["source_params"] == {"SrtT": "rt", "PG": "1"}
+        assert payload["applied_filters"]["keyword"] == keyword
+        assert payload["error"] is None
+        assert mock_get.call_args.kwargs["url"] == expected_url
+
     def test_json_envelope_no_results_is_parseable(self):
         from typer.testing import CliRunner
 

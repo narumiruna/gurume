@@ -1,4 +1,4 @@
-"""Contract tests for the shared restaurant output projection."""
+"""Contract tests for shared response output conversion."""
 
 import pytest
 from pydantic import ValidationError
@@ -6,8 +6,10 @@ from pydantic import ValidationError
 from gurume.cli import _build_json_data
 from gurume.detail import RestaurantDetail
 from gurume.restaurant import Restaurant
+from gurume.search import SearchMeta
 from gurume.server_helpers import _to_detail_output
 from gurume.server_helpers import _to_restaurant_outputs
+from gurume.server_helpers import _to_search_meta_output
 
 
 @pytest.mark.parametrize("url", ["https://EXAMPLE.com", "https://tabelog.com/寿司/?q=日本料理", "not-a-url"])
@@ -66,8 +68,24 @@ def test_search_and_detail_outputs_share_projection_and_url_normalization():
     assert _to_restaurant_outputs([], limit=1) == []
 
 
-def test_mcp_restaurant_outputs_reject_invalid_url():
-    restaurant = Restaurant(name="寿司店", url="not-a-url")
+@pytest.mark.parametrize("url", ["not-a-url", "ftp://example.com/search", "file:///tmp/search.html"])
+def test_search_metadata_rejects_invalid_http_urls(url: str):
+    meta = SearchMeta(
+        total_count=0,
+        current_page=1,
+        results_per_page=20,
+        total_pages=1,
+        has_next_page=False,
+        has_prev_page=False,
+        source_url=url,
+    )
+    with pytest.raises(ValidationError):
+        _to_search_meta_output(meta)
+
+
+@pytest.mark.parametrize("url", ["not-a-url", "https://example.com/" + "a" * 2084])
+def test_mcp_restaurant_outputs_reject_invalid_url(url: str):
+    restaurant = Restaurant(name="寿司店", url=url)
     with pytest.raises(ValidationError):
         _to_restaurant_outputs([restaurant], limit=1)
     with pytest.raises(ValidationError):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+from pydantic import AnyHttpUrl
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
@@ -79,7 +80,7 @@ class SearchMetaOutput(BaseModel):
     total_pages: int | None = Field(description="Total number of result pages reported by Tabelog")
     has_next_page: bool = Field(description="Whether Tabelog reports a next result page")
     has_prev_page: bool = Field(description="Whether Tabelog reports a previous result page")
-    source_url: HttpUrl | None = Field(default=None, description="Tabelog URL fetched for the first parsed page")
+    source_url: AnyHttpUrl | None = Field(default=None, description="Tabelog URL fetched for the first parsed page")
     source_params: dict[str, str] = Field(
         default_factory=dict,
         description="Query parameters sent with the first parsed page request",
