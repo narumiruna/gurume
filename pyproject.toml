@@ -38,11 +38,11 @@ classifiers     = [
 ]
 dependencies    = [
   "beautifulsoup4>=4.15.0",
-  "curl-cffi>=0.16.3",
-  "mcp[cli]>=1.27.1,<2",
-  "pydantic>=2.13.5",
+  "curl-cffi>=0.17.0",
+  "mcp[cli]>=1.30.0,<2",
+  "pydantic>=2.14.1",
   "textual>=8.2.8",
-  "typer>=0.27.2",
+  "typer>=0.27.3",
 ]
 
 [project.urls]
@@ -56,21 +56,21 @@ gurume = "gurume.cli:main"
 
 [project.optional-dependencies]
 browser = [
-    "playwright>=1.58",
+  "playwright>=1.64.1",
 ]
 
 [dependency-groups]
 dev  = [
-  "pytest>=9.1.1",
-  "pytest-asyncio>=1.4.0",
+  "pytest>=9.2.0",
+  "pytest-asyncio>=1.4.1",
   "pytest-cov>=7.1.0",
-  "ruff>=0.16.8",
-  "ty>=0.0.83",
+  "ruff>=0.17.3",
+  "ty>=0.0.94",
 ]
 docs = [
   "mkdocs>=1.6.1",
-  "mkdocs-material>=9.7.7",
-  "mkdocstrings[python]>=1.0.6",
+  "mkdocs-material>=9.8.0",
+  "mkdocstrings[python]>=1.0.8",
 ]
 
 [build-system]
