@@ -107,3 +107,4 @@
 2026-10-09 | fix(browser): recover validated timeout content and classify profile, empty-result and HTTP failures (#96)
 2026-10-09 | fix(browser): preserve shared textual area-not-found handling (#96)
 2026-10-29 | chore(deps): update Python dependencies while retaining MCP 1.x compatibility (#local)
+2026-10-29 | chore(deps): refresh locked Python dependencies while retaining MCP 1.x compatibility (#local)
