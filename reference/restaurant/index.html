@@ -1306,7 +1306,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">602</span>
 <span class="normal">603</span>
 <span class="normal">604</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">do</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously. Deprecated; use search().&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run the search asynchronously. Deprecated; use search()."""</span>
     <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1335,7 +1335,7 @@
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">598</span>
 <span class="normal">599</span>
 <span class="normal">600</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">do_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously. Deprecated; use search_sync().&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Run the search synchronously. Deprecated; use search_sync()."""</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_sync</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -1483,7 +1483,7 @@
 <span class="normal">594</span>
 <span class="normal">595</span>
 <span class="normal">596</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_retry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search asynchronously.</span>
+<span class="w">    </span><span class="sd">"""Run the search asynchronously.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        use_cache: Whether to use the cache. Defaults to True.</span>
@@ -1491,7 +1491,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of restaurants.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_params</span><span class="p">()</span>
 
     <span class="n">area_slug</span> <span class="o">=</span> <span class="n">get_area_slug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1663,7 +1663,7 @@
 <span class="normal">552</span>
 <span class="normal">553</span>
 <span class="normal">554</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">search_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_retry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Run the search synchronously.</span>
+<span class="w">    </span><span class="sd">"""Run the search synchronously.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        use_cache: Whether to use the cache. Defaults to True.</span>
@@ -1671,7 +1671,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List of restaurants.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_params</span><span class="p">()</span>
 
     <span class="n">area_slug</span> <span class="o">=</span> <span class="n">get_area_slug</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span> <span class="k">else</span> <span class="kc">None</span>
@@ -1935,54 +1935,54 @@ Keywords <code>.</code> and <code>..</code> stay in query params to prevent path
     <span class="n">area_slug</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">genre_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Tabelog search URL and adjust params for area/genre filters.</span>
+<span class="w">    </span><span class="sd">"""Build the Tabelog search URL and adjust params for area/genre filters.</span>
 
 <span class="sd">    Area-only searches use ``/{area_slug}/rstLst/``. Cuisine searches use a</span>
 <span class="sd">    cuisine-specific path segment. When keyword, area, and cuisine are all</span>
-<span class="sd">    available, the keyword search uses Tabelog&#39;s scoped keyword path so the</span>
+<span class="sd">    available, the keyword search uses Tabelog's scoped keyword path so the</span>
 <span class="sd">    filters are represented in the URL path rather than legacy query params.</span>
 <span class="sd">    Keywords ``.`` and ``..`` stay in query params to prevent path normalization.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        params: Search params dict (mutated in place and returned).</span>
-<span class="sd">        area_slug: Tabelog area slug like ``&quot;tokyo&quot;`` or ``None``.</span>
-<span class="sd">        genre_code: Tabelog genre code like ``&quot;RC0201&quot;`` or ``None``.</span>
+<span class="sd">        area_slug: Tabelog area slug like ``"tokyo"`` or ``None``.</span>
+<span class="sd">        genre_code: Tabelog genre code like ``"RC0201"`` or ``None``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple of (url, params).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://tabelog.com/rst/rstsearch&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://tabelog.com/rst/rstsearch"</span>
     <span class="n">cuisine_slug</span> <span class="o">=</span> <span class="n">get_cuisine_slug_by_code</span><span class="p">(</span><span class="n">genre_code</span><span class="p">)</span> <span class="k">if</span> <span class="n">genre_code</span> <span class="k">else</span> <span class="kc">None</span>
-    <span class="n">keyword</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sk&quot;</span><span class="p">)</span>
+    <span class="n">keyword</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sk"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">keyword</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">area_slug</span> <span class="ow">and</span> <span class="n">cuisine_slug</span> <span class="ow">and</span> <span class="n">keyword</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">):</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sk&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sw&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sa&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;LstG&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-            <span class="n">encoded_keyword</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">keyword</span><span class="p">),</span> <span class="n">safe</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;https://tabelog.com/keywords/</span><span class="si">{</span><span class="n">encoded_keyword</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/kwdLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">params</span>
+        <span class="k">if</span> <span class="n">area_slug</span> <span class="ow">and</span> <span class="n">cuisine_slug</span> <span class="ow">and</span> <span class="n">keyword</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="s2">".."</span><span class="p">):</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sk"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sw"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sa"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"LstG"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">encoded_keyword</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">keyword</span><span class="p">),</span> <span class="n">safe</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"https://tabelog.com/keywords/</span><span class="si">{</span><span class="n">encoded_keyword</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/kwdLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span> <span class="n">params</span>
 
-        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;sw&quot;</span><span class="p">,</span> <span class="n">keyword</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"sw"</span><span class="p">,</span> <span class="n">keyword</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">genre_code</span><span class="p">:</span>
-            <span class="n">params</span><span class="p">[</span><span class="s2">&quot;LstG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">genre_code</span>
+            <span class="n">params</span><span class="p">[</span><span class="s2">"LstG"</span><span class="p">]</span> <span class="o">=</span> <span class="n">genre_code</span>
         <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span>
 
     <span class="k">if</span> <span class="n">area_slug</span> <span class="ow">and</span> <span class="n">cuisine_slug</span><span class="p">:</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sa&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;LstG&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;https://tabelog.com/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/rstLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">params</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sa"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"LstG"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"https://tabelog.com/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/rstLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span> <span class="n">params</span>
 
-    <span class="k">if</span> <span class="n">cuisine_slug</span> <span class="ow">and</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;sa&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;全国&quot;</span><span class="p">):</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sa&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;LstG&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;https://tabelog.com/rstLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="n">params</span>
+    <span class="k">if</span> <span class="n">cuisine_slug</span> <span class="ow">and</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"sa"</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">"全国"</span><span class="p">):</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sa"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"LstG"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"https://tabelog.com/rstLst/</span><span class="si">{</span><span class="n">cuisine_slug</span><span class="si">}</span><span class="s2">/"</span><span class="p">,</span> <span class="n">params</span>
 
     <span class="k">if</span> <span class="n">area_slug</span><span class="p">:</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://tabelog.com/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/rstLst/&quot;</span>
-        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;sa&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://tabelog.com/</span><span class="si">{</span><span class="n">area_slug</span><span class="si">}</span><span class="s2">/rstLst/"</span>
+        <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"sa"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">genre_code</span><span class="p">:</span>
-        <span class="n">params</span><span class="p">[</span><span class="s2">&quot;LstG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">genre_code</span>
+        <span class="n">params</span><span class="p">[</span><span class="s2">"LstG"</span><span class="p">]</span> <span class="o">=</span> <span class="n">genre_code</span>
     <span class="k">return</span> <span class="n">url</span><span class="p">,</span> <span class="n">params</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -2081,7 +2081,7 @@ Keywords <code>.</code> and <code>..</code> stay in query params to prevent path
     <span class="n">smoking_allowed</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">card_accepted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Restaurant</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quick restaurant lookup.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Quick restaurant lookup."""</span>
     <span class="k">return</span> <span class="n">RestaurantSearchRequest</span><span class="p">(</span>
         <span class="n">area</span><span class="o">=</span><span class="n">area</span><span class="p">,</span>
         <span class="n">keyword</span><span class="o">=</span><span class="n">keyword</span><span class="p">,</span>
@@ -2126,7 +2126,7 @@ Keywords <code>.</code> and <code>..</code> stay in query params to prevent path
               <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">120</span>
 <span class="normal">121</span>
 <span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">resolve_sort_type</span><span class="p">(</span><span class="n">sort</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SortType</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resolve a user-facing sort option to its Tabelog sort value.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Resolve a user-facing sort option to its Tabelog sort value."""</span>
     <span class="k">return</span> <span class="n">SORT_TYPE_BY_OPTION</span><span class="p">[</span><span class="n">sort</span><span class="p">]</span>
 </code></pre></div></td></tr></table></div>
             </details>

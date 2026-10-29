@@ -872,13 +872,13 @@
 <h2 id="mcp">MCP<a class="headerlink" href="#mcp" title="Permanent link">&para;</a></h2>
 <p>Call <code>tabelog_search_map_restaurants</code> with:</p>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;min_lat&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">34.36048477324305</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;max_lat&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">35.15027330463616</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;min_lon&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">135.85490885032183</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;max_lon&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">137.25566568625933</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;cuisine&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;焼き鳥&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;page&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
+<span class="w">  </span><span class="nt">"min_lat"</span><span class="p">:</span><span class="w"> </span><span class="mf">34.36048477324305</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"max_lat"</span><span class="p">:</span><span class="w"> </span><span class="mf">35.15027330463616</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"min_lon"</span><span class="p">:</span><span class="w"> </span><span class="mf">135.85490885032183</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"max_lon"</span><span class="p">:</span><span class="w"> </span><span class="mf">137.25566568625933</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"cuisine"</span><span class="p">:</span><span class="w"> </span><span class="s2">"焼き鳥"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"page"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"limit"</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span>
 <span class="p">}</span>
 </code></pre></div>
 <p>MCP <code>page</code> and <code>limit</code> must be JSON integers. Boolean values, floats, and numeric strings are rejected before a request. Direct Python calls with a non-string <code>cuisine</code> return a non-retryable parameter error.</p>

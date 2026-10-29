@@ -1284,7 +1284,7 @@ uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </s
 uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>browser<span class="w"> </span>gurume<span class="w"> </span>mcp
 </code></pre></div>
 <p>Call <code>tabelog_search_restaurants</code> with:</p>
-<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">&quot;area&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;三重&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;sort&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ranking&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;limit&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;transport&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;browser&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><span class="p">{</span><span class="nt">"area"</span><span class="p">:</span><span class="w"> </span><span class="s2">"三重"</span><span class="p">,</span><span class="w"> </span><span class="nt">"sort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ranking"</span><span class="p">,</span><span class="w"> </span><span class="nt">"limit"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nt">"transport"</span><span class="p">:</span><span class="w"> </span><span class="s2">"browser"</span><span class="p">}</span>
 </code></pre></div>
 <p>This opens <strong>headed</strong> Chromium and fetches one page using the same URL builder,
 restaurant parser, metadata, and area/cuisine checks as HTTP search. After a navigation
@@ -1307,8 +1307,8 @@ installation or verification. This metadata allows callers to decide whether to 
 itself performs no automatic fallback, challenge solving, or retry.</p>
 <p>If verification is required, manually open the same profile on the server machine:</p>
 <div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>--extra<span class="w"> </span>browser<span class="w"> </span>playwright<span class="w"> </span>open<span class="w"> </span>--browser<span class="w"> </span>chromium<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--user-data-dir<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HOME</span><span class="s2">/.cache/gurume/browser&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="s1">&#39;https://tabelog.com/mie/rstLst/?SrtT=rt&amp;PG=1&#39;</span>
+<span class="w">  </span>--user-data-dir<span class="w"> </span><span class="s2">"</span><span class="nv">$HOME</span><span class="s2">/.cache/gurume/browser"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="s1">'https://tabelog.com/mie/rstLst/?SrtT=rt&amp;PG=1'</span>
 </code></pre></div>
 <p>Complete any verification yourself, then close that browser before calling the tool
 again. Concurrent calls sharing the profile are not supported. The tool closes its
@@ -1985,10 +1985,10 @@ delegating response schemas and helper logic to focused modules.</p>
 
 <a href="#gurume.server.run" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="doc-signature highlight"><pre><span></span><code><span class="nf">run</span><span class="p">(</span>
-    <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
-    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
+    <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">"stdio"</span><span class="p">,</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"127.0.0.1"</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/mcp&quot;</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"/mcp"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </code></pre></div>
 
@@ -2105,26 +2105,26 @@ delegating response schemas and helper logic to focused modules.</p>
 <span class="normal">706</span>
 <span class="normal">707</span>
 <span class="normal">708</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
-    <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">,</span>
-    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span>
+    <span class="n">transport</span><span class="p">:</span> <span class="n">TransportType</span> <span class="o">=</span> <span class="s2">"stdio"</span><span class="p">,</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"127.0.0.1"</span><span class="p">,</span>
     <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8000</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/mcp&quot;</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"/mcp"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Synchronous entry point for CLI</span>
+<span class="w">    </span><span class="sd">"""Synchronous entry point for CLI</span>
 
-<span class="sd">    This function is called when running &#39;gurume mcp&#39; command.</span>
+<span class="sd">    This function is called when running 'gurume mcp' command.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        transport: MCP transport to use (&quot;stdio&quot;, &quot;sse&quot;, or &quot;streamable-http&quot;).</span>
+<span class="sd">        transport: MCP transport to use ("stdio", "sse", or "streamable-http").</span>
 <span class="sd">        host: Bind host for HTTP transports (ignored for stdio).</span>
 <span class="sd">        port: Bind port for HTTP transports (ignored for stdio).</span>
 <span class="sd">        path: HTTP mount path for the MCP endpoint (streamable-http uses</span>
 <span class="sd">            ``streamable_http_path``; sse uses ``sse_path``).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">transport</span> <span class="o">!=</span> <span class="s2">&quot;stdio&quot;</span><span class="p">:</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">transport</span> <span class="o">!=</span> <span class="s2">"stdio"</span><span class="p">:</span>
         <span class="n">mcp</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
         <span class="n">mcp</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
-        <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">&quot;streamable-http&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">"streamable-http"</span><span class="p">:</span>
             <span class="n">mcp</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">streamable_http_path</span> <span class="o">=</span> <span class="n">path</span>
         <span class="k">else</span><span class="p">:</span>  <span class="c1"># sse</span>
             <span class="n">mcp</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">sse_path</span> <span class="o">=</span> <span class="n">path</span>
@@ -2151,7 +2151,7 @@ delegating response schemas and helper logic to focused modules.</p>
     <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous."</span><span class="p">,</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
@@ -2232,42 +2232,42 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous.&quot;</span>
+                <span class="s2">"Area query in Japanese, hiragana, or romaji. Use this before searching when area names are ambiguous."</span>
             <span class="p">),</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get area and station suggestions for validating user-provided locations.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get area and station suggestions for validating user-provided locations."""</span>
     <span class="n">normalized_query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized_query</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;query parameter cannot be empty&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"query parameter cannot be empty"</span><span class="p">)</span>
 
         <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_area_suggestions_async</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"invalid_parameters"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty area query string before calling this tool again.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Pass a non-empty area query string before calling this tool again."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Area suggestion request failed because the upstream service was unavailable."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a broader area query.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry later, or try a broader area query."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Area suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Area suggestion request failed unexpectedly."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -2296,7 +2296,7 @@ delegating response schemas and helper logic to focused modules.</p>
     <span class="n">query</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or restaurant-name suggestions before searching.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or restaurant-name suggestions before searching."</span><span class="p">,</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
@@ -2378,43 +2378,43 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or &quot;</span>
-                <span class="s2">&quot;restaurant-name suggestions before searching.&quot;</span>
+                <span class="s2">"Keyword query in Japanese, hiragana, or romaji. Use this to detect Genre2 cuisines or "</span>
+                <span class="s2">"restaurant-name suggestions before searching."</span>
             <span class="p">),</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SuggestionListOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get keyword suggestions for cuisine names, restaurant names, and popular search variants.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Get keyword suggestions for cuisine names, restaurant names, and popular search variants."""</span>
     <span class="n">normalized_query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">normalized_query</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;query parameter cannot be empty&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"query parameter cannot be empty"</span><span class="p">)</span>
 
         <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_keyword_suggestions_async</span><span class="p">(</span><span class="n">normalized_query</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"invalid_parameters"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Invalid suggestion query: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Pass a non-empty keyword query string before calling this tool again.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Pass a non-empty keyword query string before calling this tool again."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed because the upstream service was unavailable.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Keyword suggestion request failed because the upstream service was unavailable."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry later, or try a shorter keyword query.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry later, or try a shorter keyword query."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Keyword suggestion request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Keyword suggestion request failed unexpectedly."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -2443,36 +2443,36 @@ delegating response schemas and helper logic to focused modules.</p>
     <span class="n">restaurant_url</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Tabelog restaurant URL from search results. Must start with https://tabelog.com/.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;^https://tabelog</span><span class="se">\\</span><span class="s2">.com/.+&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Tabelog restaurant URL from search results. Must start with https://tabelog.com/."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="s2">"^https://tabelog</span><span class="se">\\</span><span class="s2">.com/.+"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">fetch_reviews</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog after the base page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch review pages from Tabelog after the base page."</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_menu</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page after the base page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch the restaurant menu page after the base page."</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_courses</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page after the base page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch the restaurant course page after the base page."</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_review_pages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of review pages to fetch when fetch_reviews is true.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum number of review pages to fetch when fetch_reviews is true."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -2601,32 +2601,32 @@ delegating response schemas and helper logic to focused modules.</p>
     <span class="n">restaurant_url</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Tabelog restaurant URL from search results. Must start with https://tabelog.com/.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^https://tabelog\.com/.+&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Tabelog restaurant URL from search results. Must start with https://tabelog.com/."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^https://tabelog\.com/.+"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">fetch_reviews</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch review pages from Tabelog after the base page.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch review pages from Tabelog after the base page."</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_menu</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant menu page after the base page.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch the restaurant menu page after the base page."</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fetch_courses</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">bool</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Whether to fetch the restaurant course page after the base page.&quot;</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to fetch the restaurant course page after the base page."</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">max_review_pages</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of review pages to fetch when fetch_reviews is true.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum number of review pages to fetch when fetch_reviews is true."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantDetailOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch base restaurant information and optional reviews, menu items, and courses.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Fetch base restaurant information and optional reviews, menu items, and courses."""</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">_validate_detail_params</span><span class="p">(</span><span class="n">restaurant_url</span><span class="p">,</span> <span class="n">fetch_reviews</span><span class="p">,</span> <span class="n">fetch_menu</span><span class="p">,</span> <span class="n">fetch_courses</span><span class="p">,</span> <span class="n">max_review_pages</span><span class="p">)</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">RestaurantDetailRequest</span><span class="p">(</span>
@@ -2639,41 +2639,41 @@ delegating response schemas and helper logic to focused modules.</p>
         <span class="n">detail</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">fetch</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;invalid_parameters&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid detail request parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"invalid_parameters"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Invalid detail request parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when &quot;</span>
-                <span class="s2">&quot;only basic restaurant information is needed.&quot;</span>
+                <span class="s2">"Pass a non-empty `https://tabelog.com/` restaurant URL. Set optional fetch flags to false when "</span>
+                <span class="s2">"only basic restaurant information is needed."</span>
             <span class="p">),</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="n">request_errors</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">&quot;Restaurant detail request&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">"Restaurant detail request"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">http_status_code</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">403</span>
             <span class="k">else</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed because Tabelog returned an HTTP error.&quot;</span><span class="p">,</span>
+                <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant detail request failed because Tabelog returned an HTTP error."</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Verify the restaurant URL from search results and retry later.&quot;</span><span class="p">,</span>
+                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Verify the restaurant URL from search results and retry later."</span><span class="p">,</span>
                 <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed because the upstream service did not return usable data.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant detail request failed because the upstream service did not return usable data."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Verify the restaurant URL from search results and retry later.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Verify the restaurant URL from search results and retry later."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant detail request failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant detail request failed unexpectedly."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -2865,18 +2865,18 @@ Returns list of all supported cuisines:
     <span class="n">structured_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tabelog_list_cuisines</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CuisineListOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the complete list of all 29 supported Japanese cuisine types with their Tabelog genre codes.</span>
+<span class="w">    </span><span class="sd">"""Get the complete list of all 29 supported Japanese cuisine types with their Tabelog genre codes.</span>
 
 <span class="sd">    **WHEN TO USE**:</span>
 <span class="sd">    - Before calling `tabelog_search_restaurants` with `cuisine` parameter to verify available options</span>
 <span class="sd">    - Providing cuisine type suggestions/autocomplete to users</span>
-<span class="sd">    - Validating user&#39;s cuisine input against supported types</span>
+<span class="sd">    - Validating user's cuisine input against supported types</span>
 <span class="sd">    - Building UI dropdown menus or selection lists</span>
 
 <span class="sd">    **RETURN FORMAT**:</span>
 <span class="sd">    Returns list of all supported cuisines:</span>
-<span class="sd">    - name: Cuisine name in Japanese (e.g., &#39;すき焼き&#39;, &#39;焼肉&#39;, &#39;ラーメン&#39;)</span>
-<span class="sd">    - code: Tabelog genre code (e.g., &#39;RC0107&#39;, &#39;RC0103&#39;) - used internally for filtering</span>
+<span class="sd">    - name: Cuisine name in Japanese (e.g., 'すき焼き', '焼肉', 'ラーメン')</span>
+<span class="sd">    - code: Tabelog genre code (e.g., 'RC0107', 'RC0103') - used internally for filtering</span>
 
 <span class="sd">    **CUISINE CATEGORIES** (29 types total):</span>
 <span class="sd">    - Japanese: すき焼き, しゃぶしゃぶ, 寿司, 天ぷら, とんかつ, 焼き鳥, ラーメン, うどん, そば, うなぎ, 日本料理, 海鮮</span>
@@ -2888,9 +2888,9 @@ Returns list of all supported cuisines:
 <span class="sd">    - Other: カレー, カフェ, パン, スイーツ</span>
 
 <span class="sd">    **WORKFLOW EXAMPLE**:</span>
-<span class="sd">    1. User asks: &#39;Find sukiyaki restaurants in Tokyo&#39;</span>
-<span class="sd">    2. Call `tabelog_list_cuisines` to verify &#39;すき焼き&#39; is supported → Returns {name: &#39;すき焼き&#39;, code: &#39;RC0107&#39;}</span>
-<span class="sd">    3. Call `tabelog_search_restaurants` with area=&#39;東京&#39;, cuisine=&#39;すき焼き&#39;</span>
+<span class="sd">    1. User asks: 'Find sukiyaki restaurants in Tokyo'</span>
+<span class="sd">    2. Call `tabelog_list_cuisines` to verify 'すき焼き' is supported → Returns {name: 'すき焼き', code: 'RC0107'}</span>
+<span class="sd">    3. Call `tabelog_search_restaurants` with area='東京', cuisine='すき焼き'</span>
 
 <span class="sd">    **NO INPUT REQUIRED**: This tool takes no parameters, simply call it to get the full list.</span>
 
@@ -2899,26 +2899,26 @@ Returns list of all supported cuisines:
 
 <span class="sd">    Raises:</span>
 <span class="sd">        RuntimeError: If cuisine list retrieval fails (should be rare as data is static)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">cuisines</span> <span class="o">=</span> <span class="n">get_all_genres</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">_build_cuisine_list_error_output</span><span class="p">(</span>
             <span class="n">ToolErrorOutput</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Cuisine list retrieval failed unexpectedly.&quot;</span><span class="p">,</span>
+                <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Cuisine list retrieval failed unexpectedly."</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
                 <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="k">return</span> <span class="n">_build_cuisine_list_error_output</span><span class="p">(</span>
             <span class="n">ToolErrorOutput</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Cuisine list retrieval failed unexpectedly.&quot;</span><span class="p">,</span>
+                <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Cuisine list retrieval failed unexpectedly."</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
                 <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -2951,7 +2951,7 @@ Returns list of all supported cuisines:
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Southern latitude of the search rectangle&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Southern latitude of the search rectangle"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">max_lat</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -2960,7 +2960,7 @@ Returns list of all supported cuisines:
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Northern latitude of the search rectangle&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Northern latitude of the search rectangle"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">min_lon</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -2969,7 +2969,7 @@ Returns list of all supported cuisines:
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Western longitude of the search rectangle&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Western longitude of the search rectangle"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">max_lon</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -2978,21 +2978,21 @@ Returns list of all supported cuisines:
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Eastern longitude of the search rectangle&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Eastern longitude of the search rectangle"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
     <span class="n">cuisine</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Only 焼き鳥 is currently verified for the map endpoint&quot;</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Only 焼き鳥 is currently verified for the map endpoint"</span>
         <span class="p">),</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;焼き鳥&quot;</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"焼き鳥"</span><span class="p">,</span>
     <span class="n">page</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Upstream page; fixed 20 markers per page&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Upstream page; fixed 20 markers per page"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
@@ -3001,7 +3001,7 @@ Returns list of all supported cuisines:
             <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Results to return from the fetched page&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Results to return from the fetched page"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MapSearchOutput</span>
@@ -3054,26 +3054,26 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
 <span class="p">)</span>
 <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">tabelog_search_map_restaurants</span><span class="p">(</span>
     <span class="n">min_lat</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Southern latitude of the search rectangle&quot;</span><span class="p">)</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Southern latitude of the search rectangle"</span><span class="p">)</span>
     <span class="p">],</span>
     <span class="n">max_lat</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Northern latitude of the search rectangle&quot;</span><span class="p">)</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">90</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Northern latitude of the search rectangle"</span><span class="p">)</span>
     <span class="p">],</span>
     <span class="n">min_lon</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Western longitude of the search rectangle&quot;</span><span class="p">)</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Western longitude of the search rectangle"</span><span class="p">)</span>
     <span class="p">],</span>
     <span class="n">max_lon</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Eastern longitude of the search rectangle&quot;</span><span class="p">)</span>
+        <span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=-</span><span class="mi">180</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Eastern longitude of the search rectangle"</span><span class="p">)</span>
     <span class="p">],</span>
-    <span class="n">cuisine</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Only 焼き鳥 is currently verified for the map endpoint&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">&quot;焼き鳥&quot;</span><span class="p">,</span>
-    <span class="n">page</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Upstream page; fixed 20 markers per page&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">limit</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Results to return from the fetched page&quot;</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+    <span class="n">cuisine</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Only 焼き鳥 is currently verified for the map endpoint"</span><span class="p">)]</span> <span class="o">=</span> <span class="s2">"焼き鳥"</span><span class="p">,</span>
+    <span class="n">page</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Upstream page; fixed 20 markers per page"</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">limit</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Results to return from the fetched page"</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MapSearchOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Search yakitori by geographic rectangle using undocumented map XML, NOT a prefecture/national ranking.</span>
+<span class="w">    </span><span class="sd">"""Search yakitori by geographic rectangle using undocumented map XML, NOT a prefecture/national ranking.</span>
 
 <span class="sd">    Sorting is by upstream rating. Bounds may cross prefectures; total_count is the rectangle total.</span>
 <span class="sd">    Budget fields are raw and unverified. This is separate from tabelog_search_restaurants, not a 403 fallback.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">validate_map_limit</span><span class="p">(</span><span class="n">limit</span><span class="p">)</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">MapSearchRequest</span><span class="p">(</span><span class="n">min_lat</span><span class="p">,</span> <span class="n">max_lat</span><span class="p">,</span> <span class="n">min_lon</span><span class="p">,</span> <span class="n">max_lon</span><span class="p">,</span> <span class="n">cuisine</span><span class="o">=</span><span class="n">cuisine</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">)</span>
@@ -3104,7 +3104,7 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Area name in Japanese. Prefer a validated prefecture, city, or station from `tabelog_get_area_suggestions`.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Area name in Japanese. Prefer a validated prefecture, city, or station from `tabelog_get_area_suggestions`."</span><span class="p">,</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3112,7 +3112,7 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;General keyword for restaurant names or free-text matching. Use `cuisine` for cuisine-type searches.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"General keyword for restaurant names or free-text matching. Use `cuisine` for cuisine-type searches."</span><span class="p">,</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -3120,22 +3120,22 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Cuisine name in Japanese. Validate with `tabelog_get_keyword_suggestions` or `tabelog_list_cuisines` before searching.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Cuisine name in Japanese. Validate with `tabelog_get_keyword_suggestions` or `tabelog_list_cuisines` before searching."</span><span class="p">,</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sort</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">SortOption</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;ranking&quot;</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Result ordering: ranking, review-count, new-open, or standard.&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">"ranking"</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Result ordering: ranking, review-count, new-open, or standard."</span><span class="p">,</span>
         <span class="p">),</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ranking&quot;</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"ranking"</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of restaurants to return from the first fetched page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum number of restaurants to return from the first fetched page."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
         <span class="p">),</span>
@@ -3144,7 +3144,7 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;1-based result page to fetch from Tabelog. Use the returned metadata to continue paging.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"1-based result page to fetch from Tabelog. Use the returned metadata to continue paging."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -3152,33 +3152,33 @@ Budget fields are raw and unverified. This is separate from tabelog_search_resta
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reservation date in YYYYMMDD format. Must be used together with reservation_time.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;^</span><span class="se">\\</span><span class="s2">d</span><span class="si">{8}</span><span class="s2">$&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Reservation date in YYYYMMDD format. Must be used together with reservation_time."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="s2">"^</span><span class="se">\\</span><span class="s2">d</span><span class="si">{8}</span><span class="s2">$"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reservation_time</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reservation time in 24-hour HHMM format. Must be used together with reservation_date.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="s2">&quot;^</span><span class="se">\\</span><span class="s2">d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Reservation time in 24-hour HHMM format. Must be used together with reservation_date."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="s2">"^</span><span class="se">\\</span><span class="s2">d</span><span class="si">{4}</span><span class="s2">$"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">party_size</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional party size for reservation filtering.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Optional party size for reservation filtering."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">],</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"browser"</span><span class="p">],</span>
         <span class="n">Field</span><span class="p">(</span>
-            <span class="n">default</span><span class="o">=</span><span class="s2">&quot;http&quot;</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Explicit transport: browser opens headed Chromium, not automatic fallback.&quot;</span><span class="p">,</span>
+            <span class="n">default</span><span class="o">=</span><span class="s2">"http"</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Explicit transport: browser opens headed Chromium, not automatic fallback."</span><span class="p">,</span>
         <span class="p">),</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">,</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"http"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantSearchOutput</span>
 </code></pre></div>
 
@@ -3416,8 +3416,8 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Area name in Japanese. Prefer a validated prefecture, city, or station from &quot;</span>
-                <span class="s2">&quot;`tabelog_get_area_suggestions`.&quot;</span>
+                <span class="s2">"Area name in Japanese. Prefer a validated prefecture, city, or station from "</span>
+                <span class="s2">"`tabelog_get_area_suggestions`."</span>
             <span class="p">),</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
@@ -3427,7 +3427,7 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;General keyword for restaurant names or free-text matching. Use `cuisine` for cuisine-type searches.&quot;</span>
+                <span class="s2">"General keyword for restaurant names or free-text matching. Use `cuisine` for cuisine-type searches."</span>
             <span class="p">),</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
@@ -3437,21 +3437,21 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="p">(</span>
-                <span class="s2">&quot;Cuisine name in Japanese. Validate with `tabelog_get_keyword_suggestions` or &quot;</span>
-                <span class="s2">&quot;`tabelog_list_cuisines` before searching.&quot;</span>
+                <span class="s2">"Cuisine name in Japanese. Validate with `tabelog_get_keyword_suggestions` or "</span>
+                <span class="s2">"`tabelog_list_cuisines` before searching."</span>
             <span class="p">),</span>
             <span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sort</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">SortOption</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;ranking&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Result ordering: ranking, review-count, new-open, or standard.&quot;</span><span class="p">),</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ranking&quot;</span><span class="p">,</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"ranking"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Result ordering: ranking, review-count, new-open, or standard."</span><span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"ranking"</span><span class="p">,</span>
     <span class="n">limit</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Maximum number of restaurants to return from the first fetched page.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum number of restaurants to return from the first fetched page."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">le</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span>
         <span class="p">),</span>
@@ -3460,7 +3460,7 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="nb">int</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;1-based result page to fetch from Tabelog. Use the returned metadata to continue paging.&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"1-based result page to fetch from Tabelog. Use the returned metadata to continue paging."</span><span class="p">,</span>
             <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -3468,28 +3468,28 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reservation date in YYYYMMDD format. Must be used together with reservation_time.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{8}</span><span class="s2">$&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Reservation date in YYYYMMDD format. Must be used together with reservation_time."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^\d</span><span class="si">{8}</span><span class="s2">$"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">reservation_time</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">Field</span><span class="p">(</span>
             <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Reservation time in 24-hour HHMM format. Must be used together with reservation_date.&quot;</span><span class="p">,</span>
-            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;^\d</span><span class="si">{4}</span><span class="s2">$&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">"Reservation time in 24-hour HHMM format. Must be used together with reservation_date."</span><span class="p">,</span>
+            <span class="n">pattern</span><span class="o">=</span><span class="sa">r</span><span class="s2">"^\d</span><span class="si">{4}</span><span class="s2">$"</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">party_size</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Optional party size for reservation filtering.&quot;</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Optional party size for reservation filtering."</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
     <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">transport</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
-        <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">],</span>
-        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Explicit transport: browser opens headed Chromium, not automatic fallback.&quot;</span><span class="p">),</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;http&quot;</span><span class="p">,</span>
+        <span class="n">Literal</span><span class="p">[</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"browser"</span><span class="p">],</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"http"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Explicit transport: browser opens headed Chromium, not automatic fallback."</span><span class="p">),</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="s2">"http"</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RestaurantSearchOutput</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Search Tabelog restaurants with validated filters and pagination metadata.</span>
+<span class="w">    </span><span class="sd">"""Search Tabelog restaurants with validated filters and pagination metadata.</span>
 
 <span class="sd">    Recommended workflow:</span>
 <span class="sd">    1. Validate ambiguous areas with `tabelog_get_area_suggestions`.</span>
@@ -3499,7 +3499,7 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 
 <span class="sd">    Returns a structured envelope with restaurants, applied filters, pagination metadata,</span>
 <span class="sd">    and non-fatal warnings that help the caller refine follow-up tool calls.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">sort_type</span> <span class="o">=</span> <span class="n">_validate_search_params</span><span class="p">(</span>
             <span class="n">sort</span><span class="p">,</span>
@@ -3524,47 +3524,47 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
             <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
             <span class="n">max_pages</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">if</span> <span class="n">transport</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;browser&quot;</span><span class="p">}:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;transport must be http or browser&quot;</span><span class="p">)</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search_browser</span><span class="p">()</span> <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">&quot;browser&quot;</span> <span class="k">else</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">transport</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"http"</span><span class="p">,</span> <span class="s2">"browser"</span><span class="p">}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"transport must be http or browser"</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search_browser</span><span class="p">()</span> <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">"browser"</span> <span class="k">else</span> <span class="k">await</span> <span class="n">request</span><span class="o">.</span><span class="n">search</span><span class="p">()</span>
     <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">detail</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;unsupported_cuisine&quot;</span> <span class="k">if</span> <span class="n">cuisine</span> <span class="ow">and</span> <span class="s2">&quot;Unknown cuisine type&quot;</span> <span class="ow">in</span> <span class="n">detail</span> <span class="k">else</span> <span class="s2">&quot;invalid_parameters&quot;</span>
+        <span class="n">error_code</span> <span class="o">=</span> <span class="s2">"unsupported_cuisine"</span> <span class="k">if</span> <span class="n">cuisine</span> <span class="ow">and</span> <span class="s2">"Unknown cuisine type"</span> <span class="ow">in</span> <span class="n">detail</span> <span class="k">else</span> <span class="s2">"invalid_parameters"</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
             <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Invalid search parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Invalid search parameters: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">suggested_action</span><span class="o">=</span><span class="n">_search_validation_suggested_action</span><span class="p">(</span><span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span> <span class="n">error_code</span><span class="o">=</span><span class="n">error_code</span><span class="p">),</span>
             <span class="n">detail</span><span class="o">=</span><span class="n">detail</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">error</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">&quot;Restaurant search&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">"Restaurant search"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">http_status_code</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">403</span>
             <span class="k">else</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because the upstream service did not return usable results.&quot;</span><span class="p">,</span>
+                <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant search failed because the upstream service did not return usable results."</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="n">suggested_action</span><span class="o">=</span><span class="p">(</span>
-                    <span class="s2">&quot;Retry later, or validate the area and cuisine with suggestion tools before searching again.&quot;</span>
+                    <span class="s2">"Retry later, or validate the area and cuisine with suggestion tools before searching again."</span>
                 <span class="p">),</span>
                 <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
         <span class="n">error</span> <span class="o">=</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-            <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;internal_error&quot;</span><span class="p">,</span>
-            <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed unexpectedly.&quot;</span><span class="p">,</span>
+            <span class="n">error_code</span><span class="o">=</span><span class="s2">"internal_error"</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant search failed unexpectedly."</span><span class="p">,</span>
             <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Retry the tool call. If the same error repeats, inspect the server logs.&quot;</span><span class="p">,</span>
+            <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Retry the tool call. If the same error repeats, inspect the server logs."</span><span class="p">,</span>
             <span class="n">detail</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">:</span>
             <span class="n">items</span> <span class="o">=</span> <span class="n">_to_restaurant_outputs</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">restaurants</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
-            <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;success&quot;</span><span class="p">,</span> <span class="s2">&quot;no_results&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
+            <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"success"</span><span class="p">,</span> <span class="s2">"no_results"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"success"</span>
             <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">SearchStatus</span><span class="o">.</span><span class="n">NO_RESULTS</span><span class="p">:</span>
-                <span class="n">status</span> <span class="o">=</span> <span class="s2">&quot;no_results&quot;</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="s2">"no_results"</span>
 
             <span class="k">return</span> <span class="n">_build_search_output</span><span class="p">(</span>
                 <span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span>
@@ -3585,14 +3585,14 @@ and non-fatal warnings that help the caller refine follow-up tool calls.</p>
 
         <span class="n">error</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">_browser_search_error</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">&quot;browser&quot;</span>
-            <span class="k">else</span> <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">&quot;Restaurant search&quot;</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">transport</span> <span class="o">==</span> <span class="s2">"browser"</span>
+            <span class="k">else</span> <span class="n">_upstream_access_denied_error</span><span class="p">(</span><span class="s2">"Restaurant search"</span><span class="p">,</span> <span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">response</span><span class="o">.</span><span class="n">http_status</span> <span class="o">==</span> <span class="mi">403</span>
             <span class="k">else</span> <span class="n">ToolErrorOutput</span><span class="p">(</span>
-                <span class="n">error_code</span><span class="o">=</span><span class="s2">&quot;upstream_unavailable&quot;</span><span class="p">,</span>
-                <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Restaurant search failed because Tabelog returned an error response.&quot;</span><span class="p">,</span>
+                <span class="n">error_code</span><span class="o">=</span><span class="s2">"upstream_unavailable"</span><span class="p">,</span>
+                <span class="n">message</span><span class="o">=</span><span class="s2">"Restaurant search failed because Tabelog returned an error response."</span><span class="p">,</span>
                 <span class="n">retryable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">&quot;Validate the area or cuisine first, then retry the search.&quot;</span><span class="p">,</span>
+                <span class="n">suggested_action</span><span class="o">=</span><span class="s2">"Validate the area or cuisine first, then retry the search."</span><span class="p">,</span>
                 <span class="n">detail</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">error_message</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
