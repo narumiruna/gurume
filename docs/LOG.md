@@ -109,3 +109,4 @@
 2026-10-28 | fix(search): use scoped Tabelog URLs for mapped keyword, area, and cuisine searches (#local)
 2026-10-29 | fix(search): preserve long keyword URLs in JSON metadata and keep dot-only keywords in query parameters (#97)
 2026-10-29 | chore(deps): update Python dependencies while retaining MCP 1.x compatibility (#local)
+2026-10-29 | chore(deps): refresh locked Python dependencies while retaining MCP 1.x compatibility (#local)
